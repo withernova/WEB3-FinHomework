@@ -1,0 +1,287 @@
+<!DOCTYPE HTML>
+<html lang="en" xmlns:wb="http://open.weibo.com/wb" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <link rel="stylesheet" type="text/css" href="//qzonestyle.gtimg.cn/qzone/hybrid/app/404/style/404style_min.css">
+    <script src="https://tjs.sjs.sinajs.cn/open/api/js/wb.js" type="text/javascript" charset="utf-8">
+    </script>
+    <meta charset="UTF-8">
+    <title>智寻归途</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+
+
+        .mod_share{
+            width: 56px;
+            height: 40px;
+            line-height: 40px;
+            padding: 0 25px;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #6eaf08;
+            color: #fff;
+            font-size: 0;
+            display: flex;
+            margin-top: 10px;
+
+        }
+        .share_inner{
+            display: inline-block;
+            *display: inline;
+            zoom: 1;
+            height: 24px;
+            line-height: 24px;
+            margin: 9px 0;
+            padding: 0 10px;
+            font-size: 18px;
+            float: left;
+        }
+        .share_list{
+            display: none;
+            height: 24px;
+            line-height: 24px;
+            margin-top: 9px;
+            padding-left: 10px;
+            border-left: 1px solid #639d07;
+            font-size: 0;
+            vertical-align: top;
+            overflow: hidden;
+            float: left;
+        }
+        .mod_share .share_list .share_link{
+            display: block;
+            cursor: pointer;
+        }
+
+        .mod_share .share_list .link_inner.link_inner{
+            display: none;
+        }
+        .ico_tencentweibo{
+            background-position: 0 0;
+        }
+        .mod_share_hover {
+            width: 215px;
+        }
+
+        .oldMan_name { margin-bottom: 20px; } .oldMan_lostPlace { line-height: 28px; } .oldMan_lostTime{ line-height: 28px; } .oldMan_feature{ line-height: 28px; } .photo{ float: left; width: 160px; height: 216px; margin-right: 20px; background: #f0f0f0; } .oldMan_box{ position: relative; z-index: 100; width: 600px; height: 220px; padding: 10px; left: 20px; border-radius: 10px; margin: 0 auto; background: #fff; zoom: 1; } .desc{ width: 460px; overflow: hidden; font-size: 14px; position: absolute; left: 180px; } .weibo{ display: inline-block; } .qzon{ display: inline-block; padding-right: 10px; } .share{ display: inline-block; }</style>
+</head>
+
+<body>
+<div id="content" class="cf ">
+    <div id="duobei_wrap">
+        <div class="logo_wrap cf">
+            <a id="logo">
+            </a>
+            <div id="title">
+                <i>帮</i>
+                <i>助</i>
+                <i>更</i>
+                <i>多</i>
+                <i>的</i>
+                <i>老</i>
+                <i>人</i>
+                <i>回</i>
+                <i>家</i>
+            </div>
+        </div>
+        <div class="oldMan_box ">
+            <img id="photo" class="photo" th:src="${oldMan.oldManImg}" />
+            <div class="desc">
+                <div  class="oldMan_name">
+                    <h2  id ="oldMan_name" th:text="${oldMan.oldName}+((${oldMan.oldGender}))">
+                    </h2>
+                </div>
+                <div class="oldMan_phone">
+                    <span>线索联系方式：</span>
+                    <span  id="oldMan_phone" th:text="${oldMan.tel}">
+              </span>
+                </div>
+                <div   class="oldMan_lostTime">
+                    <span>走丢时间：</span>
+                    <span id="oldMan_lostTime" th:text="${oldMan.lostTime}">
+              </span>
+                </div>
+                <div class="oldMan_lostPlace">
+                    <span>走失地点：</span>
+                    <span id="oldMan_lostPlace" th:text="${oldMan.lostPlace}">
+              </span>
+                </div>
+                <div class="oldMan_feature">
+                    <span>身体特征：</span>
+                    <span id="oldMan_feature" th:text="${oldMan.feature}">
+              </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- #duobei_wrap -->
+    <div class="line ">
+    </div>
+    <div class="not_found ">
+        <i class="ribbon">
+        </i>
+        <div class="not_found_404 cf">
+            <span>4</span>
+            <span>0</span>
+            <span>4</span>
+        </div>
+        <div class="btn mod_404">
+            <a href="./index.html" class="button button-rounded">回到首页</a>
+            <div class="mod_share button  " onmouseover="this.className += ' mod_share_hover';" onmouseout="this.className = this.className.replace(' mod_share_hover','')">
+                <span class="share_inner">分享</span>
+                <ul class="share_list">
+                    <li>
+                        <a href="javascript:void(0);" class="share_link" onclick="share('weibo');return false;" title="腾讯微博">
+                            <span class="link_inner">腾讯微博</span>
+                            <i class="ico_tencentweibo">
+                            </i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="javascript:void(0);" class="share_link" onclick="share('qzone');return false;" title="QQ空间">
+                            <span class="link_inner">QQ空间</span>
+                            <i class="ico_qzone">
+                            </i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="javascript:void(0);" class="share_link" onclick="share('sina');return false;" title="新浪微博">
+                            <span class="link_inner">新浪微博</span>
+                            <i class="ico_sinaweibo">
+                            </i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="javascript:void(0);" class="share_link" onclick="share('weixin');return false;" title="微信">
+                            <span class="link_inner">微信</span>
+                            <i class="ico_weixin">
+                            </i>
+                        </a>
+                    </li>
+                </ul>
+                <span style="clear: both;">
+            </span>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+    function onmouseout(event) {
+        this.className = this.className.replace(' mod_share_hover', '')
+    }
+    function onmouseover(event) {
+        this.className += ' mod_share_hover';
+    }
+    let photo =document.getElementById("photo").getAttribute("src");
+    let oldManName =  document.getElementById("oldMan_name").innerText;
+    let lostTime =  document.getElementById("oldMan_lostTime").innerText;
+    let lostPlace =  document.getElementById("oldMan_lostPlace").innerText;
+    let feature = document.getElementById("oldMan_feature").innerText;
+    let phone = document.getElementById("oldMan_phone").innerText;
+
+    // console.log(oldManName);
+
+    window.share = function(target) {
+
+        var summary = ["姓名：",oldManName,  "，走失地点：",lostPlace, "\uff0c\u5931\u8e2a\u65f6\u95f4\uff1a", lostTime, "\uff0c\u7279\u5f81\u63cf\u8ff0\uff1a", feature].join("");
+        if (summary) {
+            summary = "#帮助老人回家#" + summary;
+        }
+        var stitle = "走失老人详情";
+        var desc = "走失的老人需要回家，快来参与爱心的传递吧！";
+        var encode = encodeURIComponent;
+        var opts = {
+            "surl": "http://qzone.qq.com/gy/404/" + new Date().getTime() + "/lostchild.html",
+            "site": "QQ\u7a7a\u95f4",
+            "summary": summary || "#老人回家#归家救援志愿队用技术点亮公益，让我们一起寻找走失的老人！",
+            "stitle": stitle,
+            "pics": photo,
+            "desc": desc,
+            "origin_url": document.URL
+        };
+        var surl = opts.surl || "http://www.qq.com/404/",
+            summary = opts.summary || "\u8fd9\u4e2a\u662f\u5206\u4eab\u7684\u5185\u5bb9",
+            stitle = opts.stitle || "\u8fd9\u4e2a\u662f\u5206\u4eab\u7684\u6807\u9898",
+            pics = opts.pics || "http://qzonestyle.gtimg.cn/qzone_v6/act/img/20120422_qzone_7_years/pop_up/icon-pop-seven-years.png",
+            site = opts.site || "\u8fd9\u4e2a\u662f\u5206\u4eab\u94fe\u63a5\u7684\u6587\u5b57",
+            desc = opts.desc || "\u5931\u8e2a\u7684\u5b9d\u8d1d\u8981\u56de\u5bb6\uff0c\u5feb\u6765\u53c2\u4e0e\u7231\u5fc3\u7684\u4f20\u9012\u5427\uff01",
+            origin_url = opts.origin_url || "http://www.qq.com/404/";
+        var shareList = {
+            weibo: {
+                method: function(evt) {
+                    var w = "http://v.t.qq.com/share/share.php",
+                        q = ["?site=", encode(surl + "#via=share_t_weib"), "&title=", encode(summary), "&pic=", encode(pics), "&url=", encode(surl)].join(""),
+                        p = [w, q].join("");
+                    openit(p, "weibo", "width=700, height=680, top=0, left=0, toolbar=no, menubar=no, scrollbars=no, location=yes, resizable=no, status=no");
+                }
+            },
+            qzone: {
+                method: function(evt) {
+                    var buff = [],
+                        ps = {
+                            url: surl + "#via=404-qzoneshare",
+                            desc: desc || "\u5931\u8e2a\u7684\u5b9d\u8d1d\u8981\u56de\u5bb6\uff0c\u5feb\u6765\u53c2\u4e0e\u7231\u5fc3\u7684\u4f20\u9012\u5427\uff01",
+                            summary: summary,
+                            title: stitle,
+                            pics: pics,
+                            site: site
+                        };
+                    for (var k in ps) {
+                        buff.push(k + "=" + encode(ps[k] || ""));
+                    }
+                    var w = "http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?" + buff.join("&"),
+                        q = ["#via=share_t_qzone", "&title=", encode(summary), "&pic=", encode(pics), "&url=", encode(surl)].join(""),
+                        p = [w, q].join("");
+                    openit(p, "qzone", "width=700, height=680, top=0, left=0, toolbar=no, menubar=no, scrollbars=no, location=yes, resizable=no, status=no");
+                }
+            },
+            sina: {
+                method: function() {
+                    var w = "http://v.t.sina.com.cn/share/share.php",
+                        q = ["?url=", encode(surl + "#via=share_x_weib"), "&title=", encode(summary), "&source=", "&sourceUrl=", surl, "&content=utf-8", "&pic=", encode(pics)].join(""),
+                        p = [w, q].join("");
+                    openit(p, "sina", "toolbar=0,status=0,resizable=1,width=440,height=430");
+                }
+            },
+            kaixin: {
+                method: function() {
+                    var n = "http://www.kaixin001.com/repaste/bshare.php?rurl=" + encode(surl + "#via=share_kaixin") + "&rcontent=&rtitle=" + encode(summary);
+                    openit(n, "kaixin", "toolbar=0,status=0,resizable=1,width=600,height=360");
+                }
+            },
+            renren: {
+                method: function() {
+                    var n = "http://www.connect.renren.com/share/sharer?title=" + encode(summary) + "&url=" + encode(surl + "#via=share_renren"),
+                        p = window.open(n, "rr", "toolbar=0,status=0,resizable=1,width=510,height=300");
+                    if (p) {
+                        p.focus();
+                    }
+                }
+            },
+            weixin: {
+                method: function() {
+                    var n = "http://qzone.qq.com/gy/404/page/qrcode.html?url=" + encode(origin_url + "#via=share_weixin"),
+                        p = window.open(n, "rr", "toolbar=0,status=0,resizable=1,width=620,height=430");
+                    if (p) {
+                        p.focus();
+                    }
+                }
+            }
+        };
+        var openit = function(u, n, p) {
+            function o() {
+                var z;
+                if (!(z = window.open(u, n, p))) {
+                    location.href = u;
+                } else {
+                    z.focus();
+                }
+            }
+            o();
+        };
+        shareList[target] && shareList[target].method();
+    };
+</script>
+
+</html>

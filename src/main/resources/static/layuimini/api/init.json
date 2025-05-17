@@ -1,0 +1,152 @@
+{
+  "homeInfo": {
+    "title": "首页",
+    "href": "page/welcome.html"
+  },
+  "logoInfo": {
+    "title": "智寻归途",
+    "image": "layuimini/images/logo.png",
+    "href": ""
+  },
+  "menuInfo": [
+    {
+      "title": "常规管理",
+      "icon": "fa fa-address-book",
+      "href": "",
+      "target": "_self",
+      "child": [
+        {
+          "title": "可视化数据显示",
+          "href": "data-view.html",
+          "icon": "fa fa-bar-chart",
+          "target": "_self"
+        },
+        {
+          "title": "失踪预测可视化",
+          "href": "echats.html",
+          "icon": "fa fa-area-chart",
+          "target": "_self"
+        },
+        {
+          "title": "救援行动",
+          "href": "",
+          "icon": "fa fa-road",
+          "target": "_self",
+          "child": [
+            {
+              "title": "救援信息",
+              "href": "page/ongoingrescue.html",
+              "icon": "fa fa-file-text",
+              "target": "_self"
+            },
+            {
+              "title": "救援管理",
+              "href": "page/aid-application.html",
+              "icon": "fa fa-th-large",
+              "target": "_self"
+            },
+            {
+              "title": "地图管理",
+              "href": "page/map-management.html",
+              "icon": "fa fa-map",
+              "target": "_self"
+            }
+          ]
+        },
+        {
+          "title": "任务中心",
+          "icon": "fa fa-tasks",
+          "href": "",
+          "target": "_self",
+          "child": [
+            {
+              "title": "任务发布",
+              "href": "page/task-publish.html",
+              "icon": "fa fa-upload",
+              "target": "_self"
+            },
+            {
+              "title": "任务管理",
+              "href": "page/task-management.html",
+              "icon": "fa fa-list-alt",
+              "target": "_self"
+            }
+          ]
+        },
+        {
+          "title": "队员管理",
+          "href": "",
+          "icon": "fa fa-group",
+          "target": "_self",
+          "child": [
+            {
+              "title": "队员信息",
+              "href": "page/volunteer-info.html",
+              "icon": "fa fa-file-text-o",
+              "target": "_self"
+            },
+            {
+              "title": "信息修改",
+              "href": "page/register.html",
+              "icon": "fa fa-paint-brush",
+              "target": "_self"
+            }
+          ]
+        },
+
+
+        {
+          "title": "人脸比对",
+          "href": "",
+          "icon": "fa fa-group",
+          "target": "_self",
+          "child": [
+            {
+              "title": "图片比对",
+              "href": "page/face_comparison.html",
+              "icon": "fa fa-id-badge",
+              "target": "_self"
+            },
+            {
+              "title": "视频比对",
+              "href": "page/face_comparison_video.html",
+              "icon": "fa user-circle-o",
+              "target": "_self"
+            }
+          ]
+        },
+        {
+          "title": "声纹识别",
+          "href": "page/voiceprint-recognition.html",
+          "icon": "fa fa-bell",
+          "target": "_self"
+        },
+        {
+          "title": "通知家属",
+          "href": "page/family-notification.html",
+          "icon": "fa fa-commenting-o",
+          "target": "_self"
+        },
+        {
+          "title": "紧急通知",
+          "href": "page/emergency-notice.html",
+          "icon": "fa fa-bell-o",
+          "target": "_self"
+        },
+        {
+          "title": "使用说明",
+          "href": "page/user-guide.html",
+          "icon": "fa fa-book",
+          "target": "_self"
+        },
+        {
+          "title": "系统设置",
+          "href": "page/system-settings.html",
+          "icon": "fa fa-gears",
+          "target": "_self"
+        }
+      ]
+    }
+  ]
+}
+

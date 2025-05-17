@@ -1,0 +1,67 @@
+{
+  "code": 200,
+  "msg": "",
+  "count": 6,
+  "data": [
+    {
+      "id": 1,
+      "userId": 2018112000,
+      "name": "许景瑞",
+      "gender": "男",
+      "age": 19,
+      "phone": 17768523568,
+      "lastLoginPlace": "无锡市滨湖区江南大学",
+      "password": "acd1234564",
+      "rescueNum": 6,
+      "status": 1
+    },
+    {
+      "id": 1,
+      "userId": 2018112001,
+      "name": "瞿成乐",
+      "gender": "男",
+      "age": 20,
+      "phone": 17715026830,
+      "lastLoginPlace": "无锡市滨湖区江南大学",
+      "password": "acd1234564",
+      "rescueNum": 6,
+      "status": 0
+    },
+    {
+      "id": 1,
+      "userId": 2018112050,
+      "name": "谢雨晴",
+      "gender": "女",
+      "age": 18,
+      "phone": 15888100046,
+      "lastLoginPlace": "无锡市滨湖区融创茂",
+      "password": "acd1234564",
+      "rescueNum": 6,
+      "status": 1
+    },
+    {
+      "id": 1,
+      "userId": 2018112008,
+      "name": "高诚",
+      "gender": "男",
+      "age": 20,
+      "phone": 18513627185,
+      "lastLoginPlace": "无锡市滨湖区市民中心",
+      "password": "acd1234564",
+      "rescueNum": 6,
+      "status": 0
+    },
+    {
+      "id": 1,
+      "userId": 2018112025,
+      "name": "宋征岳",
+      "gender": "男",
+      "age": 28,
+      "phone": 18896906828,
+      "lastLoginPlace": "无锡市滨湖区星光广场173栋",
+      "password": "acd1234564",
+      "rescueNum": 8,
+      "status": 2
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-BakaApplication<baka>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.maka.BakaApplication",
+            "projectName": "baka",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

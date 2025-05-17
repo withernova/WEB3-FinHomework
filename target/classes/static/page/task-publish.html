@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>任务发布</title>
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <link rel="stylesheet" href="../layuimini/lib/layui-v2.5.5/css/layui.css" media="all">
+  <link rel="stylesheet" href="../layuimini/css/public.css" media="all">
+  <style>
+    body {
+      background-color: #f2f2f2;
+    }
+
+    .layuimini-container {
+      margin: 20px auto;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+
+    .layui-form-label {
+      color: #333;
+    }
+
+    .layui-input-inline {
+      width: 300px;
+    }
+
+    .urgent-level {
+      margin-top: 10px;
+    }
+
+    .layui-upload {
+      margin-top: 10px;
+    }
+
+    .status-green {
+      color: green;
+    }
+
+    .status-red {
+      color: red;
+    }
+
+    .view-progress-btn {
+      background-color: #1c528a;
+      color: white; /* 按钮文字颜色 */
+    }
+
+    /* 悬停时按钮颜色变化 */
+    .view-progress-btn:hover {
+      background-color: #0069d9; /* 悬停时的颜色 */
+    }
+    .layui-card {
+      margin: 20px;
+    }
+
+    .layui-card-header {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .layui-card-body {
+      padding: 15px;
+    }
+  </style>
+</head>
+<body>
+<div class="layuimini-container">
+  <div class="layuimini-main">
+    <fieldset class="layui-elem-field layui-field-title" align="center" style="margin-top: 20px;">
+      <legend>任务发布</legend>
+    </fieldset>
+
+    <form class="layui-form" id="taskForm">
+      <div class="layui-form-item">
+        <label class="layui-form-label">走失人员姓名</label>
+        <div class="layui-input-inline">
+          <input type="text" name="lost_person_name" lay-verify="required" placeholder="请输入姓名" autocomplete="off" class="layui-input">
+        </div>
+      </div>
+
+      <div class="layui-form-item">
+        <label class="layui-form-label">走失时间</label>
+        <div class="layui-input-inline">
+          <input type="text" name="lost_time" id="date1" lay-verify="required" autocomplete="off" class="layui-input">
+        </div>
+      </div>
+
+      <div class="layui-form-item">
+        <label class="layui-form-label">走失地点</label>
+        <div class="layui-input-inline">
+          <input type="text" name="lost_province" lay-verify="required" placeholder="请输入省" autocomplete="off" class="layui-input">
+        </div>
+        <div class="layui-input-inline">
+          <input type="text" name="lost_city" lay-verify="required" placeholder="请输入市" autocomplete="off" class="layui-input">
+        </div>
+        <div class="layui-input-inline">
+          <input type="text" name="lost_area" lay-verify="required" placeholder="请输入区" autocomplete="off" class="layui-input">
+        </div>
+      </div>
+
+      <div class="layui-form-item">
+        <label class="layui-form-label">具体地址</label>
+        <div class="layui-input-inline">
+          <input type="text" name="specific_address" placeholder="请输入具体地址" autocomplete="off" class="layui-input">
+        </div>
+      </div>
+
+      <div class="layui-form-item">
+        <label class="layui-form-label">联系人手机号</label>
+        <div class="layui-input-inline">
+          <input type="tel" name="contact_phone" lay-verify="required|phone" autocomplete="off" class="layui-input">
+        </div>
+      </div>
+
+      <div class="layui-form-item">
+        <label class="layui-form-label">选择队员</label>
+        <div class="layui-input-inline">
+          <select name="rescue_member" lay-verify="required" id="rescue-member">
+            <option value="">请选择队员</option>
+            <option value="2018112000" class="status-green">杨双月 (男, 24岁, 15225706510) - 空闲</option>
+            <option value="2018112001" class="status-red">李双鱼 (男, 24岁, 13885563211) - 非空闲</option>
+            <option value="2018112002" class="status-green">汪旭瓦 (男, 24岁, 13885563214) - 空闲</option>
+            <option value="2018112003" class="status-red">黄彩羽 (女, 24岁, 13812148989) - 非空闲</option>
+            <option value="2018112004" class="status-red">谢千颜 (女, 24岁, 17878981314) - 非空闲</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="layui-form-item">
+        <label class="layui-form-label">上传图片</label>
+        <div class="layui-input-block">
+          <div class="layui-upload">
+            <button type="button" class="layui-btn view-progress-btn" id="uploadImage">上传图片</button>
+            <div class="layui-upload-list" id="uploadList"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="layui-form-item urgent-level">
+        <label class="layui-form-label">紧急等级</label>
+        <div class="layui-input-inline">
+          <select name="emergency_level" lay-verify="required">
+            <option value="">请选择紧急等级</option>
+            <option value="1">一般</option>
+            <option value="2">紧急</option>
+            <option value="3">非常紧急</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="layui-form-item">
+        <div class="layui-input-block" style="text-align: center;">
+          <button class="layui-btn layui-btn-normal" lay-submit="" lay-filter="demo1">立即发布</button>
+          <button type="button" class="layui-btn layui-btn-primary" id="previewBtn">预览</button>
+          <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../layuimini/lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+<script src="../layuimini/lib/jquery-3.4.1/jquery-3.4.1.min.js"></script>
+
+<script>
+  layui.use(['form', 'laydate', 'upload'], function () {
+    var form = layui.form,
+            laydate = layui.laydate,
+            upload = layui.upload;
+
+    // 日期选择器
+    laydate.render({
+      elem: '#date1',
+      type: 'datetime'
+    });
+
+    // 上传图片
+    var uploadInst = upload.render({
+      elem: '#uploadImage',
+      url: '/upload/', // 替换为你的上传接口
+      accept: 'images',
+      done: function (res) {
+        $('#uploadList').append('<img src="' + res.url + '" style="width: 100px; height: auto; margin-right: 10px;">');
+      },
+      error: function () {
+        $('#uploadList').append('<span style="color: red;">上传失败</span>');
+      }
+    });
+
+    // 提交表单
+    form.on('submit(demo1)', function (data) {
+      console.log(data.field); // 在这里处理表单提交数据
+      return false; // 阻止表单默认提交
+    });
+
+    // 预览按钮点击事件
+    $('#previewBtn').click(function () {
+      var formData = $('#taskForm').serializeArray();
+      var dataObj = {};
+
+      formData.forEach(function (item) {
+        dataObj[item.name] = item.value;
+      });
+
+      // 获取选中队员的姓名
+      var selectedOption = $('#rescue-member').find('option:selected');
+      var rescuerName = selectedOption.length ? selectedOption.text().split(' ')[0] : '未知'; // 获取选中队员的姓名部分
+
+      // 添加走失地点、具体地址、紧急情况到 dataObj
+      dataObj['lost_location'] = dataObj['lost_province'] + dataObj['lost_city'] + dataObj['lost_area'];
+      dataObj['specific_address'] = dataObj['specific_address']; // 获取具体地址
+      dataObj['rescue_member'] = rescuerName;
+
+      // 构建预览页面的 URL
+      var previewUrl = 'task-preview.html?' + $.param(dataObj);
+      window.open(previewUrl, '_blank'); // 在新标签页中打开预览页面
+    });
+  });
+</script>
+</body>
+</html>

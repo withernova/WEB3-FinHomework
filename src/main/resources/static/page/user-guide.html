@@ -1,0 +1,204 @@
+<!--使用说明-->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>使用说明</title>
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <link rel="stylesheet" href="../layuimini/lib/layui-v2.5.5/css/layui.css" media="all">
+  <link rel="stylesheet" href="../layuimini/css/public.css" media="all">
+  <style>
+    /* 鼠标悬停改变背景和字体颜色为白色 */
+    .layui-colla-title:hover {
+      background-color: #28333E;
+      color: white !important;
+      transition: color 0.3s, background-color 0.3s;
+    }
+    .view-progress-btn {
+      background-color: #1c528a;
+      color: white; /* 按钮文字颜色 */
+    }
+
+    /* 悬停时按钮颜色变化 */
+    .view-progress-btn:hover {
+      background-color: #0069d9; /* 悬停时的颜色 */
+    }
+
+    /* 鼠标悬停时显示提示 */
+    .layui-colla-title::after {
+      content: attr(data-hint);
+      color: #999;
+      font-size: 12px;
+      margin-left: 10px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    /* 鼠标悬停时提示文字显现 */
+    .layui-colla-title:hover::after {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+<div class="layuimini-container">
+  <div class="layuimini-main">
+
+    <!-- 使用说明标题 -->
+    <fieldset class="layui-elem-field layui-field-title" align="center" style="margin-top: 20px;">
+      <legend>系统使用说明</legend>
+    </fieldset>
+
+    <!-- 折叠面板 -->
+    <div class="layui-collapse" id="colla-panel">
+
+      <!-- 救援管理模块 -->
+      <div class="layui-colla-item">
+        <h2 class="layui-colla-title" data-hint="点击展开">救援管理模块</h2>
+        <div class="layui-colla-content">
+
+          <!-- 子折叠面板（救援申请和救援行动） -->
+          <div class="layui-collapse">
+            <div class="layui-colla-item">
+              <h2 class="layui-colla-title" data-hint="点击展开">救援申请</h2>
+              <div class="layui-colla-content">
+
+                <!-- 再次嵌套详细说明 -->
+                <div class="layui-collapse">
+                  <div class="layui-colla-item">
+                    <h2 class="layui-colla-title" data-hint="点击展开">如何填写救援申请</h2>
+                    <div class="layui-colla-content">
+                      <p>用户需要填写走失老人的详细信息，包括姓名、性别、走失时间和地点等内容，提交后系统将自动生成救援任务。</p>
+                    </div>
+                  </div>
+                  <div class="layui-colla-item">
+                    <h2 class="layui-colla-title" data-hint="点击展开">提交后如何处理</h2>
+                    <div class="layui-colla-content">
+                      <p>提交救援申请后，系统会通知相关救援队成员，他们可以接受任务并开始救援行动。</p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="layui-colla-item">
+              <h2 class="layui-colla-title" data-hint="点击展开">救援行动</h2>
+              <div class="layui-colla-content">
+
+                <!-- 再次嵌套详细说明 -->
+                <div class="layui-collapse" lay-accordion>
+                  <div class="layui-colla-item">
+                    <h2 class="layui-colla-title" data-hint="点击展开">如何追踪救援行动</h2>
+                    <div class="layui-colla-content">
+                      <p>在救援行动页面中，用户可以看到所有正在进行的救援任务，并追踪每个任务的实时进展。</p>
+                    </div>
+                  </div>
+                  <div class="layui-colla-item">
+                    <h2 class="layui-colla-title" data-hint="点击展开">完成任务后如何反馈</h2>
+                    <div class="layui-colla-content">
+                      <p>救援行动完成后，队员可以通过系统提交救援反馈，详细描述救援过程和结果。</p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 队员管理模块 -->
+      <div class="layui-colla-item">
+        <h2 class="layui-colla-title" data-hint="点击展开">队员管理模块</h2>
+        <div class="layui-colla-content">
+
+          <!-- 子折叠面板 -->
+          <div class="layui-collapse" lay-accordion>
+            <div class="layui-colla-item">
+              <h2 class="layui-colla-title" data-hint="点击展开">队员注册</h2>
+              <div class="layui-colla-content">
+                <p>新队员可以通过此功能注册成为救援队成员。</p>
+              </div>
+            </div>
+            <div class="layui-colla-item">
+              <h2 class="layui-colla-title" data-hint="点击展开">队员信息</h2>
+              <div class="layui-colla-content">
+                <p>查看已注册队员的详细信息。</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 紧急通知模块 -->
+      <div class="layui-colla-item">
+        <h2 class="layui-colla-title" data-hint="点击展开">紧急通知模块</h2>
+        <div class="layui-colla-content">
+          <p>系统管理员可以通过该模块发布紧急通知，及时通知所有救援队成员突发情况。</p>
+        </div>
+      </div>
+
+      <!-- 系统设置模块 -->
+      <div class="layui-colla-item">
+        <h2 class="layui-colla-title" data-hint="点击展开">系统设置模块</h2>
+        <div class="layui-colla-content">
+          <p>通过该模块，用户可以修改系统设置，包括个人信息、密码等。</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 常见问题部分 -->
+    <fieldset class="layui-elem-field layui-field-title" align="center" style="margin-top: 20px;">
+      <legend>常见问题解答</legend>
+    </fieldset>
+    <ul class="layui-text">
+      <li><strong>Q1：如何提交救援申请？</strong>
+        <p>在救援管理模块中选择“救援申请”，填写走失老人信息并提交。</p>
+      </li>
+      <li><strong>Q2：如何注册成为救援队成员？</strong>
+        <p>在队员管理模块中选择“队员注册”，填写个人信息并提交，管理员审核通过后即可成为救援队成员。</p>
+      </li>
+      <li><strong>Q3：如何查看当前救援任务？</strong>
+        <p>在救援管理模块中选择“救援行动”，查看当前救援任务详情。</p>
+      </li>
+    </ul>
+
+    <!-- 返回按钮 -->
+    <div class="layui-form-item" style="text-align: center; margin-top: 30px;">
+      <button class="layui-btn view-progress-btn" onclick="window.history.back()">返回</button>
+    </div>
+  </div>
+</div>
+
+<script src="../layuimini/lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+<script src="../layuimini/lib/jquery-3.4.1/jquery-3.4.1.min.js"></script>
+<script>
+  // 初始化折叠面板
+  layui.use('element', function(){
+    var element = layui.element;
+
+    // 监听折叠面板的展开和关闭事件
+    $('#colla-panel .layui-colla-item').each(function () {
+      var $this = $(this);
+      $this.find('.layui-colla-title').on('click', function () {
+        setTimeout(function() { // 延时获取状态，确保已经展开或闭合
+          var isExpanded = $this.find('.layui-colla-content').hasClass('layui-show');
+          if (isExpanded) {
+            $this.find('.layui-colla-title').attr('data-hint', '点击闭合'); // 当展开时显示"点击闭合"
+          } else {
+            $this.find('.layui-colla-title').attr('data-hint', '点击展开'); // 当闭合时显示"点击展开"
+          }
+        }, 200); // 延迟200ms确保面板状态已更新
+      });
+    });
+  });
+</script>
+
+</body>
+</html>
