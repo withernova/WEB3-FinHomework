@@ -7,81 +7,102 @@ import com.maka.query.SimpleUser;
 import com.maka.query.UserInfo;
 import com.maka.service.UserService;
 import com.maka.service.impl.UserServiceImpl;
+import com.maka.dto.UserRegistrationRequest;
+import com.maka.dto.UserRegistrationResponse;
+import com.maka.pojo.User;
+
 import com.mysql.cj.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
+import javax.servlet.http.HttpSession;
+import java.util.HashMap;
+import java.util.Map;
 /**
  * @author yang
  */
-@CrossOrigin
 @RestController
+@RequestMapping("/api/users")
 public class UserController {
-
-    private Logger logger = LoggerFactory.getLogger(UserController.class);
-
-    private UserService userService;
-
+    
     @Autowired
-    public void setUserService(UserServiceImpl userService) {
-        this.userService = userService;
+    private UserService userService;
+    
+    @PostMapping("/sendVerificationCode")
+    public ResponseEntity<?> sendVerificationCode(@RequestBody Map<String, String> request) {
+        String phone = request.get("phone");
+        
+        if (phone == null || phone.isEmpty()) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "手机号不能为空");
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+        
+        boolean sent = userService.sendVerificationCode(phone);
+        
+        Map<String, Object> result = new HashMap<>();
+        if (sent) {
+            result.put("success", true);
+            result.put("message", "验证码已发送");
+            return ResponseEntity.ok(result);
+        } else {
+            result.put("success", false);
+            result.put("message", "验证码发送失败");
+            return ResponseEntity.unprocessableEntity().body(result);
+        }
     }
-
+            
     @PostMapping("/register")
-    public MessageResponse registerVolunteer(@Validated SimpleUser simpleUser) {
-        logger.info("{}", simpleUser);
-
-        return userService.registerVolunteer(simpleUser);
+    public ResponseEntity<UserRegistrationResponse> register(@RequestBody UserRegistrationRequest request) {
+        UserRegistrationResponse response = userService.register(request);
+        return ResponseEntity.ok(response);
     }
-
-
-    @RequestMapping("/getPageUser")
-    public PageResponse selectUserByPage(PageRequest pageRequest) {
-        List<UserInfo> users = userService.selectUserByPage(pageRequest.getCurrentPage(), pageRequest.getPageSize());
-        int totalNum = userService.getTotalUsersNums();
-        pageRequest.setData(users);
-        pageRequest.setPageTotalNum(totalNum / pageRequest.getPageSize() + 1);
-        pageRequest.setTotalNum(totalNum);
-        logger.info(users.toString());
-        return new PageResponse(HttpStatus.OK.value(), "查询成功", totalNum, users);
+    
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> request, HttpSession session) {
+        String username = request.get("username");
+        String password = request.get("password");
+        Boolean remember = Boolean.valueOf(request.get("remember"));
+        
+        User user = userService.login(username, password);
+        
+        if (user != null) {
+            // 登录成功，设置session
+            session.setAttribute("userId", user.getUuid());
+            session.setAttribute("userType", user.getUserType());
+            
+            // 如果勾选"记住我"，延长session过期时间
+            if (remember != null && remember) {
+                session.setMaxInactiveInterval(7 * 24 * 60 * 60); // 设置为7天
+            }
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "登录成功");
+            response.put("userType", user.getUserType());
+            
+            return ResponseEntity.ok(response);
+        } else {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "用户名或密码错误");
+            return ResponseEntity.badRequest().body(result);
+        }
     }
-
-    @RequestMapping("/getUser")
-    public PageResponse selectAllUser() {
-        List<UserInfo> users = userService.selectAllUser();
-        int totalNum =users.size();
-        return new PageResponse(HttpStatus.OK.value(), "查询成功", totalNum, users);
-    }
-
-
-    @RequestMapping("getPageUserByCondition")
-    public PageResponse getPageUserByCondition(PageRequest pageRequest,String name,String gender,String phone) {
-        if(StringUtils.isEmptyOrWhitespaceOnly(gender)){
-            gender = null;
-        }
-        if(StringUtils.isEmptyOrWhitespaceOnly(phone)){
-            phone = null;
-        }
-        if(StringUtils.isEmptyOrWhitespaceOnly(name)){
-            name = null;
-        }
-        if(name==null&&phone==null&&gender==null){
-            return selectAllUser();
-        }
-        logger.info("name  = {}",name);
-        logger.info("gender = {}",gender);
-        logger.info("phone= {}",phone);
-        List<UserInfo> users = userService.getPageUserByCondition(pageRequest.getCurrentPage(), pageRequest.getPageSize(),name,gender,phone);
-        int totalNum = users.size();
-        return new PageResponse(HttpStatus.OK.value(), "查询成功", totalNum, users);
+    
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpSession session) {
+        session.invalidate();
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("message", "已退出登录");
+        return ResponseEntity.ok(result);
     }
 }

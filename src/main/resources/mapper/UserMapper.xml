@@ -1,206 +1,71 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.maka.mapper.UserMapper">
-    <resultMap id="BaseResultMap" type="com.maka.pojo.User">
-        <id column="id" jdbcType="INTEGER" property="id"/>
-        <result column="open_id" jdbcType="VARCHAR" property="openId"/>
-        <result column="password" jdbcType="VARCHAR" property="password"/>
-        <result column="realname" jdbcType="VARCHAR" property="realname"/>
-        <result column="username" jdbcType="VARCHAR" property="username"/>
-        <result column="tel" jdbcType="VARCHAR" property="tel"/>
-        <result column="nickname" jdbcType="VARCHAR" property="nickname"/>
-        <result column="avatar" jdbcType="VARCHAR" property="avatar"/>
-        <result column="gender" jdbcType="VARCHAR" property="gender"/>
-        <result column="worker" jdbcType="BIT" property="worker"/>
-    </resultMap>
 
-    <resultMap id="userInfo" type="com.maka.query.UserInfo">
-        <id column="id" jdbcType="INTEGER" property="userId"/>
-        <result column="password" jdbcType="VARCHAR" property="password"/>
-        <result column="realname" jdbcType="VARCHAR" property="name"/>
-        <result column="tel" jdbcType="VARCHAR" property="phone"/>
-        <result column="gender" jdbcType="VARCHAR" property="gender"/>
-    </resultMap>
-
-    <resultMap id="RescuingUser" type="com.maka.vo.RescuingUser">
-        <id column="id" property="userId"/>
-        <result column="realname" property="userName"/>
-        <result column="area" property="area"/>
-        <result column="confirm_time" property="confirmTime"/>
-    </resultMap>
-
-    <sql id="Base_Column_List">
-        id, open_id, `password`, realname, username, tel, nickname, avatar, gender, worker
-    </sql>
-    <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
-        select
-        <include refid="Base_Column_List"/>
-        from tb_user
-        where id = #{id,jdbcType=INTEGER}
+<mapper namespace="com.example.elderrescue.mapper.UserMapper">
+    <!-- 检查用户名是否存在 -->
+    <select id="checkUsernameExists" resultType="int">
+        SELECT COUNT(*) FROM users WHERE username = #{username}
     </select>
-    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
-        delete
-        from tb_user
-        where id = #{id,jdbcType=INTEGER}
-    </delete>
-    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.maka.pojo.User" useGeneratedKeys="true">
-        insert into tb_user (open_id, `password`, realname,
-                             username, tel, nickname,
-                             avatar, gender, worker)
-        values (#{openId,jdbcType=VARCHAR}, #{password,jdbcType=VARCHAR}, #{realname,jdbcType=VARCHAR},
-                #{username,jdbcType=VARCHAR}, #{tel,jdbcType=VARCHAR}, #{nickname,jdbcType=VARCHAR},
-                #{avatar,jdbcType=VARCHAR}, #{gender,jdbcType=VARCHAR}, #{worker,jdbcType=BIT})
+    
+    <!-- 检查手机号是否存在 -->
+    <select id="checkPhoneExists" resultType="int">
+        SELECT COUNT(*) FROM users WHERE phone = #{phone}
+    </select>
+    
+    <!-- 插入新用户 -->
+    <insert id="insertUser" parameterType="com.example.elderrescue.pojo.User">
+        INSERT INTO users (uuid, username, password, phone, gender, user_type)
+        VALUES (#{uuid}, #{username}, #{password}, #{phone}, #{gender}, #{userType})
     </insert>
-    <insert id="insertSelective" parameterType="com.maka.query.SimpleUser">
-        insert into tb_user
-        <trim prefix="(" suffix=")" suffixOverrides=",">
-
-            <if test="user.password != null">
-                `password`,
-            </if>
-
-            <if test="user.userPhone != null">
-                username,
-            </if>
-            <if test="user.userName != null">
-                `realname`,
-            </if>
-            <if test="user.userPhone != null">
-                tel,
-            </if>
-            <if test="user.userGender != null">
-                gender,
-            </if>
-            <if test="user.worker != null">
-                worker,
-            </if>
-        </trim>
-        <trim prefix="values (" suffix=")" suffixOverrides=",">
-
-            <if test="user.password != null">
-                #{user.password,jdbcType=VARCHAR},
-            </if>
-
-            <if test="user.userPhone != null">
-                #{user.userPhone,jdbcType=VARCHAR},
-            </if>
-            <if test="user.userName != null">
-                #{user.userName,jdbcType=VARCHAR},
-            </if>
-            <if test="user.userPhone != null">
-                #{user.userPhone,jdbcType=VARCHAR},
-            </if>
-
-            <if test="user.userGender != null">
-                #{user.userGender,jdbcType=VARCHAR},
-            </if>
-            <if test="user.worker != null">
-                #{user.worker,jdbcType=BIT},
-            </if>
-        </trim>
+    
+    <!-- 插入搜救志愿者 -->
+    <insert id="insertRescuer" parameterType="com.example.elderrescue.pojo.Rescuer">
+        INSERT INTO rescuers (uuid, name, status, location, task_ids)
+        VALUES (#{uuid}, #{name}, #{status}, #{location}, JSON_ARRAY())
     </insert>
-    <update id="updateByPrimaryKeySelective" parameterType="com.maka.pojo.User">
-        update tb_user
-        <set>
-            <if test="openId != null">
-                open_id = #{openId,jdbcType=VARCHAR},
-            </if>
-            <if test="password != null">
-                `password` = #{password,jdbcType=VARCHAR},
-            </if>
-            <if test="realname != null">
-                realname = #{realname,jdbcType=VARCHAR},
-            </if>
-            <if test="username != null">
-                username = #{username,jdbcType=VARCHAR},
-            </if>
-            <if test="tel != null">
-                tel = #{tel,jdbcType=VARCHAR},
-            </if>
-            <if test="nickname != null">
-                nickname = #{nickname,jdbcType=VARCHAR},
-            </if>
-            <if test="avatar != null">
-                avatar = #{avatar,jdbcType=VARCHAR},
-            </if>
-            <if test="gender != null">
-                gender = #{gender,jdbcType=VARCHAR},
-            </if>
-            <if test="worker != null">
-                worker = #{worker,jdbcType=BIT},
-            </if>
-        </set>
-        where id = #{id,jdbcType=INTEGER}
+    
+    <!-- 插入家属 -->
+    <insert id="insertFamily" parameterType="com.example.elderrescue.pojo.Family">
+        INSERT INTO families (uuid, name, task_ids)
+        VALUES (#{uuid}, #{name}, JSON_ARRAY())
+    </insert>
+    
+    <!-- 根据用户名查询用户 -->
+    <select id="getUserByUsername" resultType="com.example.elderrescue.pojo.User">
+        SELECT * FROM users WHERE username = #{username}
+    </select>
+    
+    <!-- 根据手机号查询用户 -->
+    <select id="getUserByPhone" resultType="com.example.elderrescue.pojo.User">
+        SELECT * FROM users WHERE phone = #{phone}
+    </select>
+    
+    <!-- 根据UUID查询用户 -->
+    <select id="getUserByUuid" resultType="com.example.elderrescue.pojo.User">
+        SELECT * FROM users WHERE uuid = #{uuid}
+    </select>
+    
+    <!-- 根据UUID查询志愿者 -->
+    <select id="getRescuerByUuid" resultType="com.example.elderrescue.pojo.Rescuer">
+        SELECT * FROM rescuers WHERE uuid = #{uuid}
+    </select>
+    
+    <!-- 根据UUID查询家属 -->
+    <select id="getFamilyByUuid" resultType="com.example.elderrescue.pojo.Family">
+        SELECT * FROM families WHERE uuid = #{uuid}
+    </select>
+    
+    <!-- 更新用户状态 -->
+    <update id="updateUserStatus">
+        UPDATE users 
+        SET status = #{status} 
+        WHERE uuid = #{uuid}
     </update>
-    <update id="updateByPrimaryKey" parameterType="com.maka.pojo.User">
-        update tb_user
-        set open_id    = #{openId,jdbcType=VARCHAR},
-            `password` = #{password,jdbcType=VARCHAR},
-            realname   = #{realname,jdbcType=VARCHAR},
-            username   = #{username,jdbcType=VARCHAR},
-            tel        = #{tel,jdbcType=VARCHAR},
-            nickname   = #{nickname,jdbcType=VARCHAR},
-            avatar     = #{avatar,jdbcType=VARCHAR},
-            gender     = #{gender,jdbcType=VARCHAR},
-            worker     = #{worker,jdbcType=BIT}
-        where id = #{id,jdbcType=INTEGER}
+    
+    <!-- 更新志愿者状态 -->
+    <update id="updateRescuerStatus">
+        UPDATE rescuers 
+        SET status = #{status} 
+        WHERE uuid = #{uuid}
     </update>
-
-    <select id="selectByPhone" resultMap="BaseResultMap">
-        select
-        <include refid="Base_Column_List"/>
-        from tb_user
-        where tel = #{tel} limit 1;
-    </select>
-
-    <select id="selectUserByPage" resultMap="userInfo">
-        select id, password, realname, tel, gender
-        from tb_user
-        where worker=true
-        limit #{from},#{size}
-    </select>
-
-    <select id="getTotalUsersNums" resultType="int">
-        select count(id)
-        from tb_user
-    </select>
-
-    <select id="getRescueNumByUserId" resultType="integer">
-        select count(*)
-        from tb_user
-                 inner join tb_rescue_experience
-                            on tb_user.id = tb_rescue_experience.user_id
-        where confirm = true
-          and tb_user.id = #{userId}
-    </select>
-
-    <select id="selectAllUser" resultMap="userInfo">
-        select id, password, realname, tel, gender
-        from tb_user
-    </select>
-
-    <select id="selectPageUserBycondition" resultMap="userInfo">
-        select id, password, realname, tel, gender
-        from tb_user
-        <where>
-            <if test="name!=null">
-                realname = #{name}
-            </if>
-            <if test="gender!=null">
-                and gender = #{gender}
-            </if>
-            <if test="phone!=null">
-                and tel =#{phone}
-            </if>
-        </where>
-        limit #{from},#{size}
-    </select>
-
-
-    <select id="getUsersToRescueMan" resultMap="RescuingUser">
-        select id ,realname,area,confirm_time from tb_user
-        inner join tb_rescue_experience on tb_user.id = tb_rescue_experience.user_id
-        where confirm = true and rescue_id = #{oldMan}
-        order by confirm_time
-    </select>
 </mapper>

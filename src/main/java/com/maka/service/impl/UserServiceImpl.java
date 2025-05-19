@@ -8,98 +8,127 @@ import com.maka.query.SimpleUser;
 import com.maka.query.UserInfo;
 import com.maka.service.UserService;
 import com.maka.vo.RescuingUser;
+import com.maka.pojo.Family;
+import com.maka.pojo.Rescuer;
+import com.maka.service.SmsService;
+import com.maka.dto.UserRegistrationRequest;
+import com.maka.dto.UserRegistrationResponse;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author admin
  */
 @Service
 public class UserServiceImpl implements UserService {
-
-
+    
+    @Autowired
     private UserMapper userMapper;
-    private Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
-    private JdbcTemplate jdbcTemplate;
+    
     @Autowired
-    public UserServiceImpl(UserMapper userMapper) {
-        this.userMapper = userMapper;
-    }
-
-    @Autowired
-    public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
-
-
+    private SmsService smsService;
+    
+    private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    
     @Override
-    public List<RescuingUser> getUsersToRescueMan(int oldMan) {
-        return userMapper.getUsersToRescueMan(oldMan);
+    public boolean sendVerificationCode(String phone) {
+        return smsService.sendVerificationCode(phone);
     }
-
+    
     @Override
-    public MessageResponse registerVolunteer(SimpleUser user) {
-        User result = userMapper.selectByPhone(user.getUserPhone());
-        if(null!=result){
-            return MessageResponse.userError("该手机号已经注册,请更换手机号");
+    @Transactional
+    public UserRegistrationResponse register(UserRegistrationRequest request) {
+        UserRegistrationResponse response = new UserRegistrationResponse();
+        
+        // 1. 验证用户名是否已存在
+        if (userMapper.checkUsernameExists(request.getUsername()) > 0) {
+            response.setSuccess(false);
+            response.setMessage("用户名已存在");
+            return response;
         }
-        return userMapper.insertSelective(user)>0?MessageResponse.success("注册成功"):MessageResponse.systemError("出错！请稍后再试");
-    }
-
-    @Override
-    public int getTotalUsersNums() {
-        return userMapper.getTotalUsersNums();
-    }
-
-    @Override
-        public List<UserInfo> selectUserByPage(int currentPage, int pageSize) {
-        List<UserInfo> users = userMapper.selectUserByPage((currentPage - 1) * pageSize, pageSize);
-        for (UserInfo user : users) {
-            transfer(user);
-            user.setRescueNum(userMapper.getRescueNumByUserId(user.getUserId()));
+        
+        // 2. 验证手机号是否已存在
+        if (userMapper.checkPhoneExists(request.getPhone()) > 0) {
+            response.setSuccess(false);
+            response.setMessage("手机号已注册");
+            return response;
         }
-        return users;
-    }
-
-    @Override
-    public List<UserInfo> getPageUserByCondition(int currentPage, int pageSize, String name, String gender, String phone) {
-        List<UserInfo> users = userMapper.selectPageUserBycondition((currentPage - 1) * pageSize, pageSize, name, gender, phone);
-        for (UserInfo user : users) {
-            transfer(user);
-            user.setRescueNum(userMapper.getRescueNumByUserId(user.getUserId()));
+        
+        // 3. 验证短信验证码
+        if (!smsService.verifyCode(request.getPhone(), request.getVerificationCode())) {
+            response.setSuccess(false);
+            response.setMessage("验证码错误或已过期");
+            return response;
         }
-        return users;
-    }
-
-    @Override
-    public List<UserInfo> selectAllUser() {
-        List<UserInfo> users = userMapper.selectAllUser();
-        for (UserInfo user : users) {
-            user.setRescueNum(userMapper.getRescueNumByUserId(user.getUserId()));
+        
+        // 4. 创建用户
+        String userUuid = UUID.randomUUID().toString();
+        
+        User user = new User();
+        user.setUuid(userUuid);
+        user.setUsername(request.getUsername());
+        user.setPassword(passwordEncoder.encode(request.getPassword())); // 加密密码
+        user.setPhone(request.getPhone());
+        user.setGender(request.getGender() != null ? request.getGender() : "M"); // 默认男性
+        user.setUserType(request.getUserType());
+        
+        userMapper.insertUser(user);
+        
+        // 5. 根据角色创建相应记录
+        if ("rescuer".equals(request.getUserType())) {
+            Rescuer rescuer = new Rescuer();
+            rescuer.setUuid(userUuid);
+            rescuer.setName(request.getName());
+            rescuer.setStatus("available");
+            rescuer.setLocation(request.getLocation());
+            rescuer.setTaskIds(new ArrayList<>());
+            
+            userMapper.insertRescuer(rescuer);
+        } else if ("family".equals(request.getUserType())) {
+            Family family = new Family();
+            family.setUuid(userUuid);
+            family.setName(request.getName());
+            family.setTaskIds(new ArrayList<>());
+            
+            userMapper.insertFamily(family);
         }
-        return users;
+        
+        // 6. 设置响应
+        response.setSuccess(true);
+        response.setMessage("注册成功");
+        response.setUuid(userUuid);
+        
+        return response;
     }
-
-
-
-
-    private void transfer(UserInfo user){
-        //替换手机号
-        StringBuilder tempPhone = new StringBuilder(user.getPhone());
-        StringBuilder replace = tempPhone.replace(3, 7, "****");
-        user.setPhone( replace.toString());
-        //替换密码
-        char[] pwd = new char[user.getPassword().length()];
-        Arrays.fill(pwd, '*');
-        user.setPassword(new String(pwd));
-
+    
+    @Override
+    public User login(String username, String password) {
+        User user = null;
+        
+        // 支持用户名或手机号登录
+        if (username.matches("^1\\d{10}$")) {
+            // 手机号登录
+            user = userMapper.getUserByPhone(username);
+        } else {
+            // 用户名登录
+            user = userMapper.getUserByUsername(username);
+        }
+        
+        if (user != null && passwordEncoder.matches(password, user.getPassword())) {
+            return user;
+        }
+        
+        return null;
     }
-
 }
