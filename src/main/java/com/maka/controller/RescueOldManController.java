@@ -97,21 +97,21 @@ public class RescueOldManController {
     @PostMapping("/getDetailOldManRescue")
     public MessageResponse getDetailOldManRescue(String oldManId, String oldManName) throws ParseException {
         oldManId = "1";
-        List<RescuingUser> rescueMan = userService.getUsersToRescueMan(Integer.parseInt(oldManId));
+        // List<RescuingUser> rescueMan = userService.getUsersToRescueMan(Integer.parseInt(oldManId));
 
-        List<Clue> clueOfOldMan = rescueOldManService.getClueOfOldMan(Integer.parseInt(oldManId));
+        // List<Clue> clueOfOldMan = rescueOldManService.getClueOfOldMan(Integer.parseInt(oldManId));
 
-        ArrayList<TimeLine> timeLines = new ArrayList<>();
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:MM:SS");
+        // ArrayList<TimeLine> timeLines = new ArrayList<>();
+        // SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:MM:SS");
 
-        for (RescuingUser rescuingUser : rescueMan) {
-            timeLines.add(rescuingUser.transferToTimeLine());
-        }
-        for (Clue clue : clueOfOldMan) {
-            TimeLine timeLine = clue.transferToTimeLine(oldManName);
-            timeLine.setTime(new Date());
-            timeLines.add(timeLine);
-        }
+        // for (RescuingUser rescuingUser : rescueMan) {
+        //     timeLines.add(rescuingUser.transferToTimeLine());
+        // }
+        // for (Clue clue : clueOfOldMan) {
+        //     TimeLine timeLine = clue.transferToTimeLine(oldManName);
+        //     timeLine.setTime(new Date());
+        //     timeLines.add(timeLine);
+        // }
 //        TimeLine timeLine = new TimeLine();
 //        String time1 = "2021-4-16 09:02:10";
 //        timeLine.setTime(simpleDateFormat.parse(time1));
@@ -130,10 +130,10 @@ public class RescueOldManController {
 //        timeLine.setDesc("杨双月在郫都区小龙坎附近发现疑似老人");
 //        timeLines.add(timeLine3);
 
-        timeLines.sort((o1, o2) -> {
-            return (int) (o1.getTime().getTime() - o2.getTime().getTime());
-        });
-        return MessageResponse.success("成功", timeLines);
+        // timeLines.sort((o1, o2) -> {
+        //     return (int) (o1.getTime().getTime() - o2.getTime().getTime());
+        // });
+        return MessageResponse.success("成功", null);
 
     }
 
