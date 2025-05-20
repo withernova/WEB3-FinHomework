@@ -15,9 +15,14 @@ spring:
     url: jdbc:mysql://123.249.76.205:3306/web?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     password: 114514
     username: root
+    hikari:
+      max-lifetime: 300000
+      idle-timeout: 60000
+      connection-timeout: 30000
   redis: # redis配置
     database: 0
-    host: localhost
+    host: 123.249.76.205
+    password: 700101
     port: 6379
     jedis:
       pool:

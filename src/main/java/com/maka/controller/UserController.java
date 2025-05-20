@@ -96,6 +96,12 @@ public class UserController {
             return ResponseEntity.badRequest().body(result);
         }
     }
+
+    // 获取当前登录用户
+    @GetMapping("/getCurrentUser")
+    public User getCurrentUser(HttpSession session) {
+        return (User) session.getAttribute("userId");
+    }
     
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpSession session) {

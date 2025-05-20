@@ -66,11 +66,11 @@ public class UserServiceImpl implements UserService {
         }
         
         // 3. 验证短信验证码
-        if (!smsService.verifyCode(request.getPhone(), request.getVerificationCode())) {
-            response.setSuccess(false);
-            response.setMessage("验证码错误或已过期");
-            return response;
-        }
+        // if (!smsService.verifyCode(request.getPhone(), request.getVerificationCode())) {
+        //     response.setSuccess(false);
+        //     response.setMessage("验证码错误或已过期");
+        //     return response;
+        // }
         
         // 4. 创建用户
         String userUuid = UUID.randomUUID().toString();
@@ -90,7 +90,7 @@ public class UserServiceImpl implements UserService {
             Rescuer rescuer = new Rescuer();
             rescuer.setUuid(userUuid);
             rescuer.setName(request.getName());
-            rescuer.setStatus("available");
+            rescuer.setStatus("visitor");
             rescuer.setLocation(request.getLocation());
             rescuer.setTaskIds(new ArrayList<>());
             

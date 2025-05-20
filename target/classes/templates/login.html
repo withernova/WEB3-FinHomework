@@ -359,28 +359,69 @@
 					form = layui.form,
 					layer = layui.layer;
 
-				// 登录过期的时候，跳出ifram框架
-				if (top.location != self.location) top.location = self.location;
+				var show_num = []; // 全局变量
 
-				$('.bind-password').on('click', function() {
-					if ($(this).hasClass('icon-5')) {
-						$(this).removeClass('icon-5');
-						$("input[name='password']").attr('type', 'password');
-					} else {
-						$(this).addClass('icon-5');
-						$("input[name='password']").attr('type', 'text');
+				function draw(show_num) {
+					var canvas_width=$('#canvas').width();
+					var canvas_height=$('#canvas').height();
+					var canvas = document.getElementById("canvas");
+					var context = canvas.getContext("2d");
+					canvas.width = canvas_width;
+					canvas.height = canvas_height;
+					var sCode = "A,B,C,E,F,G,H,J,K,L,M,N,P,Q,R,S,T,W,X,Y,Z,1,2,3,4,5,6,7,8,9,0";
+					var aCode = sCode.split(",");
+					var aLength = aCode.length;
+
+					for (var i = 0; i <= 3; i++) {
+						var j = Math.floor(Math.random() * aLength);
+						var deg = Math.random() * 30 * Math.PI / 180;
+						var txt = aCode[j];
+						show_num[i] = txt.toLowerCase();
+						var x = 10 + i * 20;
+						var y = 20 + Math.random() * 8;
+						context.font = "bold 23px 微软雅黑";
+
+						context.translate(x, y);
+						context.rotate(deg);
+
+						context.fillStyle = randomColor();
+						context.fillText(txt, 0, 0);
+
+						context.rotate(-deg);
+						context.translate(-x, -y);
 					}
+					for (var i = 0; i <= 5; i++) {
+						context.strokeStyle = randomColor();
+						context.beginPath();
+						context.moveTo(Math.random() * canvas_width, Math.random() * canvas_height);
+						context.lineTo(Math.random() * canvas_width, Math.random() * canvas_height);
+						context.stroke();
+					}
+					for (var i = 0; i <= 30; i++) {
+						context.strokeStyle = randomColor();
+						context.beginPath();
+						var x = Math.random() * canvas_width;
+						var y = Math.random() * canvas_height;
+						context.moveTo(x, y);
+						context.lineTo(x + 1, y + 1);
+						context.stroke();
+					}
+				}
+
+				function randomColor() {
+					var r = Math.floor(Math.random() * 256);
+					var g = Math.floor(Math.random() * 256);
+					var b = Math.floor(Math.random() * 256);
+					return "rgb(" + r + "," + g + "," + b + ")";
+				}
+
+				$(function(){
+					draw(show_num);
+					$("#canvas").on('click',function(){
+						draw(show_num);
+					});
 				});
 
-				$('.icon-nocheck').on('click', function() {
-					if ($(this).hasClass('icon-check')) {
-						$(this).removeClass('icon-check');
-					} else {
-						$(this).addClass('icon-check');
-					}
-				});
-
-				// 进行登录操作
 				form.on('submit(login)', function(data) {
 					data = data.field;
 					if (data.username == '') {
@@ -395,11 +436,48 @@
 						layer.msg('验证码不能为空');
 						return false;
 					}
-					layer.msg('登录成功', function() {
-						window.location = 'index.html';
+					// 前端验证码校验
+					if (data.captcha.toLowerCase() !== show_num.join("")) {
+						layer.msg('验证码错误');
+						draw(show_num);
+						return false;
+					}
+
+					// 保持登录（记住我）勾选判断
+					var remember = $('.icon-nocheck').hasClass('icon-check');
+
+					// AJAX 登录请求
+					$.ajax({
+						url: '/api/users/login',
+						type: 'POST',
+						contentType: 'application/json',
+						data: JSON.stringify({
+							username: data.username,
+							password: data.password,
+							remember: remember
+							// 通常后端不需要验证码字段，如果有后端校验可以一并传递
+						}),
+						success: function(res) {
+							if (res.success) {
+								layer.msg('登录成功', {icon:1, time:1500}, function() {
+									// 成功后跳转首页
+									window.location.href = 'index.html';
+								});
+							} else {
+								layer.msg(res.message || '登录失败');
+								// 登录失败刷新验证码
+								draw(show_num);
+							}
+						},
+						error: function(xhr) {
+							layer.msg('登录失败，请确认你的账户密码填写正确');
+							draw(show_num);
+						}
 					});
-					return false;
+
+					return false; // 阻止表单默认提交
 				});
+			});
 			$(function(){
             var show_num = [];
             draw(show_num);
@@ -424,7 +502,6 @@
                 }
             })
         });
-		//TODO:真的检测
 
         function draw(show_num) {
             var canvas_width=$('#canvas').width();
@@ -480,7 +557,7 @@
             return "rgb(" + r + "," + g + "," + b + ")";
         }
 
-			});
+
 		</script>
 	</body>
 </html>
