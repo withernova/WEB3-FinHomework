@@ -3,7 +3,6 @@ package com.maka.mapper;
 import com.maka.pojo.User;
 import com.maka.pojo.Rescuer;
 import com.maka.pojo.Family;
-import com.maka.query.SimpleUser;
 import com.maka.query.UserInfo;
 import com.maka.vo.RescuingUser;
 import org.apache.ibatis.annotations.Mapper;

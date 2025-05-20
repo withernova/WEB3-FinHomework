@@ -19,54 +19,54 @@ import java.io.IOException;
 @ControllerAdvice
 public class WebExceptionHandler {
 
-    private Logger logger = LoggerFactory.getLogger("WebExceptionHandler");
+    // private Logger logger = LoggerFactory.getLogger("WebExceptionHandler");
 
 
-    /**
-     * 处理数据校验异常 MethodArgumentNotValidException
-     * @param ex 校验异常
-     * @return 提示信息
-     */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseBody
-    public MessageResponse handleBindException(MethodArgumentNotValidException ex) {
-        FieldError fieldError = ex.getBindingResult().getFieldError();
-        if(fieldError!=null){
-            return MessageResponse.userError(fieldError.getDefaultMessage());
-        }
-        return MessageResponse.systemError("内部错误");
-    }
+    // /**
+    //  * 处理数据校验异常 MethodArgumentNotValidException
+    //  * @param ex 校验异常
+    //  * @return 提示信息
+    //  */
+    // @ExceptionHandler(MethodArgumentNotValidException.class)
+    // @ResponseBody
+    // public MessageResponse handleBindException(MethodArgumentNotValidException ex) {
+    //     FieldError fieldError = ex.getBindingResult().getFieldError();
+    //     if(fieldError!=null){
+    //         return MessageResponse.userError(fieldError.getDefaultMessage());
+    //     }
+    //     return MessageResponse.systemError("内部错误");
+    // }
 
-    /**
-     * 处理数据校验异常 BindException
-     * @param e 校验异常
-     * @return 提示信息
-     */
-    @ExceptionHandler(BindException.class)
-    @ResponseBody
-    public MessageResponse handleBindException(BindException e){
-        FieldError fieldError = e.getBindingResult().getFieldError();
-        if(fieldError!=null){
-            return MessageResponse.userError(fieldError.getDefaultMessage());
-        }
-        return MessageResponse.systemError("请稍后再试");
-    }
-
-
-    @ExceptionHandler(IOException.class)
-    @ResponseBody
-    public MessageResponse handlerIoException(Exception e){
-        e.printStackTrace();
-        return MessageResponse.systemError("服务器出现异常，请稍后在世");
-    }
+    // /**
+    //  * 处理数据校验异常 BindException
+    //  * @param e 校验异常
+    //  * @return 提示信息
+    //  */
+    // @ExceptionHandler(BindException.class)
+    // @ResponseBody
+    // public MessageResponse handleBindException(BindException e){
+    //     FieldError fieldError = e.getBindingResult().getFieldError();
+    //     if(fieldError!=null){
+    //         return MessageResponse.userError(fieldError.getDefaultMessage());
+    //     }
+    //     return MessageResponse.systemError("请稍后再试");
+    // }
 
 
-    @ExceptionHandler(Exception.class)
-    @ResponseBody
-    public MessageResponse handledException(Exception exception){
-        exception.printStackTrace();
-        return MessageResponse.systemError("未知");
-    }
+    // @ExceptionHandler(IOException.class)
+    // @ResponseBody
+    // public MessageResponse handlerIoException(Exception e){
+    //     e.printStackTrace();
+    //     return MessageResponse.systemError("服务器出现异常，请稍后在世");
+    // }
+
+
+    // @ExceptionHandler(Exception.class)
+    // @ResponseBody
+    // public MessageResponse handledException(Exception exception){
+    //     exception.printStackTrace();
+    //     return MessageResponse.systemError("未知");
+    // }
 
 
 

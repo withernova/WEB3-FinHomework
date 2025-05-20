@@ -4,7 +4,6 @@ package com.maka.service.impl;
 import com.maka.component.MessageResponse;
 import com.maka.mapper.UserMapper;
 import com.maka.pojo.User;
-import com.maka.query.SimpleUser;
 import com.maka.query.UserInfo;
 import com.maka.service.UserService;
 import com.maka.vo.RescuingUser;

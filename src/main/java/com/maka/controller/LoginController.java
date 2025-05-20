@@ -11,17 +11,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class LoginController {
 
-    @PostMapping("/login")
-    public MessageResponse login(Admin admin){
+    // @PostMapping("/login")
+    // public MessageResponse login(Admin admin){
 
-        String token = JwtUtil.createToken(admin.getAdminName(), JwtUtil.TTL, JwtUtil.SECRET);
-        if(token!=null){
-            return MessageResponse.success(token);
-        }
-        return MessageResponse.userError("认证失败");
+    //     String token = JwtUtil.createToken(admin.getAdminName(), JwtUtil.TTL, JwtUtil.SECRET);
+    //     if(token!=null){
+    //         return MessageResponse.success(token);
+    //     }
+    //     return MessageResponse.userError("认证失败");
 
 
-    }
+    // }
 
 
 

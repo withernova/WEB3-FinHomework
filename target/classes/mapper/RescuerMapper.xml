@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.maka.mapper.RescuerMapper">
+    <!-- 插入新的搜救队员 (如果不存在) -->
+    <insert id="insertRescuer" parameterType="com.maka.pojo.Rescuer">
+        INSERT INTO rescuers (
+            uuid, name, status, location, skills_description, skill_tags, task_ids
+        )
+        VALUES (
+            #{uuid}, #{name}, 'available', #{location}, #{skillsDescription}, 
+            JSON_ARRAY(), JSON_ARRAY()
+        )
+    </insert>
+    
+    <!-- 更新或插入搜救队员信息 -->
+    <update id="updateOrInsertRescuer" parameterType="com.maka.pojo.Rescuer">
+        INSERT INTO rescuers (
+            uuid, name, status, location, skills_description, skill_tags, task_ids
+        )
+        VALUES (
+            #{uuid}, #{name}, 'available', #{location}, #{skillsDescription}, 
+            JSON_ARRAY(), JSON_ARRAY()
+        )
+        ON DUPLICATE KEY UPDATE
+            name = #{name},
+            status = 'available',
+            location = #{location},
+            skills_description = #{skillsDescription}
+    </update>
+    
+    <!-- 根据UUID查询搜救队员 -->
+    <select id="getRescuerByUuid" resultType="com.maka.pojo.Rescuer">
+        SELECT 
+            uuid, name, status, location, 
+            skills_description as skillsDescription,
+            skill_tags as skillTags,
+            task_ids as taskIds
+        FROM rescuers
+        WHERE uuid = #{uuid}
+    </select>
+    
+    <!-- 获取所有可用的搜救队员 -->
+    <select id="getAvailableRescuers" resultType="com.maka.pojo.Rescuer">
+        SELECT 
+            uuid, name, status, location, 
+            skills_description as skillsDescription,
+            skill_tags as skillTags,
+            task_ids as taskIds
+        FROM rescuers
+        WHERE status = 'available'
+    </select>
+    
+    <!-- 更新搜救队员信息 -->
+    <update id="updateRescuer" parameterType="com.maka.pojo.Rescuer">
+        UPDATE rescuers
+        SET 
+            name = #{name},
+            location = #{location},
+            skills_description = #{skillsDescription}
+        WHERE uuid = #{uuid}
+    </update>
+    
+    <!-- 更新搜救队员技能标签 -->
+    <update id="updateRescuerSkillTags">
+        UPDATE rescuers
+        SET skill_tags = JSON_ARRAY(
+            <foreach collection="skillTags" item="tag" separator=",">
+                #{tag}
+            </foreach>
+        )
+        WHERE uuid = #{uuid}
+    </update>
+</mapper>

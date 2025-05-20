@@ -138,6 +138,10 @@ public class RescueOldManController {
     }
 
     public class PageController {
+        @GetMapping("/login")
+        public String loginPage() {
+            return "login"; // 自动去 templates/login.html
+        }
 
         @GetMapping("/user-guide")
         public String userGuide() {
@@ -196,6 +200,10 @@ public class RescueOldManController {
         @GetMapping("/map-management")
         public String mapManagement() {
             return "page/map-management"; // 对应 templates/map-management.html
+        }
+        @GetMapping("/rescurer_apply")
+        public String rescureApply() {
+            return "page/rescurer_apply"; // 对应 templates/map-management.html
         }
     }
 }

@@ -3,7 +3,6 @@ package com.maka.controller;
 import com.maka.component.MessageResponse;
 import com.maka.query.PageRequest;
 import com.maka.query.PageResponse;
-import com.maka.query.SimpleUser;
 import com.maka.query.UserInfo;
 import com.maka.service.UserService;
 import com.maka.service.impl.UserServiceImpl;
