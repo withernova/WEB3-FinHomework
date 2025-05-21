@@ -1,6 +1,11 @@
 from zhipuai import ZhipuAI
 from config import Config
 import logging
+import re
+
+def split_tags(raw_response):
+    # 支持中英文逗号、顿号、分号、换行、空格等
+    return [x.strip() for x in re.split(r"[，,、;\n\r\s]+", raw_response) if x.strip()]
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +91,7 @@ class TagExtractor:
             raw_response = self._chat(user_bio, tag_library)
             
             # 处理模型输出，允许中英文逗号
-            candidates = [x.strip() for x in raw_response.replace("，", ",").split(",") if x.strip()]
+            candidates = split_tags(raw_response)
             logger.info(f"模型提取的候选标签: {candidates}")
             
             # 与标签库取交集，确保标签有效

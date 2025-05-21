@@ -25,4 +25,9 @@ public interface RescuerService {
     
     // 获取所有技能标签
     List<SkillTag> getAllSkillTags();
+
+    boolean updateRescuerWithTags(Rescuer rescuer);
+
+    List<Rescuer> getAvailableRescuersPaged(int offset, int limit);
+    int getAvailableRescuersCount();
 }

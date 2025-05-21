@@ -40,6 +40,25 @@
             margin-bottom: 10px;
             font-weight: bold;
         }
+        /* 搜索框样式 */
+        .tag-search-input {
+            width: 100%;
+            max-width: 300px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        @media (max-width: 600px) {
+            .tag-list {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .tag-search-input {
+                max-width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -66,6 +85,13 @@
                     
                     <div class="tag-section">
                         <div class="tag-section-title">所有可用标签</div>
+                        <!-- 放在form内 -->
+                        <!-- 改用 Thymeleaf 的 th:value 属性 -->
+                        <input type="hidden" id="rescuerName" th:value="${rescuer.name}" />
+                        <input type="hidden" id="rescuerLocation" th:value="${rescuer.location}" />
+                        <input type="hidden" id="rescuerSkillsDescription" th:value="${rescuer.skillsDescription}" />
+                        <!-- 搜索输入框添加在这里 -->
+                        <input type="text" id="tagSearchInput" class="tag-search-input" placeholder="搜索标签..." autocomplete="off">
                         <div class="tag-list" id="allTags">
                             <div th:each="tag : ${allTags}" class="tag-item" 
                                  th:text="${tag.tagName}" 
@@ -94,26 +120,49 @@
         var $ = layui.jquery;
         
         // 点击标签选择/取消
-        $('.tag-item').on('click', function(){
+        $(document).on('click', '.tag-item', function(){
             $(this).toggleClass('selected');
+        });
+
+        // 搜索标签功能
+        $('#tagSearchInput').on('input', function(){
+            var keyword = $(this).val().trim().toLowerCase();
+            $('#allTags .tag-item').each(function(){
+                var tagText = $(this).data('tag').toLowerCase();
+                if(tagText.indexOf(keyword) !== -1){
+                    $(this).show();
+                }else{
+                    $(this).hide();
+                }
+            });
         });
         
         // 保存标签
         $('#saveTagsBtn').on('click', function(){
             var loading = layer.load(1);
-            
-            // 获取所有选中的标签
             var selectedTags = [];
-            $('.tag-item.selected').each(function(){
-                selectedTags.push($(this).data('tag'));
+            $('#allTags .tag-item.selected').each(function(){
+                var tag = $(this).data('tag');
+                if(tag !== "未找到匹配标签，请优化个人简介"){
+                    selectedTags.push(tag);
+                }
             });
-            
-            // 发送AJAX请求保存标签
+
+            // 从隐藏input取值
+            var name = $('#rescuerName').val();
+            var location = $('#rescuerLocation').val();
+            var skillsDescription = $('#rescuerSkillsDescription').val();
+
             $.ajax({
                 url: '/rescuer/save-tags',
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ tags: selectedTags }),
+                data: JSON.stringify({
+                    name: name,
+                    location: location,
+                    skillsDescription: skillsDescription,
+                    tags: selectedTags
+                }),
                 success: function(res){
                     layer.close(loading);
                     if(res.success){
@@ -130,11 +179,38 @@
                 }
             });
         });
-        
+                
         // 跳过按钮
         $('#skipBtn').on('click', function(){
             layer.confirm('确定要跳过编辑标签吗？', {icon: 3, title:'提示'}, function(index){
-                window.location.href = '/rescuer/profile';
+                // 获取隐藏input的值
+                var name = $('#rescuerName').val();
+                var location = $('#rescuerLocation').val();
+                var skillsDescription = $('#rescuerSkillsDescription').val();
+
+                // 这里 tags 设置为空数组
+                $.ajax({
+                    url: '/rescuer/save-tags',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        name: name,
+                        location: location,
+                        skillsDescription: skillsDescription,
+                        tags: []
+                    }),
+                    success: function(res){
+                        if(res.success){
+                            window.location.href = '/rescuer/profile';
+                        } else {
+                            layer.msg(res.message, {icon: 2});
+                        }
+                    },
+                    error: function(){
+                        layer.msg('保存失败，请稍后再试', {icon: 2});
+                    }
+                });
+
                 layer.close(index);
             });
         });

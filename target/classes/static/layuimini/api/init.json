@@ -79,22 +79,16 @@
           "icon": "fa fa-group",
           "target": "_self",
           "child": [
-            {
+            { 
               "title": "申请加入我们",
-              "href": "page/rescuer_apply.html",
+              "href": "rescuer/apply",
               "icon": "fa fa-file-text-o",
               "target": "_self"
             },
             {
               "title": "队员信息",
-              "href": "page/volunteer-info.html",
+              "href": "page/rescuer_list.html",
               "icon": "fa fa-file-text-o",
-              "target": "_self"
-            },
-            {
-              "title": "信息修改",
-              "href": "page/register.html",
-              "icon": "fa fa-paint-brush",
               "target": "_self"
             }
           ]

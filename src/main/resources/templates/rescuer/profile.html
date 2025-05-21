@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>搜救队员资料</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/layuimini/lib/layui-v2.5.5/css/layui.css" media="all">
+    <link rel="stylesheet" href="/layuimini/css/public.css" media="all">
+    <style>
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .tag-item {
+            background-color: #1E9FFF;
+            color: #fff;
+            padding: 5px 10px;
+            margin: 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+<div class="layuimini-container">
+    <div class="layuimini-main">
+        <!-- 调试信息 -->
+        <div class="layui-collapse" style="margin-bottom: 15px;">
+            <div class="layui-colla-item">
+                <h2 class="layui-colla-title">调试信息</h2>
+                <div class="layui-colla-content">
+                    <p th:text="'Rescuer 对象: ' + ${rescuer}"></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="layui-card">
+            <div class="layui-card-header">搜救队员资料</div>
+            <div class="layui-card-body">
+                <form class="layui-form" action="/rescuer/profile/save" method="post">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">姓名：</label>
+                        <div class="layui-input-block">
+                            <input type="text" name="name" th:value="${rescuer != null ? rescuer.name : ''}" required class="layui-input">
+                        </div>
+                    </div>
+                    
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">状态：</label>
+                        <div class="layui-input-block">
+                            <input type="text" th:value="${rescuer != null && rescuer.status == 'available' ? '可用' : '申请中'}" readonly class="layui-input">
+                        </div>
+                    </div>
+                    
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">所在地区：</label>
+                        <div class="layui-input-block">
+                            <input type="text" name="location" th:value="${rescuer != null ? rescuer.location : ''}" class="layui-input">
+                        </div>
+                    </div>
+                    
+                    <div class="layui-form-item layui-form-text">
+                        <label class="layui-form-label">个人技能描述：</label>
+                        <div class="layui-input-block">
+                            <textarea name="skillsDescription" class="layui-textarea" th:text="${rescuer != null ? rescuer.skillsDescription : ''}"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">技能标签：</label>
+                        <div class="layui-input-block">
+                            <div class="tag-list" th:if="${rescuer != null && rescuer.skillTags != null && !rescuer.skillTags.isEmpty()}">
+                                <div th:each="tag : ${rescuer.skillTags}" class="tag-item" th:text="${tag}"></div>
+                            </div>
+                            <div th:if="${rescuer == null || rescuer.skillTags == null || rescuer.skillTags.isEmpty()}" class="layui-form-mid layui-word-aux">
+                                您还未设置技能标签，<a href="/rescuer/generate-tags" class="layui-font-blue">点击设置</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="layui-form-item">
+                        <div class="layui-input-block">
+                                <button type="submit" class="layui-btn layui-btn-normal">保存资料</button>
+                                <a href="/rescuer/generate-tags" class="layui-btn layui-btn-warm">编辑技能标签</a>
+                    </div>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/layuimini/lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+<script src="/layuimini/lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+<script>
+    layui.use(['form', 'element'], function(){
+        var form = layui.form;
+        var element = layui.element;
+        
+        // 查看页面是否正确加载
+        console.log('页面已加载');
+    });
+</script>
+</body>
+</html>

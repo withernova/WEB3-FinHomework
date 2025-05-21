@@ -6,7 +6,7 @@ spring:
     cache: false
     suffix: .html
     encoding: UTF-8
-    mode: HTML5
+    mode: HTML
 #这是数据库的依赖
   mvc:
     throw-exception-if-no-handler-found: true
@@ -66,6 +66,7 @@ xfyun:
 
 
 mybatis:
+  type-handlers-package: com.maka.typehandler
   mapper-locations: classpath*:mapper/*Mapper.xml
   type-aliases-package: com.maka.pojo
   configuration:
@@ -76,5 +77,10 @@ logging:
     com.maka.mapper: debug
     org.mybatis: debug
     org.springframework.jdbc.datasource: debug
+    # 添加 Thymeleaf 相关日志
+    org.thymeleaf: debug
+    org.thymeleaf.TemplateEngine: debug
+    org.thymeleaf.spring5: debug
+    org.springframework.web: debug
 server:
   port: 8080

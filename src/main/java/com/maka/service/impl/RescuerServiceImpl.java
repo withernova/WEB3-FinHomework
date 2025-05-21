@@ -130,4 +130,26 @@ public class RescuerServiceImpl implements RescuerService {
     public List<SkillTag> getAllSkillTags() {
         return skillTagMapper.getAllTags();
     }
+
+    @Override
+    @Transactional
+    public boolean updateRescuerWithTags(Rescuer rescuer) {
+        // 1. 更新 rescuer 基本信息和 status
+        int res1 = rescuerMapper.updateRescuerWithStatus(rescuer);
+
+        // 2. 更新 skill_tags
+        int res2 = rescuerMapper.updateRescuerSkillTags(rescuer.getUuid(), rescuer.getSkillTags());
+
+        return res1 > 0 && res2 > 0;
+    }
+    
+    @Override
+    public List<Rescuer> getAvailableRescuersPaged(int offset, int limit) {
+        return rescuerMapper.getAvailableRescuersPaged(offset, limit);
+    }
+
+    @Override
+    public int getAvailableRescuersCount() {
+        return rescuerMapper.getAvailableRescuersCount();
+    }
 }

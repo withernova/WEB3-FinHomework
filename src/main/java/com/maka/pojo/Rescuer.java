@@ -14,7 +14,19 @@ public class Rescuer implements Serializable {
     private String status; // available, visitor
     private String location;
     private String skillsDescription; // 用户描述的技能
+    
     private List<String> skillTags;   // AI生成的技能标签
     private List<Integer> taskIds;
-    
+    @Override
+    public String toString() {
+        return "Rescuer{" +
+                "uuid='" + uuid + '\'' +
+                ", name='" + name + '\'' +
+                ", status='" + status + '\'' +
+                ", location='" + location + '\'' +
+                ", skillsDescription='" + skillsDescription + '\'' +
+                ", skillTags=" + skillTags +
+                ", taskIds=" + taskIds +
+                '}';
+    }
 }

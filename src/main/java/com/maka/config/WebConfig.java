@@ -15,10 +15,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.servlet.config.annotation.*;
+import org.thymeleaf.spring5.SpringTemplateEngine;
+import org.thymeleaf.spring5.view.ThymeleafViewResolver;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
+import org.thymeleaf.spring5.SpringTemplateEngine;
+import org.thymeleaf.spring5.view.ThymeleafViewResolver;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
+
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer{
-
+    
 
 
 
@@ -59,5 +66,32 @@ public class WebConfig implements WebMvcConfigurer{
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/static/**").addResourceLocations("classpath:/static/");
+    }
+
+    @Bean
+    public ClassLoaderTemplateResolver templateResolver() {
+        ClassLoaderTemplateResolver resolver = new ClassLoaderTemplateResolver();
+        resolver.setPrefix("templates/");
+        resolver.setSuffix(".html");
+        resolver.setCharacterEncoding("UTF-8");
+        resolver.setTemplateMode("HTML");
+        resolver.setCacheable(false);
+        return resolver;
+    }
+
+    @Bean
+    public SpringTemplateEngine templateEngine() {
+        SpringTemplateEngine engine = new SpringTemplateEngine();
+        engine.setTemplateResolver(templateResolver());
+        engine.setEnableSpringELCompiler(true);
+        return engine;
+    }
+
+    @Bean
+    public ThymeleafViewResolver thymeleafViewResolver() {
+        ThymeleafViewResolver resolver = new ThymeleafViewResolver();
+        resolver.setTemplateEngine(templateEngine());
+        resolver.setCharacterEncoding("UTF-8");
+        return resolver;
     }
 }

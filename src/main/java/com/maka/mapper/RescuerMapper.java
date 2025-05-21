@@ -25,4 +25,9 @@ public interface RescuerMapper {
     
     // 更新搜救队员技能标签
     int updateRescuerSkillTags(@Param("uuid") String uuid, @Param("skillTags") List<String> skillTags);
+
+    int updateRescuerWithStatus(Rescuer rescuer);
+
+    List<Rescuer> getAvailableRescuersPaged(@Param("offset") int offset, @Param("limit") int limit);
+    int getAvailableRescuersCount();
 }
