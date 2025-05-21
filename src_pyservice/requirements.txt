@@ -1,0 +1,5 @@
+flask==3.0.2
+SQLAlchemy==2.0.29
+pymysql==1.1.0          # MySQL 驱动
+haversine==2.8.1        # 计算两点距离
+zhipuai==2.0.0          # 智谱 SDK

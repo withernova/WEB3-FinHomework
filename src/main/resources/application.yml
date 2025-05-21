@@ -1,4 +1,6 @@
-
+file:
+  upload-dir: E:/26654
+  access-prefix: http://localhost:8080/files/
 spring:
   thymeleaf:
     prefix: classpath:/templates/

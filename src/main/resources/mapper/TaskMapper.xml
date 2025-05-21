@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.maka.mapper.TaskMapper">
+
+    <!-- ========= 通用映射 ========= -->
+    <resultMap id="TaskMap" type="com.maka.pojo.Task">
+        <id     column="id"         property="id"/>
+        <result column="elder_name" property="elderName"/>
+        <result column="lost_time"  property="lostTime"/>
+        <result column="photo_url"  property="photoUrl"/>
+        <result column="audio_url"  property="audioUrl"/>
+        <result column="location"   property="location"/>
+        <result column="status"     property="status"/>
+        <result column="extra_info" property="extraInfo"/>
+    </resultMap>
+
+    <!-- ========= 新增 ========= -->
+    <insert id="insertTask" useGeneratedKeys="true" keyProperty="id"
+            parameterType="com.maka.pojo.Task">
+        INSERT INTO tasks
+              (elder_name, lost_time, photo_url, audio_url, location, status, extra_info)
+        VALUES(#{elderName}, #{lostTime}, #{photoUrl}, #{audioUrl},
+               #{location},  #{status},   #{extraInfo})
+    </insert>
+
+    <!-- ========= 单条 / 全量 / 状态筛选 ========= -->
+    <select id="getTaskById" resultMap="TaskMap">
+        SELECT * FROM tasks WHERE id = #{id}
+    </select>
+
+    <select id="getAllTasks" resultMap="TaskMap">
+        SELECT * FROM tasks ORDER BY lost_time DESC
+    </select>
+
+    <select id="getTasksByStatus" resultMap="TaskMap">
+        SELECT * FROM tasks WHERE status = #{status} ORDER BY lost_time DESC
+    </select>
+
+    <!-- ========= 更新 ========= -->
+    <update id="updateTask" parameterType="com.maka.pojo.Task">
+        UPDATE tasks
+        SET elder_name = #{elderName},
+            lost_time  = #{lostTime},
+            photo_url  = #{photoUrl},
+            audio_url  = #{audioUrl},
+            location   = #{location},
+            status     = #{status},
+            extra_info = #{extraInfo}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateTaskStatus">
+        UPDATE tasks SET status = #{status} WHERE id = #{id}
+    </update>
+
+    <!-- ========= 删除 ========= -->
+    <delete id="deleteTask">
+        DELETE FROM tasks WHERE id = #{id}
+    </delete>
+
+    <!-- ========= ★ 新增分页查询 ========= -->
+    <select id="getTasksPaged" resultMap="TaskMap">
+        SELECT * FROM tasks
+        ORDER BY lost_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- ========= ★ 新增计数 ========= -->
+    <select id="getTasksCountByStatus" resultType="int">
+        SELECT COUNT(*) FROM tasks
+        <where>
+            <if test="status != null">
+                status = #{status}
+            </if>
+        </where>
+    </select>
+
+</mapper>

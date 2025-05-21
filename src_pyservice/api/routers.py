@@ -69,3 +69,34 @@ def extract_tags():
     except Exception as e:
         logger.error(f"处理请求时发生错误: {str(e)}")
         return jsonify({"error": "服务器内部错误"}), 500
+@api_bp.route("/recommend_volunteers", methods=["POST"])
+def recommend_volunteers():
+    """
+    请求体示例:
+    {
+      "family_name": "李先生",
+      "lost_address": "杭州市西湖区灵隐路",
+      "lost_lat": 30.240,         # WGS84
+      "lost_lon": 120.109,
+      "needed_tags": ["城市导航","搜索技能"]
+    }
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        lost_lat  = float(data.get("lost_lat"))
+        lost_lon  = float(data.get("lost_lon"))
+        lost_addr = data.get("lost_address","未知地点")
+        family    = data.get("family_name","尊敬的家属")
+        tags      = data.get("needed_tags") or []
+
+    except Exception:
+        return jsonify({"error":"参数缺失或格式错误"}), 400
+
+    report = recommender.gen_report(
+        family_name=family,
+        lost_address=lost_addr,
+        lost_lat=lost_lat,
+        lost_lon=lost_lon,
+        tags=tags
+    )
+    return jsonify({"report": report})
