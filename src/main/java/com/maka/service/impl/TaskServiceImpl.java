@@ -5,6 +5,8 @@ import com.maka.mapper.TaskMapper;
 import com.maka.pojo.Family;
 import com.maka.pojo.Rescuer;
 import com.maka.pojo.Task;
+import com.maka.pojo.User;
+import com.maka.mapper.UserMapper;
 import com.maka.service.RescuerService;
 import com.maka.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,9 @@ public class TaskServiceImpl implements TaskService {
 
     @Autowired
     private FamilyMapper familyMapper;
+
+    @Autowired
+    private UserMapper userMapper;
 
     @Value("${flask.recommendation.url:http://localhost:5000/api/recommend-rescuers}")
     private String recommendationApiUrl;
@@ -181,6 +186,7 @@ public class TaskServiceImpl implements TaskService {
             
             // 添加救援人员信息
             List<Map<String, Object>> rescuersList = new ArrayList<>();
+            // 在构建救援人员信息时添加电话号码
             for (Rescuer rescuer : availableRescuers) {
                 Map<String, Object> rescuerData = new HashMap<>();
                 rescuerData.put("uuid", rescuer.getUuid());
@@ -188,6 +194,12 @@ public class TaskServiceImpl implements TaskService {
                 rescuerData.put("location", rescuer.getLocation());
                 rescuerData.put("skillTags", rescuer.getSkillTags());
                 rescuerData.put("taskIds", rescuer.getTaskIds());
+                
+                // 获取用户信息和电话号码
+                User user = userMapper.getUserByUuid(rescuer.getUuid());
+                if (user != null) {
+                    rescuerData.put("phone", user.getPhone());
+                }
                 
                 // 计算成功任务数（如果需要）
                 int successfulTasks = 0;
@@ -220,6 +232,11 @@ public class TaskServiceImpl implements TaskService {
                 result.put("reportHtml", response.get("report_html"));
                 result.put("reportText", response.get("report_text"));
                 result.put("topRescuers", response.get("top_rescuers"));
+                
+                // 添加docx_url字段
+                if (response.containsKey("docx_url")) {
+                    result.put("docx_url", response.get("docx_url"));
+                }
             } else {
                 result.put("success", false);
                 result.put("message", response != null ? response.get("message") : "推荐服务异常");

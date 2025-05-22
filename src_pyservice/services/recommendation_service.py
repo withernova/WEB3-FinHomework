@@ -74,6 +74,7 @@ class RecommendationService:
                 scored_rescuers.append({
                     "uuid": rescuer["uuid"],
                     "name": rescuer["name"],
+                    "phone": rescuer.get("phone", "未提供"),  # 确保保留电话号码
                     "distance": distance,
                     "distance_score": distance_score,
                     "tag_score": tag_score,
@@ -209,6 +210,7 @@ class RecommendationService:
             推荐人选 {i+1}：{rescuer['name']}
             - 距离走失地点约 {rescuer['distance']:.1f} 公里（距离得分：{rescuer['distance_score']:.1f}/10）
             - 技能标签：{', '.join(rescuer.get('skill_tags', []))}
+            - 联系电话：{rescuer.get('phone', '未提供')}
             - 技能匹配度得分：{rescuer['tag_score']:.1f}/10
             - 匹配理由：{rescuer['tag_reason']}
             - 历史成功任务数：{rescuer['successful_tasks']} （经验得分：{rescuer['success_score']:.1f}/10）
@@ -242,18 +244,19 @@ class RecommendationService:
         html_rescuers = []
         for i, rescuer in enumerate(top_rescuers):
             html_rescuers.append(f"""
-            <div class="rescuer-card">
-                <h4>推荐人选 {i+1}：<span class="rescuer-name">{rescuer['name']}</span></h4>
-                <ul>
-                    <li>距离走失地点约 <strong>{rescuer['distance']:.1f} 公里</strong>（距离得分：{rescuer['distance_score']:.1f}/10）</li>
-                    <li>技能标签：<strong>{', '.join(rescuer.get('skill_tags', []))}</strong></li>
-                    <li>技能匹配度得分：<strong>{rescuer['tag_score']:.1f}/10</strong></li>
-                    <li>匹配理由：{rescuer['tag_reason']}</li>
-                    <li>历史成功任务数：<strong>{rescuer['successful_tasks']}</strong>（经验得分：{rescuer['success_score']:.1f}/10）</li>
-                    <li>综合评分：<strong>{rescuer['total_score']:.1f}/10</strong></li>
-                </ul>
-            </div>
-            """)
+                <div class="rescuer-card">
+                    <h4>推荐人选 {i+1}：<span class="rescuer-name">{rescuer['name']}</span></h4>
+                    <ul>
+                        <li>距离走失地点约 <strong>{rescuer['distance']:.1f} 公里</strong>（距离得分：{rescuer['distance_score']:.1f}/10）</li>
+                        <li>技能标签：<strong>{', '.join(rescuer.get('skill_tags', []))}</strong></li>
+                        <li>联系电话：<strong>{rescuer.get('phone', '未提供')}</strong></li>
+                        <li>技能匹配度得分：<strong>{rescuer['tag_score']:.1f}/10</strong></li>
+                        <li>匹配理由：{rescuer['tag_reason']}</li>
+                        <li>历史成功任务数：<strong>{rescuer['successful_tasks']}</strong>（经验得分：{rescuer['success_score']:.1f}/10）</li>
+                        <li>综合评分：<strong>{rescuer['total_score']:.1f}/10</strong></li>
+                    </ul>
+                </div>
+                """)
         
         html_report = f"""
         <div class="recommendation-content">

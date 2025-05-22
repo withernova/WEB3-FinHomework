@@ -453,11 +453,19 @@ public class TaskController {
                 // 如果Python服务返回了相对URL，转换为绝对URL
                 if (recommendationResult.containsKey("docx_url")) {
                     String docxUrl = (String) recommendationResult.get("docx_url");
+                    System.out.println("原始docx_url: " + docxUrl);
+                    
+                    // 设置Python服务的基础URL
+                    String pythonServiceUrl = "http://127.0.0.1:5000"; // 修改为您的Python服务URL
+                    
                     if (docxUrl.startsWith("/")) {
-                        recommendationResult.put("docx_url", baseUrl + docxUrl);
+                        // 使用Python服务URL而不是Java服务URL
+                        docxUrl = pythonServiceUrl + docxUrl;
+                        System.out.println("修正后的docx_url: " + docxUrl);
+                        recommendationResult.put("docx_url", docxUrl);
                     }
                 }
-                
+                                
                 response.put("data", recommendationResult);
             } else {
                 response.put("code", 500);

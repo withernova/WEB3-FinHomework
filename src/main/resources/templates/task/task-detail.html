@@ -51,8 +51,13 @@
       margin: 20px 0;
       display: none;
     }
-    .btn-download-report {
+    .download-buttons {
       margin-top: 15px;
+      text-align: center;
+      display: none; /* 默认隐藏 */
+    }
+    .btn-download-report {
+      margin: 0 5px;
     }
   </style>
 </head>
@@ -136,22 +141,17 @@
         <div class="report-content" id="reportContent">
           <!-- 报告内容将通过AJAX加载 -->
         </div>
-        
-        <div class="text-center">
-          <button class="layui-btn layui-btn-normal btn-download-report" id="downloadReport">
-            <i class="layui-icon layui-icon-download-circle"></i> 下载推荐报告
-          </button>
-        </div>
       </div>
-        <!-- 修改下载按钮部分 -->
-    <div class="text-center">
+      
+      <!-- 下载按钮 - 初始隐藏 -->
+      <div class="download-buttons" id="downloadButtons">
         <button class="layui-btn layui-btn-normal btn-download-report" id="downloadTxtReport">
-            <i class="layui-icon layui-icon-download-circle"></i> 下载文本报告
+          <i class="layui-icon layui-icon-download-circle"></i> 下载文本报告
         </button>
         <a class="layui-btn layui-btn-normal btn-download-report" id="downloadDocxReport" target="_blank">
-            <i class="layui-icon layui-icon-file"></i> 下载Word报告
+          <i class="layui-icon layui-icon-file"></i> 下载Word报告
         </a>
-    </div>
+      </div>
       
       <!-- 加载中提示 -->
       <div class="report-loading" id="reportLoading">
@@ -209,9 +209,10 @@ layui.use(['layer'], function(){
   
   // 智能推荐救援人员
     $('#recommendRescuers').on('click', function(){
-    // 显示加载提示
+    // 显示加载提示，隐藏报告和下载按钮
     $('#reportLoading').show();
     $('#recommendationReport').hide();
+    $('#downloadButtons').hide();
     
     // 发送请求获取推荐
     $.ajax({
@@ -221,7 +222,11 @@ layui.use(['layer'], function(){
         // 隐藏加载提示
         $('#reportLoading').hide();
         
+        console.log("收到API响应:", res); // 打印完整响应
+        
         if(res.code === 0){
+            console.log("API返回数据:", res.data); // 打印数据部分
+            
             // 显示推荐报告
             $('#reportContent').html(res.data.report_html || res.data.reportHtml);
             $('#recommendationReport').show();
@@ -229,25 +234,39 @@ layui.use(['layer'], function(){
             // 存储报告原始文本用于下载
             window.recommendationReportText = res.data.report_text || res.data.reportText;
             
+            // 检查docx_url字段
+            console.log("docx_url:", res.data.docx_url);
+            
             // 更新docx下载按钮链接
             if(res.data.docx_url) {
-            $('#downloadDocxReport').attr('href', res.data.docx_url).show();
+            console.log("设置Word下载链接:", res.data.docx_url);
+            $('#downloadDocxReport').attr('href', res.data.docx_url);
+            $('#downloadDocxReport').css('display', 'inline-block'); // 强制显示
+            $('#downloadButtons').show();
+            
+            // 检查按钮是否可见
+            console.log("下载按钮可见性:", $('#downloadButtons').is(':visible'));
+            console.log("Word下载按钮可见性:", $('#downloadDocxReport').is(':visible'));
             } else {
+            console.warn("未收到Word文档URL");
             $('#downloadDocxReport').hide();
+            // 仍然显示文本下载按钮
+            $('#downloadButtons').show();
             }
         } else {
             layer.msg(res.msg || '获取推荐失败', {icon: 2});
         }
         },
-        error: function(){
+        error: function(xhr, status, error){
         $('#reportLoading').hide();
+        console.error("AJAX错误:", error, xhr.responseText);
         layer.msg('服务器错误，请稍后重试', {icon: 2});
         }
     });
     });
   
-  // 下载推荐报告
-  $('#downloadReport').on('click', function(){
+  // 下载文本报告
+  $('#downloadTxtReport').on('click', function(){
     if(window.recommendationReportText){
       // 创建Blob对象
       var blob = new Blob([window.recommendationReportText], {type: 'text/plain'});

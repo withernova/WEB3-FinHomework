@@ -9,23 +9,16 @@ logger = logging.getLogger(__name__)
 import re
 
 def extract_markdown_content(text):
-    """
-    提取以三引号包裹的 markdown 内容块
-    支持 '''markdown ... ''' 或 ```markdown ... ```
-    """
-    # 支持三种写法：'''markdown、```markdown、''' 和 ```
-    pattern = r"(?:'''|```)markdown\s*(.*?)(?:'''|```)$"
+    # 只取第一个 '''markdown 或 ```markdown 到下一个 ''' 或 ```
+    pattern = r"(?:'''|```)markdown\s*(.*?)(?:'''|```)"
     match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
     if match:
         return match.group(1).strip()
-    return text.strip()  # 如果没有包裹直接返回原文
+    return text.strip()
 
 def generate_docx_from_markdown(
     markdown_input, output_path, template_path=None, is_text=False
 ):
-    """
-    用pandoc将Markdown文本或文件转换为Word文档
-    """
     try:
         if is_text:
             md = extract_markdown_content(markdown_input)
@@ -35,7 +28,8 @@ def generate_docx_from_markdown(
         else:
             markdown_path = markdown_input
 
-        cmd = ["pandoc", markdown_path, "-o", output_path]
+        # 关键在这里加上 -f markdown
+        cmd = ["pandoc", "-f", "markdown", markdown_path, "-o", output_path]
         if template_path and os.path.exists(template_path):
             cmd.append(f"--reference-doc={template_path}")
 
