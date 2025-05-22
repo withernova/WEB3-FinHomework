@@ -61,13 +61,13 @@
           "child": [
             {
               "title": "任务发布",
-              "href": "page/task-publish.html",
+              "href": "task/task-publish",
               "icon": "fa fa-upload",
               "target": "_self"
             },
             {
               "title": "任务管理",
-              "href": "page/task-management.html",
+              "href": "task/task-manage",
               "icon": "fa fa-list-alt",
               "target": "_self"
             }

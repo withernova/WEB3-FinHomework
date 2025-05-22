@@ -3,39 +3,27 @@ package com.maka.mapper;
 import com.maka.pojo.Task;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-
 import java.util.List;
 
 /**
- * 任务数据访问层
+ * 走失老人任务数据访问接口（XML版本）
  */
 @Mapper
 public interface TaskMapper {
+    int insert(Task task);
 
-    /** 新增任务 */
-    int insertTask(Task task);
+    int update(Task task);
 
-    /** 根据主键查询任务 */
-    Task getTaskById(Integer id);
+    Task selectById(Integer id);
 
-    /** 查询所有任务 */
-    List<Task> getAllTasks();
+    List<Task> selectAll();
 
-    /** 根据状态查询任务 */
-    List<Task> getTasksByStatus(String status);
+    List<Task> selectByStatus(String status);
 
-    /** 更新任务的全部信息 */
-    int updateTask(Task task);
-
-    /** 仅更新任务状态 */
-    int updateTaskStatus(@Param("id") Integer id,
-                         @Param("status") String status);
-
-    /** 删除任务 */
-    int deleteTask(Integer id);
-
-    List<Task> getTasksPaged(@Param("offset") int offset,
-                             @Param("limit")  int limit);
-
-    int getTasksCountByStatus(@Param("status") String status);
+    int deleteById(Integer id);
+    
+    /**
+     * 根据ID列表批量查询任务
+     */
+    List<Task> selectByIdList(@Param("idList") List<Integer> idList);
 }

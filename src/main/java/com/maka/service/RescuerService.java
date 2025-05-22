@@ -29,5 +29,7 @@ public interface RescuerService {
     boolean updateRescuerWithTags(Rescuer rescuer);
 
     List<Rescuer> getAvailableRescuersPaged(int offset, int limit);
+    
     int getAvailableRescuersCount();
+
 }

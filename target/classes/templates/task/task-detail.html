@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <title>任务详情</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <link rel="stylesheet" th:href="@{/layuimini/lib/layui-v2.5.5/css/layui.css}">
+  <link rel="stylesheet" th:href="@{/layuimini/css/public.css}">
+  <style>
+    body{background:#f2f2f2;}
+    .layuimini-container{margin:20px auto;background:#fff;border-radius:8px;
+      box-shadow:0 2px 8px rgba(0,0,0,.1);padding:20px;}
+    .task-photo{max-width:300px;max-height:300px;border-radius:5px;}
+    .task-header{display:flex;margin-bottom:30px;}
+    .task-info{margin-left:30px;flex:1;}
+    .task-title{font-size:20px;font-weight:bold;margin-bottom:15px;}
+    .task-meta{color:#666;margin-bottom:5px;}
+    .task-status-waiting{color:#FF5722;font-weight:bold;}
+    .task-status-rescuing{color:#1E9FFF;font-weight:bold;}
+    .task-status-finished{color:#5FB878;font-weight:bold;}
+    .task-extra{margin-top:20px;padding:15px;background:#f9f9f9;border-radius:5px;}
+    .task-audio{margin-top:20px;}
+    .task-buttons{margin-top:30px;text-align:center;}
+    .task-buttons .layui-btn{margin:0 10px;}
+    .recommendation-report {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #e6e6e6;
+      border-radius: 5px;
+      display: none;
+    }
+    .recommendation-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    .rescuer-card {
+      margin-bottom: 15px;
+      padding: 10px;
+      border: 1px solid #eee;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+    }
+    .rescuer-name {
+      font-weight: bold;
+      color: #1E9FFF;
+    }
+    .report-loading {
+      text-align: center;
+      margin: 20px 0;
+      display: none;
+    }
+    .btn-download-report {
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+<div class="layuimini-container">
+  <div class="layuimini-main">
+    <div class="layui-breadcrumb" style="margin-bottom:20px;">
+      <a href="/task/task-manage">任务管理</a>
+      <a><cite>任务详情</cite></a>
+    </div>
+    
+    <!-- 任务不存在的提示 -->
+    <div class="layui-card" th:if="${errorMsg != null}">
+      <div class="layui-card-header">提示</div>
+      <div class="layui-card-body" th:text="${errorMsg}">
+        任务不存在或您没有权限查看
+      </div>
+      <div class="layui-card-body">
+        <a href="/task/task-manage" class="layui-btn layui-btn-primary layui-btn-sm">返回任务列表</a>
+      </div>
+    </div>
+    
+    <div class="task-container" th:if="${task != null}">
+      <div class="task-header">
+        <div class="task-photo-container">
+          <img th:src="${task.photoUrl}" alt="老人照片" class="task-photo">
+        </div>
+        <div class="task-info">
+          <div class="task-title" th:text="${task.elderName} + ' - 走失任务'"></div>
+          
+          <div class="task-meta">
+            <span>任务ID：</span>
+            <span th:text="${task.id}"></span>
+          </div>
+          
+          <div class="task-meta">
+            <span>状态：</span>
+            <span th:class="${'task-status-' + task.status}">
+              <span th:if="${task.status == 'waiting'}">等待救援</span>
+              <span th:if="${task.status == 'rescuing'}">救援中</span>
+              <span th:if="${task.status == 'finished'}">已完成</span>
+            </span>
+          </div>
+          
+          <div class="task-meta">
+            <span>走失时间：</span>
+            <span th:text="${#dates.format(task.lostTime, 'yyyy-MM-dd HH:mm:ss')}"></span>
+          </div>
+          
+          <div class="task-meta">
+            <span>走失地点：</span>
+            <span th:text="${task.location}"></span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 语音部分 -->
+      <div class="task-audio" th:if="${task.audioUrl != null && task.audioUrl != ''}">
+        <div class="layui-card">
+          <div class="layui-card-header">语音描述</div>
+          <div class="layui-card-body">
+            <audio controls style="width:100%;">
+              <source th:src="${task.audioUrl}" type="audio/mpeg">
+              您的浏览器不支持音频播放
+            </audio>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 额外信息部分 -->
+      <div class="task-extra" th:if="${task.extraInfo != null && task.extraInfo != ''}">
+        <div class="layui-card">
+          <div class="layui-card-header">额外信息</div>
+          <div class="layui-card-body" th:text="${task.extraInfo}"></div>
+        </div>
+      </div>
+      
+      <!-- 推荐救援人员报告 -->
+      <div class="recommendation-report" id="recommendationReport">
+        <div class="recommendation-title">智能救援人员推荐报告</div>
+        <div class="report-content" id="reportContent">
+          <!-- 报告内容将通过AJAX加载 -->
+        </div>
+        
+        <div class="text-center">
+          <button class="layui-btn layui-btn-normal btn-download-report" id="downloadReport">
+            <i class="layui-icon layui-icon-download-circle"></i> 下载推荐报告
+          </button>
+        </div>
+      </div>
+      
+      <!-- 加载中提示 -->
+      <div class="report-loading" id="reportLoading">
+        <i class="layui-icon layui-icon-loading layui-anim layui-anim-rotate layui-anim-loop" style="font-size: 30px;"></i>
+        <p>正在智能匹配救援人员，请稍候...</p>
+      </div>
+      
+      <!-- 操作按钮 -->
+      <div class="task-buttons">
+        <a href="/task/task-manage" class="layui-btn layui-btn-primary">返回列表</a>
+        <a th:href="@{'/task/task-edit/' + ${task.id}}" class="layui-btn">编辑任务</a>
+        <!-- 只有等待救援状态才显示智能推荐按钮 -->
+        <button th:if="${task.status == 'waiting'}" class="layui-btn layui-btn-warm" id="recommendRescuers">
+          <i class="layui-icon layui-icon-group"></i> 智能推荐救援人员
+        </button>
+        <button th:if="${task.status == 'waiting'}" class="layui-btn layui-btn-danger" id="cancelTask">取消任务</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script th:src="@{/layuimini/lib/layui-v2.5.5/layui.js}"></script>
+<script th:src="@{/layuimini/lib/jquery-3.4.1/jquery-3.4.1.min.js}"></script>
+<script th:inline="javascript">
+/*<![CDATA[*/
+layui.use(['layer'], function(){
+  var layer = layui.layer;
+  var taskId = [[${task?.id}]];
+  
+  // 取消任务
+  $('#cancelTask').on('click', function(){
+    layer.confirm('确定要取消该任务吗？', function(index){
+      // 发送请求取消任务
+      $.ajax({
+        url: '/task/cancel/' + taskId,
+        type: 'POST',
+        success: function(res){
+          if(res.code === 0){
+            layer.msg('任务已取消', {icon: 1, time: 1500}, function(){
+              // 跳转回任务列表
+              window.location.href = '/task/task-manage';
+            });
+          } else {
+            layer.msg(res.msg || '操作失败', {icon: 2});
+          }
+          layer.close(index);
+        },
+        error: function(){
+          layer.msg('服务器错误，请稍后重试', {icon: 2});
+          layer.close(index);
+        }
+      });
+    });
+  });
+  
+  // 智能推荐救援人员
+  $('#recommendRescuers').on('click', function(){
+    // 显示加载提示
+    $('#reportLoading').show();
+    $('#recommendationReport').hide();
+    
+    // 发送请求获取推荐
+    $.ajax({
+      url: '/task/recommend-rescuers/' + taskId,
+      type: 'GET',
+      success: function(res){
+        // 隐藏加载提示
+        $('#reportLoading').hide();
+        
+        if(res.code === 0){
+          // 显示推荐报告
+          $('#reportContent').html(res.data.reportHtml);
+          $('#recommendationReport').show();
+          
+          // 存储报告原始文本用于下载
+          window.recommendationReportText = res.data.reportText;
+        } else {
+          layer.msg(res.msg || '获取推荐失败', {icon: 2});
+        }
+      },
+      error: function(){
+        $('#reportLoading').hide();
+        layer.msg('服务器错误，请稍后重试', {icon: 2});
+      }
+    });
+  });
+  
+  // 下载推荐报告
+  $('#downloadReport').on('click', function(){
+    if(window.recommendationReportText){
+      // 创建Blob对象
+      var blob = new Blob([window.recommendationReportText], {type: 'text/plain'});
+      
+      // 创建下载链接
+      var a = document.createElement('a');
+      a.download = '救援人员推荐报告_任务' + taskId + '.txt';
+      a.href = window.URL.createObjectURL(blob);
+      a.click();
+    } else {
+      layer.msg('报告内容不存在，请先生成推荐', {icon: 2});
+    }
+  });
+});
+/*]]>*/
+</script>
+</body>
+</html>

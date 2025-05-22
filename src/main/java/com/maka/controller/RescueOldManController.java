@@ -172,10 +172,10 @@ public class RescueOldManController {
             return "page/face_comparison";
         }
 
-        @GetMapping("/task-publish")
-        public String taskPublish() {
-            return "page/task-publish"; // 对应 templates/task-publish.html
-        }
+        // @GetMapping("/task-publish")
+        // public String taskPublish() {
+        //     return "page/task-publish"; // 对应 templates/task-publish.html
+        // }
 
         @GetMapping("/task-management")
         public String taskManagement() {

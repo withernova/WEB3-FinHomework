@@ -22,30 +22,30 @@ import java.util.concurrent.TimeUnit;
 @CrossOrigin
 @Controller
 public class AppErrorController  {
-    @Resource
-    private RescueOldManService rescueOldManService;
+    // @Resource
+    // private RescueOldManService rescueOldManService;
 
 
-    @ResponseBody
-    @RequestMapping("/test")
-    public MessageResponse test(){
-       return  MessageResponse.success(rescueOldManService.getRandomOldMan());
-    }
+    // @ResponseBody
+    // @RequestMapping("/test")
+    // public MessageResponse test(){
+    //    return  MessageResponse.success(rescueOldManService.getRandomOldMan());
+    // }
 
-    @RequestMapping(value = "/404",produces = {"text/html"})
-    public ModelAndView errorPage4xx(){
-        ModelAndView view = new ModelAndView("/test");
-        OldMan4Two4 randomOldMan = rescueOldManService.getRandomOldMan();
-        randomOldMan.setOldGender("("+randomOldMan.getOldGender()+")");
-        randomOldMan.setFeature(randomOldMan.getIq()+"，"+randomOldMan.getClothing());
-        view.addObject("oldMan",(Object) randomOldMan);
-        return view;
-    }
+    // @RequestMapping(value = "/404",produces = {"text/html"})
+    // public ModelAndView errorPage4xx(){
+    //     ModelAndView view = new ModelAndView("/test");
+    //     OldMan4Two4 randomOldMan = rescueOldManService.getRandomOldMan();
+    //     randomOldMan.setOldGender("("+randomOldMan.getOldGender()+")");
+    //     randomOldMan.setFeature(randomOldMan.getIq()+"，"+randomOldMan.getClothing());
+    //     view.addObject("oldMan",(Object) randomOldMan);
+    //     return view;
+    // }
 
-    @RequestMapping(value = "/500",produces = {"text/html"})
-    public ModelAndView errorPage5xx(){
-        return new ModelAndView("/test");
-    }
+    // @RequestMapping(value = "/500",produces = {"text/html"})
+    // public ModelAndView errorPage5xx(){
+    //     return new ModelAndView("/test");
+    // }
 
 
 }

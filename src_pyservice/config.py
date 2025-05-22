@@ -30,3 +30,10 @@ class Config:
     WEIGHT_DISTANCE = 0.4   # 距离权重（越近越高）
     WEIGHT_TAG      = 0.3   # 标签匹配权重
     WEIGHT_SUCCESS  = 0.3   # 历史成功数权重
+
+    MAP_API_KEY = os.environ.get("MAP_API_KEY", "your-map-api-key")
+
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DOCX_TEMPLATE_PATH = os.path.join(BASE_DIR, "templates", "report_template.docx")
+
+    TEMP_FILES = {}
