@@ -4,7 +4,7 @@ class Config:
     """全局配置"""
 
     # ---------- 智谱 ----------
-    ZHIPU_API_KEY = os.getenv("ZHIPUAI_API_KEY", "YOUR_DEFAULT_KEY")
+    ZHIPU_API_KEY = os.environ.get('ZHIPUAI_API_KEY', '56206a5488ca043b2cbdc268186efe17.NM2JqxxMDgNbezB9')
     MODEL_NAME    = "glm-4-flash"
 
     # ---------- Flask ----------

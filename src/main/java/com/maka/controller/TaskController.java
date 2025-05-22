@@ -1,180 +1,186 @@
 package com.maka.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.maka.pojo.Task;
 import com.maka.service.TaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.*;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.util.FileCopyUtils;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpSession;
-import java.io.*;
-import java.net.URLEncoder;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
-/**
- * 任务控制器
- */
 @Slf4j
 @Controller
 @RequestMapping("/task")
 public class TaskController {
 
-    @Autowired
-    private TaskService taskService;
-
-    /** Python 服务地址，可写到 application.yml */
-    @Value("${python.server-url:http://127.0.0.1:5000}")
-    private String pythonServerUrl;
-
-    /** 报告文件根目录 */
-    @Value("${report.base-dir:E:/26654/Documents/WEB3-FinHomework/uploads/reports}")
-    private String reportBaseDir;
+    @Autowired private TaskService taskService;
 
     private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    private static final ObjectMapper      OM  = new ObjectMapper();
+    private static final ObjectMapper       OM  = new ObjectMapper();
 
-    /* ------------------------------------------------------------------ */
-    /** 任务发布 */
+    // ========================================================================
+    // 发布接口
+    // ========================================================================
     @PostMapping("/publish")
     @ResponseBody
-    public Map<String,Object> publishTask(@RequestBody Map<String, String> form,
-                                          HttpSession session){
+    public Map<String,Object> publish(@RequestBody Map<String,String> form,
+                                      HttpSession session){
 
-        String userId = (String) session.getAttribute("userId");
-        if (userId == null){
+        String userId = String.valueOf(session.getAttribute("userId"));
+        if(userId==null || "null".equals(userId)){
             return Map.of("success",false,"message","未登录，请重新登录");
         }
 
         try{
-            /* 1. 组装 Task 保存数据库 --------------------------------------------------- */
+            /* ---------- 1. 组装实体并入库 ---------- */
             Task task = new Task();
             task.setElderName(form.get("lost_person_name"));
 
-            Date lostDate;
             try{
-                lostDate = SDF.parse(form.get("lost_time"));
+                task.setLostTime(SDF.parse(form.get("lost_time")));
             }catch (ParseException e){
-                return Map.of("success",false,"message","走失时间格式不正确，形如 2025-05-21 12:00:00");
+                return Map.of("success",false,"message","时间格式必须为 yyyy-MM-dd HH:mm:ss");
             }
-            task.setLostTime(lostDate);
 
             task.setPhotoUrl(form.get("photo_url"));
             task.setAudioUrl(form.get("audio_url"));
-            task.setLocation(form.get("lost_province")
-                            + form.get("lost_city")
-                            + form.get("lost_area")
-                            + form.getOrDefault("specific_address",""));
-
+            String lostAddress = form.get("lost_province")+
+                                 form.get("lost_city")+
+                                 form.get("lost_area")+
+                                 form.getOrDefault("specific_address","");
+            task.setLocation(lostAddress);
             task.setStatus("waiting");
 
-            Map<String,String> extra = Map.of(
-                    "publisher", userId,
-                    "contactPhone", form.get("contact_phone")
-            );
+            Map<String,String> extra = new HashMap<>();
+            extra.put("publisher",   userId);
+            extra.put("contactPhone",form.get("contact_phone"));
             task.setExtraInfo(OM.writeValueAsString(extra));
 
-            taskService.createTask(task);
+            taskService.createTask(task);         // 回填主键
+            int taskId = task.getId();
 
-            /* 2. 调用 Python 获取报告正文 ---------------------------------------------- */
-            String reportTxt = callPythonAndGetReport(task);
+            /* ---------- 2. 生成占位文件 ---------- */
+            String reportsDir = System.getProperty("user.dir")
+                                 + File.separator+"uploads"+File.separator+"reports";
+            File dir = new File(reportsDir);
+            if(!dir.exists()) dir.mkdirs();
 
-            /* 3. 写 TXT（UTF-8） ------------------------------------------------------- */
-            String fileName = "report_" + UUID.randomUUID() + ".txt";
-            Path   dirPath  = Paths.get(reportBaseDir);
-            Files.createDirectories(dirPath);
+            String fileName   = "report_"+taskId+".txt";
+            File   reportFile = new File(dir, fileName);
+            if(!reportFile.exists()){
+                writeTxtWithBom(reportFile, "报告生成中，请稍后刷新下载……");
+            }
 
-            Path filePath = dirPath.resolve(fileName);
-            Files.writeString(filePath, reportTxt, StandardCharsets.UTF_8,
-                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            /* ---------- 3. 同步请求 Python ---------- */
+            String report = callPythonAndGetReport(lostAddress);
+            if(report != null && !report.isBlank()){
+                writeTxtWithBom(reportFile, report); // 覆盖占位
+                log.info("已写入最终报告：{}", reportFile.getAbsolutePath());
+            }else{
+                log.warn("Python 返回空报告，文件保持占位状态");
+            }
 
-            /* 4. 返回可下载 URL -------------------------------------------------------- */
-            String url = "/task/download/" + fileName;
-            return Map.of("success",true,"reportUrl",url);
+            /* ---------- 4. 返回结果 ---------- */
+            return Map.of(
+                    "success",   true,
+                    "reportUrl", "/task/downloadReport/"+fileName
+            );
 
-        }catch (Exception e){
-            log.error("发布任务异常", e);
-            return Map.of("success",false,"message","服务器错误");
+        }catch (Exception ex){
+            log.error("发布任务异常", ex);
+            return Map.of("success",false,"message","服务器内部错误");
         }
     }
 
-    /* ------------------------------------------------------------------ */
-    /** 下载 TXT —— 带 charset=utf-8 响应头，避免乱码 */
-    @GetMapping("/download/{fileName:.+\\.txt}")
-    public ResponseEntity<InputStreamResource> downloadReport(@PathVariable String fileName) {
-
-        // 1. 防止路径穿越
-        if (fileName.contains("..")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-
-        Path file = Paths.get(reportBaseDir, fileName).normalize();
-        if (!Files.exists(file)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-
-        try {
-            byte[] data = Files.readAllBytes(file);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(new MediaType("text", "plain", StandardCharsets.UTF_8));
-
-            // Content-Disposition 处理中文文件名
-            String encoded = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
-                                       .replaceAll("\\+", "%20");
-            headers.add(HttpHeaders.CONTENT_DISPOSITION,
-                    "attachment; filename*=UTF-8''" + encoded);
-
-            headers.setContentLength(data.length);
-
-            return ResponseEntity.ok()
-                    .headers(headers)
-                    .body(new InputStreamResource(new ByteArrayInputStream(data)));
-
-        } catch (IOException e) {
-            log.error("下载报告失败", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    // ========================================================================
+    // 私有工具
+    // ========================================================================
+    /** 把字符串写入 TXT（UTF-8+BOM，防止 Windows 记事本乱码） */
+    private void writeTxtWithBom(File file, String content) throws Exception{
+        byte[] bom  = {(byte)0xEF,(byte)0xBB,(byte)0xBF};
+        byte[] body = content.getBytes(StandardCharsets.UTF_8);
+        try(FileOutputStream fos = new FileOutputStream(file,false)){
+            fos.write(bom);
+            fos.write(body);
         }
     }
 
-    /* ------------------------------------------------------------------ */
-    /** 调用 Flask 接口 */
-    private String callPythonAndGetReport(Task task) {
-
+    /** 向 Python 发 POST，拿回 report 字段 */
+    private String callPythonAndGetReport(String lostAddress){
+        RestTemplate rest = null;
         try{
-            RestTemplate rest = new RestTemplate();
-
-            Map<String,Object> body = Map.of("lost_address", task.getLocation());
+            // ① 设置 5 秒超时
+            var factory = new SimpleClientHttpRequestFactory();
+            factory.setConnectTimeout(5000);
+            factory.setReadTimeout   (15000);
+            rest = new RestTemplate(factory);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            HttpEntity<Object> req = new HttpEntity<>(body, headers);
+            Map<String,Object> payload = new HashMap<>();
+            payload.put("family_name",  "");
+            payload.put("lost_address", lostAddress);
+            payload.put("needed_tags",  new String[0]);
 
-            @SuppressWarnings("unchecked")
-            ResponseEntity<Map> resp = rest.postForEntity(
-                    pythonServerUrl + "/api/recommend_volunteers",
-                    req, Map.class);
+            log.info("向 Python 发起请求: {}", payload);     // DEBUG 1
+            ResponseEntity<String> resp = rest.postForEntity(
+                    "http://127.0.0.1:5000/api/recommend_volunteers",
+                    new HttpEntity<>(payload, headers),
+                    String.class);
 
-            if (resp.getStatusCode() == HttpStatus.OK && resp.getBody() != null) {
-                return (String) resp.getBody()
-                                    .getOrDefault("report", "报告生成失败，请稍后重试。");
+            log.info("收到 Python 状态码: {}", resp.getStatusCodeValue()); // DEBUG 2
+            log.debug("收到 Python 响应体: {}", resp.getBody());
+
+            if(resp.getStatusCode().is2xxSuccessful() && resp.getBody()!=null){
+                JsonNode root = OM.readTree(resp.getBody());
+                return root.path("report").asText(null);
             }
-        }catch (Exception ex){
-            log.error("调用 Python 服务失败", ex);
+        }catch (Exception e){
+            log.error("调用 Python 失败：{}", e.toString());
+            if(rest != null){
+                e.printStackTrace();
+            }
         }
-        return "报告生成失败，请稍后重试。";
+        return null;
+    }
+
+    // ========================================================================
+    // 自定义下载接口（带 charset）
+    // ========================================================================
+    @GetMapping("/downloadReport/{fileName:.+}")
+    public ResponseEntity<Resource> downloadReport(@PathVariable String fileName){
+        try{
+            Path path = Path.of(System.getProperty("user.dir"),
+                                "uploads","reports",fileName);
+            Resource resource = new UrlResource(path.toUri());
+            if(!resource.exists()) return ResponseEntity.notFound().build();
+
+            return ResponseEntity.ok()
+                    .contentType(new MediaType("text","plain", StandardCharsets.UTF_8))
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "inline; filename=\""+fileName+"\"")
+                    .body(resource);
+
+        }catch (MalformedURLException e){
+            return ResponseEntity.badRequest().build();
+        }
     }
 }
