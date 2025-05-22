@@ -218,24 +218,32 @@ class RecommendationService:
             """)
         
         prompt = f"""
-        请根据以下信息，生成一份走失老人救援人员推荐报告。使用Markdown格式。
+            请根据以下信息，生成一份走失老人救援人员推荐报告。
 
-        # 任务信息：
-        - 老人姓名：{task.get('elderName', '未知')}
-        - 走失地点：{task.get('location', '未知')}
-        - 额外信息：{task.get('extraInfo', '无')}
+            **必须严格遵循以下要求：**
+            1. 报告格式必须为 [GitHub Flavored Markdown]。
+            2. 只输出 Markdown 主体（不要输出代码块包裹，不要输出 ```markdown）。
+            3. 必须用 #、##、### 作为标题层级，列表用 - 或 1.。
+            4. 重要数据用 **加粗**，不要用 HTML 标签。
+            5. 每一部分之间空一行。
+            6. 内容必须保证可直接被 Pandoc 解析成结构化 Word 样式（标题、列表、加粗等）。
+            7. 绝对不要输出任何代码块（包括 ```markdown），只输出纯 markdown 报告内容！
 
-        # 推荐救援人员信息：
-        {"".join(rescuers_info)}
+            # 任务信息
+            - 老人姓名：{task.get('elderName', '未知')}
+            - 走失地点：{task.get('location', '未知')}
+            - 额外信息：{task.get('extraInfo', '无')}
 
-        请生成一份专业、详细的救援人员推荐报告，包括：
-        1. 报告标题和基本任务信息
-        2. 三位推荐救援人员的详细信息和评分解释
-        3. 推荐理由和建议行动
-        4. 确保报告格式清晰，使用Markdown语法增强可读性
+            # 推荐救援人员信息
+            {"".join(rescuers_info)}
 
-        报告应当简明扼要但内容完整，突出重点信息，便于决策者快速了解情况并采取行动。
-        """
+            请生成一份专业、详细、结构化的救援人员推荐报告，内容包括：
+            1. 报告标题和任务信息
+            2. 推荐救援人员详细信息和评分解释
+            3. 推荐理由和建议行动
+
+            **输出时不要包含任何代码块包裹，只输出 markdown 正文。**
+            """
         return prompt
     
     def _generate_html_report(self, task, top_rescuers, markdown_report):
