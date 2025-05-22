@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import javax.servlet.http.HttpServletRequest; // 别忘了导包
 
 import javax.servlet.http.HttpSession;
 import java.text.SimpleDateFormat;
@@ -408,7 +409,7 @@ public class TaskController {
     @ResponseBody
     public Map<String, Object> recommendRescuers(
             @PathVariable("id") Integer taskId,
-            HttpSession session) {
+            HttpSession session, HttpServletRequest request) {
          
         Map<String, Object> response = new HashMap<>();
         

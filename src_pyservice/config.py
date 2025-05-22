@@ -31,9 +31,10 @@ class Config:
     WEIGHT_TAG      = 0.3   # 标签匹配权重
     WEIGHT_SUCCESS  = 0.3   # 历史成功数权重
 
-    MAP_API_KEY = os.environ.get("MAP_API_KEY", "your-map-api-key")
+    MAP_API_KEY = os.environ.get("MAP_API_KEY", "2a73ff764995703ff9e17cc103851a1e")
 
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    DOCX_TEMPLATE_PATH = os.path.join(BASE_DIR, "templates", "report_template.docx")
+    BASE_DIR = "./templates"
+    DOCX_TEMPLATE_PATH = "./templates/report_template.docx"
 
+    TEMP_FILE_DIR = "./temp"
     TEMP_FILES = {}

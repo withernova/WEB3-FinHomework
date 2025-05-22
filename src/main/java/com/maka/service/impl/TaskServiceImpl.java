@@ -34,7 +34,7 @@ public class TaskServiceImpl implements TaskService {
     @Autowired
     private FamilyMapper familyMapper;
 
-    @Value("${flask.recommendation.url:http://localhost:5000/recommend-rescuers}")
+    @Value("${flask.recommendation.url:http://localhost:5000/api/recommend-rescuers}")
     private String recommendationApiUrl;
 
     @Autowired

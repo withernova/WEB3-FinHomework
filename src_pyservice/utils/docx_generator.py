@@ -1,54 +1,69 @@
-# utils/docx_generator.py
 import os
 import subprocess
 import logging
+import tempfile
 from config import Config
 
 logger = logging.getLogger(__name__)
 
-def generate_docx_from_markdown(markdown_path, output_path, template_path=None):
+import re
+
+def extract_markdown_content(text):
     """
-    使用pandoc将Markdown文件转换为Word文档
-    
-    Args:
-        markdown_path (str): Markdown文件路径
-        output_path (str): 输出Word文件路径
-        template_path (str, optional): Word模板文件路径
-    
-    Returns:
-        str: 生成的文档路径
+    提取以三引号包裹的 markdown 内容块
+    支持 '''markdown ... ''' 或 ```markdown ... ```
+    """
+    # 支持三种写法：'''markdown、```markdown、''' 和 ```
+    pattern = r"(?:'''|```)markdown\s*(.*?)(?:'''|```)$"
+    match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
+    if match:
+        return match.group(1).strip()
+    return text.strip()  # 如果没有包裹直接返回原文
+
+def generate_docx_from_markdown(
+    markdown_input, output_path, template_path=None, is_text=False
+):
+    """
+    用pandoc将Markdown文本或文件转换为Word文档
     """
     try:
+        if is_text:
+            md = extract_markdown_content(markdown_input)
+            with tempfile.NamedTemporaryFile('w', delete=False, suffix='.md', encoding='utf-8') as f:
+                f.write(md)
+                markdown_path = f.name
+        else:
+            markdown_path = markdown_input
+
         cmd = ["pandoc", markdown_path, "-o", output_path]
-        
-        # 如果指定了模板，添加模板参数
         if template_path and os.path.exists(template_path):
-            cmd.extend(["--reference-doc", template_path])
-        
-        # 执行pandoc命令
+            cmd.append(f"--reference-doc={template_path}")
+
         process = subprocess.run(
-            cmd, 
-            stdout=subprocess.PIPE, 
-            stderr=subprocess.PIPE,
-            check=True,
-            text=True
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            check=True, text=True
         )
-        
-        # 检查命令是否成功执行
+
         if process.returncode != 0:
             logger.error(f"Pandoc转换错误: {process.stderr}")
             raise Exception(f"Pandoc转换错误: {process.stderr}")
-        
-        # 确认文件已生成
+
         if not os.path.exists(output_path):
             raise Exception("Word文档生成失败")
-        
+
         return output_path
-    
+
     except subprocess.CalledProcessError as e:
         logger.error(f"Pandoc执行失败: {e.stderr}", exc_info=True)
         raise Exception(f"Pandoc执行失败: {e.stderr}")
-    
+
     except Exception as e:
         logger.error(f"生成Word文档时发生错误: {str(e)}", exc_info=True)
-        raise Exception(f"生成Word文档时发生错误: {str(e)}")
+        raise
+
+    finally:
+        if is_text and 'markdown_path' in locals():
+            try:
+                os.remove(markdown_path)
+            except Exception:
+                pass

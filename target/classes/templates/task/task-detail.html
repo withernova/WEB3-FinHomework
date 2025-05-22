@@ -143,6 +143,15 @@
           </button>
         </div>
       </div>
+        <!-- 修改下载按钮部分 -->
+    <div class="text-center">
+        <button class="layui-btn layui-btn-normal btn-download-report" id="downloadTxtReport">
+            <i class="layui-icon layui-icon-download-circle"></i> 下载文本报告
+        </button>
+        <a class="layui-btn layui-btn-normal btn-download-report" id="downloadDocxReport" target="_blank">
+            <i class="layui-icon layui-icon-file"></i> 下载Word报告
+        </a>
+    </div>
       
       <!-- 加载中提示 -->
       <div class="report-loading" id="reportLoading">
@@ -199,36 +208,43 @@ layui.use(['layer'], function(){
   });
   
   // 智能推荐救援人员
-  $('#recommendRescuers').on('click', function(){
+    $('#recommendRescuers').on('click', function(){
     // 显示加载提示
     $('#reportLoading').show();
     $('#recommendationReport').hide();
     
     // 发送请求获取推荐
     $.ajax({
-      url: '/task/recommend-rescuers/' + taskId,
-      type: 'GET',
-      success: function(res){
+        url: '/task/recommend-rescuers/' + taskId,
+        type: 'GET',
+        success: function(res){
         // 隐藏加载提示
         $('#reportLoading').hide();
         
         if(res.code === 0){
-          // 显示推荐报告
-          $('#reportContent').html(res.data.reportHtml);
-          $('#recommendationReport').show();
-          
-          // 存储报告原始文本用于下载
-          window.recommendationReportText = res.data.reportText;
+            // 显示推荐报告
+            $('#reportContent').html(res.data.report_html || res.data.reportHtml);
+            $('#recommendationReport').show();
+            
+            // 存储报告原始文本用于下载
+            window.recommendationReportText = res.data.report_text || res.data.reportText;
+            
+            // 更新docx下载按钮链接
+            if(res.data.docx_url) {
+            $('#downloadDocxReport').attr('href', res.data.docx_url).show();
+            } else {
+            $('#downloadDocxReport').hide();
+            }
         } else {
-          layer.msg(res.msg || '获取推荐失败', {icon: 2});
+            layer.msg(res.msg || '获取推荐失败', {icon: 2});
         }
-      },
-      error: function(){
+        },
+        error: function(){
         $('#reportLoading').hide();
         layer.msg('服务器错误，请稍后重试', {icon: 2});
-      }
+        }
     });
-  });
+    });
   
   // 下载推荐报告
   $('#downloadReport').on('click', function(){

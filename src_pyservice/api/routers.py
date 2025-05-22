@@ -47,36 +47,52 @@ def extract_tags():
 @api_bp.route("/recommend-rescuers", methods=["POST"])
 def recommend_rescuers():
     try:
+        logger.info("收到/recommend-rescuers请求")
+        
         data = request.json
+        logger.debug(f"请求体: {data!r}")
         if not data:
+            logger.warning("请求数据为空")
             return jsonify({"success": False, "message": "请求数据为空"}), 400
         
         # 验证必要字段
         if "task" not in data or "rescuers" not in data:
+            logger.warning(f"缺少必要字段, data.keys(): {list(data.keys())}")
             return jsonify({"success": False, "message": "缺少任务或救援人员数据"}), 400
         
-        # 调用推荐服务
+        logger.info("调用推荐服务: generate_recommendations")
         result = recommendation_service.generate_recommendations(data["task"], data["rescuers"])
+        logger.debug(f"推荐服务返回: {result!r}")
         
-        if not result["success"]:
+        if not result.get("success"):
+            logger.warning(f"推荐服务失败: {result}")
             return jsonify(result), 400
         
         # 生成唯一文件名
         report_id = str(uuid.uuid4())
-        temp_dir = tempfile.gettempdir()
+        temp_dir = getattr(Config, "TEMP_FILE_DIR", tempfile.gettempdir())
+        os.makedirs(temp_dir, exist_ok=True)
         markdown_path = os.path.join(temp_dir, f"report_{report_id}.md")
         docx_path = os.path.join(temp_dir, f"report_{report_id}.docx")
+        logger.info(f"生成临时文件: {markdown_path}, {docx_path}")
         
         # 将Markdown内容写入临时文件
+        md_content = result.get("report_markdown", "")
+        if not md_content:
+            logger.error("推荐结果未包含 report_markdown 字段")
+            return jsonify({"success": False, "message": "推荐结果无报告内容"}), 500
         with open(markdown_path, "w", encoding="utf-8") as f:
-            f.write(result["report_markdown"])
+            f.write(md_content)
+        logger.info("写入Markdown临时文件完成")
         
         # 使用pandoc生成Word文档
+        logger.info("调用generate_docx_from_markdown生成docx")
         docx_url = generate_docx_from_markdown(
             markdown_path, 
             docx_path, 
             template_path=Config.DOCX_TEMPLATE_PATH
         )
+        logger.info(f"生成docx完成: {docx_url}")
         
         # 添加文档URL到结果中
         result["docx_url"] = f"/api/download-report/{report_id}"
@@ -85,8 +101,10 @@ def recommend_rescuers():
         if not hasattr(Config, "TEMP_FILES"):
             Config.TEMP_FILES = {}
         Config.TEMP_FILES[report_id] = docx_path
+        logger.debug(f"已保存docx路径: {Config.TEMP_FILES[report_id]}")
         
         # 返回推荐结果
+        logger.info("推荐结果处理完成, 正常返回")
         return jsonify(result), 200
     
     except Exception as e:
