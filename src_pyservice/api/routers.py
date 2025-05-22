@@ -60,8 +60,15 @@ def recommend_rescuers():
             logger.warning(f"缺少必要字段, data.keys(): {list(data.keys())}")
             return jsonify({"success": False, "message": "缺少任务或救援人员数据"}), 400
         
+        # 获取标签库
+        tag_library = data.get("tagLibrary", [])
+        
         logger.info("调用推荐服务: generate_recommendations")
-        result = recommendation_service.generate_recommendations(data["task"], data["rescuers"])
+        result = recommendation_service.generate_recommendations(
+            data["task"], 
+            data["rescuers"],
+            tag_library
+        )
         logger.debug(f"推荐服务返回: {result!r}")
         
         if not result.get("success"):

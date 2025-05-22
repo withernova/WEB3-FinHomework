@@ -14,13 +14,14 @@ class RecommendationService:
         self.client = ZhipuAI(api_key=self.api_key)
         self.geo_service = GeoService()
     
-    def generate_recommendations(self, task, rescuers):
+    def generate_recommendations(self, task, rescuers, tag_library=None):
         """
         生成救援人员推荐
         
         Args:
             task (dict): 任务信息
             rescuers (list): 救援人员列表
+            tag_library (list): 标签库
         
         Returns:
             dict: 推荐结果
@@ -32,6 +33,17 @@ class RecommendationService:
             
             if not rescuers or len(rescuers) == 0:
                 return {"success": False, "message": "没有可用的救援人员"}
+            
+            # 从任务描述中提取相关标签
+            extra_info = task.get("extraInfo", "")
+            relevant_tags = []
+            tag_importance = {}
+            
+            if extra_info and tag_library:
+            # 使用大模型从额外信息中提取相关标签及其重要性
+                relevant_tags, tag_importance = self.extract_relevant_tags(extra_info, tag_library)
+                logger.info(f"从任务信息中提取的相关标签: {relevant_tags}")
+                logger.info(f"标签重要性: {json.dumps(tag_importance, ensure_ascii=False, indent=2)}")
             
             # 计算每个救援人员的得分
             scored_rescuers = []
@@ -56,29 +68,32 @@ class RecommendationService:
                 
                 # 计算技能标签匹配度
                 skill_tags = rescuer.get("skillTags", [])
-                tag_score, tag_reason = self.calculate_tag_match(task, skill_tags)
+                tag_score, tag_match_details = self.calculate_tag_match_improved(
+                    skill_tags, 
+                    relevant_tags, 
+                    tag_importance
+                )
                 
                 # 计算历史成功任务分数
-                successful_tasks = 0
-                if "taskIds" in rescuer and rescuer["taskIds"]:
-                    # 这里简化处理，实际应该通过查询任务状态来计算
-                    successful_tasks = rescuer.get("successfulTasks", 0)
+                successful_tasks = rescuer.get("successfulTasks", 0)
                 
                 # 历史任务分数 - 每个成功任务2分，上限10分
                 success_score = min(10, successful_tasks * 2)
                 
-                # 计算总分 - 平均加权
-                total_score = (distance_score + tag_score + success_score) / 3
+                # 计算总分 - 加权平均
+                # 距离占40%，标签匹配占40%，历史任务占20%
+                total_score = distance_score * 0.4 + tag_score * 0.4 + success_score * 0.2
                 
                 # 添加到结果列表
                 scored_rescuers.append({
                     "uuid": rescuer["uuid"],
                     "name": rescuer["name"],
-                    "phone": rescuer.get("phone", "未提供"),  # 确保保留电话号码
+                    "phone": rescuer.get("phone", "未提供"),
                     "distance": distance,
                     "distance_score": distance_score,
                     "tag_score": tag_score,
-                    "tag_reason": tag_reason,
+                    "tag_match_details": tag_match_details,
+                    "relevant_tags": relevant_tags,
                     "success_score": success_score,
                     "successful_tasks": successful_tasks,
                     "total_score": total_score,
@@ -92,19 +107,269 @@ class RecommendationService:
                 return {"success": False, "message": "没有合适的救援人员推荐"}
             
             # 生成报告
-            report_html, report_markdown = self.generate_recommendation_report(task, top_rescuers)
+            report_html, report_markdown = self.generate_recommendation_report(task, top_rescuers, relevant_tags)
             
             return {
                 "success": True,
                 "top_rescuers": top_rescuers,
                 "report_html": report_html,
                 "report_markdown": report_markdown,
-                "report_text": report_markdown  # 保持与Java端兼容
+                "report_text": report_markdown,
+                "relevant_tags": relevant_tags
             }
         
         except Exception as e:
             logger.error(f"生成推荐时发生错误: {str(e)}", exc_info=True)
             return {"success": False, "message": f"生成推荐时发生错误: {str(e)}"}
+
+    def extract_relevant_tags(self, extra_info, tag_library):
+        """
+        从额外信息中提取相关标签及其重要性
+        
+        Args:
+            extra_info (str): 任务额外信息
+            tag_library (list): 标签库
+        
+        Returns:
+            tuple: (相关标签列表, 标签重要性字典)
+        """
+        try:
+            logger.info("进入extract_relevant_tags方法")
+            
+            if not extra_info or not tag_library:
+                logger.warning("额外信息或标签库为空，返回空结果")
+                return [], {}
+            
+            # 简单匹配方法 (作为备选)
+            simple_tags = []
+            for tag in tag_library:
+                if tag.lower() in extra_info.lower():
+                    simple_tags.append(tag)
+            
+            simple_importance = {tag: {"importance": 3, "reason": "直接匹配"} for tag in simple_tags}
+            logger.info(f"简单匹配的标签: {simple_tags}")
+            
+            # 如果没有找到任何标签，但仍希望使用一些标签进行测试
+            if not simple_tags and tag_library:
+                # 从标签库中随机选择最多5个标签
+                import random
+                sample_size = min(5, len(tag_library))
+                sample_tags = random.sample(tag_library, sample_size)
+                simple_tags = sample_tags
+                simple_importance = {tag: {"importance": 3, "reason": "随机选择"} for tag in sample_tags}
+                logger.info(f"随机选择的标签: {simple_tags}")
+            
+            # 构建提示词 - 限制只提取最多5个最相关的标签
+            prompt = f"""
+            任务描述：
+            {extra_info}
+            
+            标签库：
+            {', '.join(tag_library)}
+            
+            请根据任务描述推测老人可能遭遇了什么，依据此信息从标签库中提取最多8个与走失老人救援最相关的标签，并为每个相关标签分配重要性等级(1-5，5为最重要)。
+            
+            请使用JSON格式返回结果：
+            {{
+                "relevant_tags": [
+                    {{"tag": "标签1", "importance": 5, "reason": "原因简述"}},
+                    {{"tag": "标签2", "importance": 3, "reason": "原因简述"}}
+                ]
+            }}
+            
+            注意：
+            1. 只选择确实相关的标签，不要强行匹配所有标签
+            2. 不要在返回内容中添加任何代码块标记
+            3. 只返回纯JSON内容，确保JSON格式有效且完整
+            4. 最多只返回5个最相关的标签
+            """
+            
+            logger.info("调用智谱AI模型提取标签")
+            # 调用智谱AI模型
+            try:
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": "你是一个专业的老人走失网站情形分析标签提取系统。请只返回纯JSON格式数据，不要添加任何代码块标记。返回的标签必须来自提供的标签库，且必须根据实际情况思考哪些标签可能会对本任务有帮助，例如老人在森林走失可能需要森林相关地形的技能，老人喜欢钓鱼，可能需要水域搜索等技能，务必因地制宜。最多返回10个最相关的标签。"},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.3,
+                    max_tokens=500  # 减少最大token数以避免生成太长的响应
+                )
+                
+                # 获取返回内容
+                content = response.choices[0].message.content
+                logger.info(f"智谱AI返回内容: {content}")
+                
+                # 清理内容
+                cleaned_content = self._clean_json_content(content)
+                logger.info(f"清理后的内容: {cleaned_content}")
+                
+                # 解析JSON
+                try:
+                    result = json.loads(cleaned_content)
+                    logger.info(f"解析JSON成功: {result}")
+                    
+                    relevant_tag_objects = result.get("relevant_tags", [])
+                    logger.info(f"相关标签对象: {relevant_tag_objects}")
+                    
+                    # 提取标签和重要性
+                    relevant_tags = []
+                    tag_importance = {}
+                    
+                    for tag_obj in relevant_tag_objects:
+                        tag = tag_obj.get("tag")
+                        importance = tag_obj.get("importance", 3)
+                        
+                        logger.info(f"检查标签: {tag}, 是否在标签库中: {tag in tag_library}")
+                        
+                        if tag and tag in tag_library:
+                            relevant_tags.append(tag)
+                            tag_importance[tag] = {
+                                "importance": importance,
+                                "reason": tag_obj.get("reason", "")
+                            }
+                    
+                    logger.info(f"智谱AI提取的相关标签: {relevant_tags}")
+                    logger.info(f"标签重要性: {tag_importance}")
+                    
+                    # 如果没有找到标签，使用简单匹配结果
+                    if not relevant_tags:
+                        logger.warning("智谱AI未提取到有效标签，使用简单匹配结果")
+                        return simple_tags, simple_importance
+                    
+                    return relevant_tags, tag_importance
+                    
+                except json.JSONDecodeError as e:
+                    logger.error(f"解析JSON失败: {str(e)}")
+                    # 尝试修复JSON
+                    try:
+                        import re
+                        # 查找 relevant_tags 数组的开始和结束
+                        match = re.search(r'"relevant_tags"\s*:\s*\[(.*?)\]', cleaned_content, re.DOTALL)
+                        if match:
+                            tags_content = match.group(1)
+                            # 提取各个标签对象
+                            tag_matches = re.finditer(r'\{\s*"tag"\s*:\s*"([^"]+)"\s*,\s*"importance"\s*:\s*(\d+)', tags_content)
+                            
+                            relevant_tags = []
+                            tag_importance = {}
+                            
+                            for tag_match in tag_matches:
+                                tag = tag_match.group(1)
+                                importance = int(tag_match.group(2))
+                                
+                                if tag in tag_library:
+                                    relevant_tags.append(tag)
+                                    tag_importance[tag] = {
+                                        "importance": importance,
+                                        "reason": "从不完整JSON提取"
+                                    }
+                            
+                            logger.info(f"从不完整JSON提取的标签: {relevant_tags}")
+                            
+                            if relevant_tags:
+                                return relevant_tags, tag_importance
+                    except Exception as e2:
+                        logger.error(f"尝试修复JSON失败: {str(e2)}")
+                    
+                    # 如果所有方法都失败，返回简单匹配结果
+                    return simple_tags, simple_importance
+                    
+            except Exception as e:
+                logger.error(f"调用智谱AI失败: {str(e)}")
+                return simple_tags, simple_importance
+                
+        except Exception as e:
+            logger.error(f"提取相关标签时发生错误: {str(e)}", exc_info=True)
+            return [], {}
+
+    def _clean_json_content(self, content):
+        """清理JSON内容，移除Markdown代码块标记和其他非JSON内容"""
+        # 移除开头的```json或```
+        if content.startswith("```"):
+            if content.startswith("```json"):
+                content = content[7:]
+            else:
+                content = content[3:]
+        
+        # 移除结尾的```
+        if content.endswith("```"):
+            content = content[:-3]
+        
+        # 去除前后空白
+        content = content.strip()
+        
+        # 尝试找到JSON的开始和结束
+        import re
+        json_match = re.search(r'(\{.*\})', content, re.DOTALL)
+        if json_match:
+            content = json_match.group(1)
+        
+        return content
+
+    def calculate_tag_match_improved(self, rescuer_tags, relevant_tags, tag_importance):
+        """
+        计算改进版的技能标签匹配度
+        
+        Args:
+            rescuer_tags (list): 救援人员的技能标签
+            relevant_tags (list): 任务相关的标签
+            tag_importance (dict): 标签重要性
+        
+        Returns:
+            tuple: (匹配分数, 匹配详情)
+        """
+        if not rescuer_tags or not relevant_tags:
+            return 5.0, {"matched": [], "missing": relevant_tags, "reason": "无技能标签或无任务相关标签，给予中等评分"}
+        
+        # 计算匹配的标签和缺失的标签
+        matched_tags = []
+        missing_tags = []
+        
+        for tag in relevant_tags:
+            if tag in rescuer_tags:
+                matched_tags.append(tag)
+            else:
+                missing_tags.append(tag)
+        
+        # 计算匹配分数
+        total_importance = sum(tag_importance.get(tag, {}).get("importance", 3) for tag in relevant_tags)
+        matched_importance = sum(tag_importance.get(tag, {}).get("importance", 3) for tag in matched_tags)
+        
+        if total_importance == 0:
+            match_score = 5.0  # 默认中等分数
+        else:
+            # 基于匹配的重要性计算分数
+            match_ratio = matched_importance / total_importance
+            match_score = match_ratio * 10
+        
+        # 生成匹配详情
+        match_details = {
+            "matched": matched_tags,
+            "missing": missing_tags,
+            "match_ratio": f"{matched_importance}/{total_importance}",
+            "reason": self._generate_match_reason(matched_tags, missing_tags, tag_importance)
+        }
+        
+        return match_score, match_details
+
+    def _generate_match_reason(self, matched_tags, missing_tags, tag_importance):
+        """生成标签匹配的原因说明"""
+        if not matched_tags and not missing_tags:
+            return "无需匹配的相关标签"
+        
+        reason = []
+        
+        if matched_tags:
+            matched_str = ", ".join([f"{tag}(重要性:{tag_importance.get(tag, {}).get('importance', 3)})" for tag in matched_tags])
+            reason.append(f"匹配标签: {matched_str}")
+        
+        if missing_tags:
+            missing_str = ", ".join([f"{tag}(重要性:{tag_importance.get(tag, {}).get('importance', 3)})" for tag in missing_tags])
+            reason.append(f"缺失标签: {missing_str}")
+        
+        return "；".join(reason)
     
     def calculate_tag_match(self, task, rescuer_tags):
         """
@@ -164,20 +429,21 @@ class RecommendationService:
             logger.error(f"计算标签匹配度时发生错误: {str(e)}", exc_info=True)
             return 5.0, "评分过程出错，默认给予中等评分"
     
-    def generate_recommendation_report(self, task, top_rescuers):
+    def generate_recommendation_report(self, task, top_rescuers, relevant_tags=None):
         """
         生成推荐报告
         
         Args:
             task (dict): 任务信息
             top_rescuers (list): 排序后的前三名救援人员
+            relevant_tags (list): 任务相关的标签
         
         Returns:
             tuple: (HTML格式报告, Markdown格式报告)
         """
         try:
             # 构建提示词
-            prompt = self._build_report_prompt(task, top_rescuers)
+            prompt = self._build_report_prompt(task, top_rescuers, relevant_tags)
             
             # 调用智谱AI生成报告
             response = self.client.chat.completions.create(
@@ -194,28 +460,44 @@ class RecommendationService:
             markdown_report = response.choices[0].message.content
             
             # 生成HTML格式的报告
-            html_report = self._generate_html_report(task, top_rescuers, markdown_report)
+            html_report = self._generate_html_report(task, top_rescuers, relevant_tags, markdown_report)
             
             return html_report, markdown_report
         
         except Exception as e:
             logger.error(f"生成报告时发生错误: {str(e)}", exc_info=True)
-            return self._generate_fallback_report(task, top_rescuers)
+            return self._generate_fallback_report(task, top_rescuers, relevant_tags)
     
-    def _build_report_prompt(self, task, top_rescuers):
+    def _build_report_prompt(self, task, top_rescuers, relevant_tags=None):
         """构建报告生成的提示词"""
         rescuers_info = []
         for i, rescuer in enumerate(top_rescuers):
+            # 获取标签匹配详情
+            tag_match_details = rescuer.get("tag_match_details", {})
+            matched_tags = tag_match_details.get("matched", [])
+            missing_tags = tag_match_details.get("missing", [])
+            
+            match_info = ""
+            if matched_tags:
+                match_info += f"匹配的关键标签: {', '.join(matched_tags)}\n        "
+            if missing_tags:
+                match_info += f"缺失的关键标签: {', '.join(missing_tags)}"
+            
             rescuers_info.append(f"""
             推荐人选 {i+1}：{rescuer['name']}
             - 距离走失地点约 {rescuer['distance']:.1f} 公里（距离得分：{rescuer['distance_score']:.1f}/10）
             - 技能标签：{', '.join(rescuer.get('skill_tags', []))}
             - 联系电话：{rescuer.get('phone', '未提供')}
             - 技能匹配度得分：{rescuer['tag_score']:.1f}/10
-            - 匹配理由：{rescuer['tag_reason']}
+            - {match_info}
             - 历史成功任务数：{rescuer['successful_tasks']} （经验得分：{rescuer['success_score']:.1f}/10）
             - 综合评分：{rescuer['total_score']:.1f}/10
             """)
+        
+        # 添加相关标签信息
+        task_tags_info = ""
+        if relevant_tags:
+            task_tags_info = f"任务关键标签：{', '.join(relevant_tags)}\n    "
         
         prompt = f"""
             请根据以下信息，生成一份走失老人救援人员推荐报告。
@@ -233,6 +515,7 @@ class RecommendationService:
             - 老人姓名：{task.get('elderName', '未知')}
             - 走失地点：{task.get('location', '未知')}
             - 额外信息：{task.get('extraInfo', '无')}
+            - {task_tags_info}
 
             # 推荐救援人员信息
             {"".join(rescuers_info)}
@@ -245,12 +528,27 @@ class RecommendationService:
             **输出时不要包含任何代码块包裹，只输出 markdown 正文。**
             """
         return prompt
-    
-    def _generate_html_report(self, task, top_rescuers, markdown_report):
+        
+    def _generate_html_report(self, task, top_rescuers, relevant_tags=None, markdown_report=""):
         """生成HTML格式的报告"""
-        # 这里可以使用markdown2html库转换，但为简便起见，我们构建一个基本HTML
+        # 添加任务关键标签
+        task_tag_html = ""
+        if relevant_tags:
+            task_tag_html = f"<p><strong>任务关键标签：</strong>{', '.join(relevant_tags)}</p>"
+        
         html_rescuers = []
         for i, rescuer in enumerate(top_rescuers):
+            # 获取标签匹配详情
+            tag_match_details = rescuer.get("tag_match_details", {})
+            matched_tags = tag_match_details.get("matched", [])
+            missing_tags = tag_match_details.get("missing", [])
+            
+            match_info = ""
+            if matched_tags:
+                match_info += f"<li>匹配的关键标签: <strong>{', '.join(matched_tags)}</strong></li>"
+            if missing_tags:
+                match_info += f"<li>缺失的关键标签: {', '.join(missing_tags)}</li>"
+            
             html_rescuers.append(f"""
                 <div class="rescuer-card">
                     <h4>推荐人选 {i+1}：<span class="rescuer-name">{rescuer['name']}</span></h4>
@@ -259,7 +557,7 @@ class RecommendationService:
                         <li>技能标签：<strong>{', '.join(rescuer.get('skill_tags', []))}</strong></li>
                         <li>联系电话：<strong>{rescuer.get('phone', '未提供')}</strong></li>
                         <li>技能匹配度得分：<strong>{rescuer['tag_score']:.1f}/10</strong></li>
-                        <li>匹配理由：{rescuer['tag_reason']}</li>
+                        {match_info}
                         <li>历史成功任务数：<strong>{rescuer['successful_tasks']}</strong>（经验得分：{rescuer['success_score']:.1f}/10）</li>
                         <li>综合评分：<strong>{rescuer['total_score']:.1f}/10</strong></li>
                     </ul>
@@ -272,11 +570,12 @@ class RecommendationService:
             <p><strong>老人姓名：</strong>{task.get('elderName', '未知')}</p>
             <p><strong>走失地点：</strong>{task.get('location', '未知')}</p>
             <p><strong>额外信息：</strong>{task.get('extraInfo', '无')}</p>
+            {task_tag_html}
             
             <h3>TOP 3 推荐救援人员</h3>
             {"".join(html_rescuers)}
             
-            <p class="recommendation-note">本报告基于距离、技能匹配度和历史成功任务数三方面进行综合评估。<br>建议立即联系推荐人选安排救援行动。</p>
+            <p class="recommendation-note">本报告基于距离、技能标签匹配度和历史成功任务数三方面进行综合评估。<br>建议立即联系推荐人选安排救援行动。</p>
             
             <div class="markdown-content">
                 <pre>{markdown_report}</pre>
@@ -286,8 +585,12 @@ class RecommendationService:
         
         return html_report
     
-    def _generate_fallback_report(self, task, top_rescuers):
+    def _generate_fallback_report(self, task, top_rescuers, relevant_tags=None):
         """生成备用报告（当API调用失败时）"""
+        task_tags_info = ""
+        if relevant_tags and len(relevant_tags) > 0:
+            task_tags_info = f"- **任务关键标签**：{', '.join(relevant_tags)}\n"
+        
         markdown_report = f"""
         # 走失老人救援人员推荐报告
         
@@ -296,19 +599,32 @@ class RecommendationService:
         - **老人姓名**：{task.get('elderName', '未知')}
         - **走失地点**：{task.get('location', '未知')}
         - **额外信息**：{task.get('extraInfo', '无')}
+        {task_tags_info}
         
         ## 推荐救援人员
         
         """
         
         for i, rescuer in enumerate(top_rescuers):
+            # 获取标签匹配详情
+            tag_match_details = rescuer.get("tag_match_details", {})
+            matched_tags = tag_match_details.get("matched", [])
+            missing_tags = tag_match_details.get("missing", [])
+            
+            match_info = ""
+            if matched_tags:
+                match_info += f"- 匹配的关键标签: **{', '.join(matched_tags)}**\n"
+            if missing_tags:
+                match_info += f"- 缺失的关键标签: {', '.join(missing_tags)}\n"
+            
             markdown_report += f"""
         ### 推荐人选 {i+1}：{rescuer['name']}
         
         - 距离走失地点约 **{rescuer['distance']:.1f} 公里**（距离得分：{rescuer['distance_score']:.1f}/10）
         - 技能标签：**{', '.join(rescuer.get('skill_tags', []))}**
+        - 联系电话：**{rescuer.get('phone', '未提供')}**
         - 技能匹配度得分：**{rescuer['tag_score']:.1f}/10**
-        - 匹配理由：{rescuer['tag_reason']}
+        {match_info}
         - 历史成功任务数：**{rescuer['successful_tasks']}**（经验得分：{rescuer['success_score']:.1f}/10）
         - 综合评分：**{rescuer['total_score']:.1f}/10**
         
@@ -321,17 +637,6 @@ class RecommendationService:
         """
         
         # 生成简单的HTML报告
-        html_report = f"""
-        <div class="recommendation-content">
-            <h3>任务信息</h3>
-            <p><strong>老人姓名：</strong>{task.get('elderName', '未知')}</p>
-            <p><strong>走失地点：</strong>{task.get('location', '未知')}</p>
-            
-            <h3>推荐救援人员</h3>
-            <div class="markdown-content">
-                <pre>{markdown_report}</pre>
-            </div>
-        </div>
-        """
+        html_report = self._generate_html_report(task, top_rescuers, relevant_tags, markdown_report)
         
         return html_report, markdown_report

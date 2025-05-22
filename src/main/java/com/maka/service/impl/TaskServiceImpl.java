@@ -4,9 +4,11 @@ import com.maka.mapper.FamilyMapper;
 import com.maka.mapper.TaskMapper;
 import com.maka.pojo.Family;
 import com.maka.pojo.Rescuer;
+import com.maka.pojo.SkillTag;
 import com.maka.pojo.Task;
 import com.maka.pojo.User;
 import com.maka.mapper.UserMapper;
+import com.maka.mapper.SkillTagMapper;
 import com.maka.service.RescuerService;
 import com.maka.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 走失老人任务服务实现
@@ -38,6 +41,9 @@ public class TaskServiceImpl implements TaskService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private SkillTagMapper skillTagMapper;
 
     @Value("${flask.recommendation.url:http://localhost:5000/api/recommend-rescuers}")
     private String recommendationApiUrl;
@@ -165,6 +171,7 @@ public class TaskServiceImpl implements TaskService {
                 result.put("message", "任务不存在");
                 return result;
             }
+            
             // 2. 获取所有可用救援人员
             List<Rescuer> availableRescuers = rescuerService.getAvailableRescuers();
             if (availableRescuers.isEmpty()) {
@@ -173,7 +180,13 @@ public class TaskServiceImpl implements TaskService {
                 return result;
             }
             
-            // 3. 准备请求数据
+            // 3. 获取所有技能标签
+            List<SkillTag> skillTags = skillTagMapper.getAllTags();
+            List<String> allTags = skillTags.stream()
+                .map(SkillTag::getTagName)
+                .collect(Collectors.toList());
+            
+            // 4. 准备请求数据
             Map<String, Object> requestData = new HashMap<>();
             
             // 添加任务信息
@@ -182,11 +195,14 @@ public class TaskServiceImpl implements TaskService {
             taskData.put("elderName", task.getElderName());
             taskData.put("location", task.getLocation());
             taskData.put("extraInfo", task.getExtraInfo());
+            System.out.println("extrainfo!!!"+task.getExtraInfo());
             requestData.put("task", taskData);
+            
+            // 添加标签库
+            requestData.put("tagLibrary", allTags);
             
             // 添加救援人员信息
             List<Map<String, Object>> rescuersList = new ArrayList<>();
-            // 在构建救援人员信息时添加电话号码
             for (Rescuer rescuer : availableRescuers) {
                 Map<String, Object> rescuerData = new HashMap<>();
                 rescuerData.put("uuid", rescuer.getUuid());
@@ -201,7 +217,7 @@ public class TaskServiceImpl implements TaskService {
                     rescuerData.put("phone", user.getPhone());
                 }
                 
-                // 计算成功任务数（如果需要）
+                // 计算成功任务数
                 int successfulTasks = 0;
                 if (rescuer.getTaskIds() != null && !rescuer.getTaskIds().isEmpty()) {
                     List<Task> rescuerTasks = taskMapper.selectByIdList(rescuer.getTaskIds());
@@ -215,7 +231,7 @@ public class TaskServiceImpl implements TaskService {
             }
             requestData.put("rescuers", rescuersList);
             
-            // 4. 调用Python Flask API
+            // 5. 调用Python Flask API
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestData, headers);
@@ -226,7 +242,7 @@ public class TaskServiceImpl implements TaskService {
                     Map.class
             );
             
-            // 5. 处理响应结果
+            // 6. 处理响应结果
             if (response != null && response.containsKey("success") && (Boolean)response.get("success")) {
                 result.put("success", true);
                 result.put("reportHtml", response.get("report_html"));
