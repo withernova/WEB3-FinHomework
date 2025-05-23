@@ -73,4 +73,48 @@ public class TaskReceiveController {
         }
         return res;
     }
+
+    /* ========= A. 进入‘任务追踪’页面 ========= */
+    @GetMapping("/task-track")
+    public String trackPage() {
+        return "task/task-track";     // 对应下面的 HTML
+    }
+
+    /* ========= B. Layui 表格数据：我的任务 ========= */
+    @GetMapping("/my-list-data")
+    @ResponseBody
+    public Map<String,Object> myListData(HttpSession session) {
+
+        String rescuerUid = (String) session.getAttribute("userId");
+        Map<String,Object> res = new HashMap<>();
+        if (rescuerUid == null) {
+            res.put("code",401); res.put("msg","未登录"); return res;
+        }
+
+        List<Task> rows  = taskService.getTasksByRescuer(rescuerUid); // 新增 service
+        res.put("code",0);
+        res.put("msg","success");
+        res.put("count", rows.size());
+        res.put("data", rows);
+        return res;
+    }
+
+    /* ========= C. 完成任务 ========= */
+    @PostMapping("/finish/{id}")
+    @ResponseBody
+    public Map<String,Object> finish(@PathVariable Integer id,
+                                    HttpSession session){
+
+        String rescuerUid = (String) session.getAttribute("userId");
+        Map<String,Object> res = new HashMap<>();
+        if (rescuerUid == null) {
+            res.put("code",401); res.put("msg","未登录"); return res;
+        }
+
+        // 只允许自己的任务改状态
+        boolean ok = taskService.finishTask(id, rescuerUid);
+        if (ok) { res.put("code",0);   res.put("msg","已标记完成"); }
+        else    { res.put("code",500); res.put("msg","操作失败"); }
+        return res;
+    }
 }

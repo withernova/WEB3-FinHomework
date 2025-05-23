@@ -22,6 +22,7 @@ import org.springframework.web.client.RestTemplate;
 
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -283,5 +284,26 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalStateException("Rescuer 不存在或写入失败");
         }
         return true;
+    }
+    @Override
+    public List<Task> getTasksByRescuer(String rescuerUid) {
+        Rescuer r = rescuerService.getRescuerByUuid(rescuerUid);
+        if (r == null || r.getTaskIds() == null || r.getTaskIds().isEmpty()) {
+            return Collections.emptyList();
+        }
+        return taskMapper.selectByIdList(r.getTaskIds());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean finishTask(Integer taskId, String rescuerUid) {
+        // 校验任务是否属于该 rescuer
+        Rescuer r = rescuerService.getRescuerByUuid(rescuerUid);
+        if (r == null || r.getTaskIds() == null || !r.getTaskIds().contains(taskId))
+            return false;
+
+        // 更新状态
+        int u = taskMapper.updateTaskStatus(taskId, "finished");
+        return u == 1;
     }
 }

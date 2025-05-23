@@ -35,4 +35,7 @@ public interface TaskService {
      * @return            true = 成功
      */
     boolean acceptTask(Integer taskId, String rescuerUuid);
+
+    List<Task> getTasksByRescuer(String rescuerUid);
+    boolean finishTask(Integer taskId, String rescuerUid);
 }

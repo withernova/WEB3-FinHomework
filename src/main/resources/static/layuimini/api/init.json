@@ -76,6 +76,12 @@
               "href": "task/task-receive", 
               "icon": "fa fa-download",   
               "target": "_self"
+            },
+            {
+              "title": "任务追踪",
+              "href" : "task/task-track",
+              "icon" : "fa fa-location-arrow",
+              "target": "_self"
             }
           ]
         },
