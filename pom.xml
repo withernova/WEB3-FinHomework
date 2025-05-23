@@ -31,6 +31,11 @@
             <artifactId>fastjson</artifactId>
             <version>1.2.75</version>
         </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.13.0</version>   <!-- 用最新版即可 -->
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
