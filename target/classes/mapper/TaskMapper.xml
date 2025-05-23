@@ -69,19 +69,20 @@
     </select>
 
     <!-- 根据状态查询任务 -->
-    <select id="selectByStatus" parameterType="java.lang.String" resultMap="TaskResultMap">
-        SELECT
-            id,
-            elder_name,
-            lost_time,
-            photo_url,
-            audio_url,
-            location,
-            status,
-            extra_info
-        FROM tasks
-        WHERE status = #{status}
+    <select id="selectByStatus" resultType="com.maka.pojo.Task">
+        SELECT * FROM tasks WHERE status = #{status}
     </select>
+
+    <update id="updateStatus">
+        UPDATE tasks SET status = #{status} WHERE id = #{id}
+    </update>
+
+    <update id="updateTaskStatus">
+        UPDATE tasks
+        SET   status = #{status}
+        WHERE id = #{id} AND status = 'waiting'
+    </update>
+
 
     <!-- 根据ID删除任务 -->
     <delete id="deleteById" parameterType="java.lang.Integer">

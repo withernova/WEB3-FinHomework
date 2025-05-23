@@ -90,6 +90,15 @@
             task_ids = #{taskIds, typeHandler=com.maka.typehandler.JsonIntegerListTypeHandler}
         WHERE uuid = #{uuid}
     </update>
+
+    <update id="appendTaskId">
+        UPDATE rescuers
+        SET task_ids = IF(task_ids IS NULL,
+                          JSON_ARRAY(#{taskId}),
+                          JSON_ARRAY_APPEND(task_ids,'$',#{taskId}))
+        WHERE uuid = #{uuid}
+    </update>
+
     <select id="getAvailableRescuersPaged" resultMap="RescuerMap">
         SELECT 
             uuid, name, status, location, 

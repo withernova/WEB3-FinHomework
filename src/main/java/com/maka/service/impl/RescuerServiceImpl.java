@@ -152,4 +152,10 @@ public class RescuerServiceImpl implements RescuerService {
     public int getAvailableRescuersCount() {
         return rescuerMapper.getAvailableRescuersCount();
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean addTaskToRescuer(String uuid, Integer taskId) {
+        return rescuerMapper.appendTaskId(uuid, taskId) == 1;
+    }
 }

@@ -18,7 +18,8 @@ public interface TaskMapper {
 
     List<Task> selectAll();
 
-    List<Task> selectByStatus(String status);
+    List<Task> selectByStatus(@Param("status") String status);
+    int       updateStatus (@Param("id") Integer id, @Param("status") String status);
 
     int deleteById(Integer id);
     
@@ -26,4 +27,9 @@ public interface TaskMapper {
      * 根据ID列表批量查询任务
      */
     List<Task> selectByIdList(@Param("idList") List<Integer> idList);
+
+    int updateStatusToRescuing(@Param("id") Integer id);
+    int updateTaskStatus(Integer id, String status);
+
+    
 }

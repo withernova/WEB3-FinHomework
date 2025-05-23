@@ -70,6 +70,12 @@
               "href": "task/task-manage",
               "icon": "fa fa-list-alt",
               "target": "_self"
+            },
+            {
+              "title": "任务接收",        
+              "href": "task/task-receive", 
+              "icon": "fa fa-download",   
+              "target": "_self"
             }
           ]
         },

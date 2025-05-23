@@ -266,4 +266,22 @@ public class TaskServiceImpl implements TaskService {
             return result;
         }
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean acceptTask(Integer taskId, String rescuerUid) {
+
+        /* ① 抢单更新 */
+        int updated = taskMapper.updateTaskStatus(taskId, "rescuing");
+        if (updated == 0) {
+            return false;   // 被别人抢了
+        }
+
+        /* ② 写入 rescuer.task_ids */
+        boolean ok = rescuerService.addTaskToRescuer(rescuerUid, taskId);
+        if (!ok) {
+            throw new IllegalStateException("Rescuer 不存在或写入失败");
+        }
+        return true;
+    }
 }

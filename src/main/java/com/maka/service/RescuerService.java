@@ -32,4 +32,6 @@ public interface RescuerService {
     
     int getAvailableRescuersCount();
 
+    boolean addTaskToRescuer(String uuid, Integer taskId);
+
 }

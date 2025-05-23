@@ -30,4 +30,9 @@ public interface RescuerMapper {
 
     List<Rescuer> getAvailableRescuersPaged(@Param("offset") int offset, @Param("limit") int limit);
     int getAvailableRescuersCount();
+
+    int appendTaskId(@Param("uuid") String uuid,@Param("taskId") Integer taskId);
+
+    Rescuer selectByUuid(String uuid);  
+
 }
