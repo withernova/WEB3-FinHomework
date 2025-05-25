@@ -18,6 +18,7 @@ spring:
     password: 114514
     username: root
     hikari:
+      maximum-pool-size: 20
       max-lifetime: 300000
       idle-timeout: 60000
       connection-timeout: 30000
