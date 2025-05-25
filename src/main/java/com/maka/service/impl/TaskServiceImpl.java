@@ -306,7 +306,7 @@ public class TaskServiceImpl implements TaskService {
             return false;
 
         // 更新状态
-        int u = taskMapper.updateTaskStatus(taskId, "finished");
+        int u = taskMapper.updateStatus(taskId, "finished");
         return u == 1;
     }
 

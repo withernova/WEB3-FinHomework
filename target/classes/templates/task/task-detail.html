@@ -201,7 +201,7 @@ layui.use(['layer'], function(){
           if(res.code === 0){
             layer.msg('任务已完成', {icon: 1, time: 1500}, function(){
               // 跳转回任务列表
-              window.location.href = '/task/task-management';
+              window.location.href = '/task/task-track';
             });
           } else {
             layer.msg(res.msg || '操作失败', {icon: 2});

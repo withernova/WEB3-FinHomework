@@ -75,7 +75,17 @@ layui.use(['table','layer','util'], function(){
       {field:'location', title:'走失地点', width:250},
       {field:'status', title:'状态', width:120, templet:'#myStatusTpl'},
       {fixed:'right', title:'操作', width:160, align:'center', toolbar:'#myTaskActions'}
-    ] ]
+    ] ],
+    done: function(res, curr, count) {
+        // 分页显示修正
+        setTimeout(function(){
+        // 强制把分页底部的“共 xx 条”改成 count
+        var countElems = document.querySelectorAll('.layui-laypage-count');
+        countElems.forEach(function(elem) {
+            elem.textContent = '共 ' + count + ' 条';
+        });
+        }, 100);
+    }
   });
 
   /* ===== 2. 监听工具条 ===== */

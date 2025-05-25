@@ -19,7 +19,7 @@ public interface TaskMapper {
     List<Task> selectAll();
 
     List<Task> selectByStatus(@Param("status") String status);
-    int       updateStatus (@Param("id") Integer id, @Param("status") String status);
+    int updateStatus (@Param("id") Integer id, @Param("status") String status);
 
     int deleteById(Integer id);
     
