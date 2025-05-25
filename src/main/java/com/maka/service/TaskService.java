@@ -38,4 +38,6 @@ public interface TaskService {
 
     List<Task> getTasksByRescuer(String rescuerUid);
     boolean finishTask(Integer taskId, String rescuerUid);
+
+    Map<String, Object> generateElderInfoSummary(Map<String, Object> templateData);
 }

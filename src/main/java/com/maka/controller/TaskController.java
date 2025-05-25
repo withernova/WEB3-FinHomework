@@ -2,6 +2,7 @@ package com.maka.controller;
 
 import com.maka.pojo.Task;
 import com.maka.service.TaskService;
+import com.maka.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -25,6 +26,9 @@ public class TaskController {
 
     @Autowired
     private TaskService taskService;
+
+    @Autowired
+    private UserService userService;
 
     @GetMapping("/task-publish")
     public String showTaskPublishPage(HttpSession session) {
@@ -53,6 +57,26 @@ public class TaskController {
         
         // 返回任务管理页面
         return "task/task-manage";
+    }
+
+    /**
+     * 显示任务接收页面
+     */
+    @GetMapping("/task-management")
+    public String showTaskManagementPage(HttpSession session) {
+        // 检查用户是否已登录
+        String userId = (String) session.getAttribute("userId");
+        if (userId == null) {
+            return "redirect:/login";
+        }
+        
+        // 检查用户是否为救援者
+        if (!userService.isRescuer(userId)) {
+            // 如果不是救援者，重定向到适当的页面
+            return "redirect:/task/task-manage";
+        }
+        
+        return "task/task-management";
     }
     
     /**
@@ -104,12 +128,27 @@ public class TaskController {
             return "redirect:/login";
         }
         
+        // 获取用户类型
+        String userType = userService.getUserType(userId);
+        
         // 获取任务详情
         Task task = taskService.getTaskById(id);
         
-        // 检查任务是否存在且属于当前用户
-        if (task != null && taskService.isTaskBelongsToFamily(id, userId)) {
+        // 检查任务是否存在以及用户是否有权限查看
+        boolean hasPermission = false;
+        
+        if (task != null) {
+            if ("family".equals(userType) && taskService.isTaskBelongsToFamily(id, userId)) {
+                hasPermission = true;
+            } else if ("rescuer".equals(userType)) {
+                hasPermission = true;
+            }
+        }
+        
+        if (hasPermission) {
             model.addAttribute("task", task);
+            // 将用户类型添加到模型中，以便在前端使用
+            model.addAttribute("userType", userType);
         } else {
             model.addAttribute("errorMsg", "任务不存在或您没有权限查看");
         }
@@ -478,6 +517,26 @@ public class TaskController {
             response.put("msg", "服务器错误: " + e.getMessage());
             return response;
         }
+    }
+
+    @PostMapping("/generate-summary")
+    @ResponseBody
+    public Map<String, Object> generateSummary(
+            @RequestBody Map<String, Object> templateData,
+            HttpSession session) {
+        
+        // 获取当前登录用户UUID
+        String userId = (String) session.getAttribute("userId");
+        if (userId == null) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("code", 401);
+            response.put("msg", "用户未登录");
+            return response;
+        }
+        
+        
+        // 调用服务生成摘要
+        return taskService.generateElderInfoSummary(templateData);
     }
 
 }

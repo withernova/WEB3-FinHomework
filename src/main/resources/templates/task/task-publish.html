@@ -18,6 +18,21 @@
     .upload-preview audio{margin-top:5px;}
     .required:after{content:'*';color:red;margin-left:4px;}
     .extra-info{min-height:100px;}
+    .template-btn{margin-top:8px;background:#f2f2f2;border:1px dashed #ddd;color:#666;}
+    .template-btn:hover{background:#e6e6e6;color:#333;}
+    .layui-elem-field{margin-bottom:20px;padding:15px;border:1px solid #e6e6e6;}
+    .layui-elem-field legend{font-size:16px;font-weight:bold;padding:0 10px;}
+    .info-template .layui-form-item:last-child{margin-bottom:0;}
+    .layui-scrollbar{max-height:500px;overflow-y:auto;padding-right:15px;}
+    .custom-input{margin-top:8px;display:none;}
+    .custom-input .layui-input{margin-left:5px;}
+    .checkbox-other{margin-left:5px !important;}
+    .add-custom-btn{background:#f2f2f2;border:1px dashed #ddd;font-size:12px;height:26px;line-height:26px;
+      padding:0 8px;margin-left:5px;margin-top:5px;}
+    .custom-item{background:#f0f0f0;border-radius:3px;padding:3px 6px;margin:5px 5px 0 0;display:inline-block;}
+    .custom-item i{font-size:12px;margin-left:3px;cursor:pointer;color:#999;}
+    .custom-item i:hover{color:#FF5722;}
+    .custom-items-container{margin-top:5px;}
   </style>
 </head>
 <body>
@@ -79,7 +94,10 @@
       <div class="layui-form-item layui-form-text">
         <label class="layui-form-label">额外信息</label>
         <div class="layui-input-block">
-          <textarea name="extraInfo" placeholder="请输入老人特征、着装、身体状况等额外信息" class="layui-textarea extra-info"></textarea>
+          <textarea name="extraInfo" id="extraInfo" placeholder="请输入老人特征、着装、身体状况等额外信息" class="layui-textarea extra-info"></textarea>
+          <button type="button" class="layui-btn layui-btn-primary template-btn" id="detailedInfoBtn">
+            <i class="layui-icon layui-icon-form"></i> 填写详细信息模板
+          </button>
         </div>
       </div>
 
@@ -92,6 +110,357 @@
         <button type="reset" class="layui-btn layui-btn-primary">重置</button>
       </div>
     </form>
+    
+    <!-- 详细信息模板 - 隐藏 -->
+    <div id="detailedInfoTemplate" style="display:none;">
+      <div class="layui-scrollbar">
+        <form class="layui-form info-template" lay-filter="templateForm">
+          <!-- 基本信息 -->
+          <fieldset class="layui-elem-field">
+            <legend>基本信息</legend>
+            <div class="layui-field-box">
+              <div class="layui-form-item">
+                <label class="layui-form-label">年龄</label>
+                <div class="layui-input-inline" style="width:100px;">
+                  <input type="number" name="age" placeholder="岁" class="layui-input">
+                </div>
+              </div>
+              
+              <div class="layui-form-item">
+                <label class="layui-form-label">性别</label>
+                <div class="layui-input-block">
+                  <input type="radio" name="gender" value="男" title="男">
+                  <input type="radio" name="gender" value="女" title="女">
+                </div>
+              </div>
+              
+              <div class="layui-form-item">
+                <label class="layui-form-label">身高体重</label>
+                <div class="layui-input-inline" style="width:120px;">
+                  <input type="text" name="height" placeholder="身高(cm)" class="layui-input">
+                </div>
+                <div class="layui-input-inline" style="width:120px;">
+                  <input type="text" name="weight" placeholder="体重(kg)" class="layui-input">
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- 身体状况 -->
+          <fieldset class="layui-elem-field">
+            <legend>身体状况</legend>
+            <div class="layui-field-box">
+              <div class="layui-form-item">
+                <label class="layui-form-label">行动能力</label>
+                <div class="layui-input-block">
+                  <input type="checkbox" name="mobility" value="需要拐杖" title="需要拐杖">
+                  <input type="checkbox" name="mobility" value="轮椅" title="轮椅">
+                  <input type="checkbox" name="mobility" value="行动缓慢" title="行动缓慢">
+                  <input type="checkbox" name="mobility" value="行动正常" title="行动正常">
+                  <input type="checkbox" name="mobility" value="其他" title="其他" lay-filter="checkboxFilter" class="checkbox-other">
+                  <div class="custom-input" id="mobility-custom">
+                    <div class="layui-inline">
+                      <input type="text" class="layui-input custom-value" placeholder="请输入其他行动能力特征">
+                      <button type="button" class="layui-btn layui-btn-xs add-custom-btn" data-type="mobility">添加</button>
+                    </div>
+                    <div class="custom-items-container" id="mobility-items"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="layui-form-item">
+                <label class="layui-form-label">健康状况</label>
+                <div class="layui-input-block">
+                  <input type="checkbox" name="health" value="老年痴呆" title="老年痴呆">
+                  <input type="checkbox" name="health" value="糖尿病" title="糖尿病">
+                  <input type="checkbox" name="health" value="高血压" title="高血压">
+                  <input type="checkbox" name="health" value="心脏病" title="心脏病">
+                  <input type="checkbox" name="health" value="视力障碍" title="视力障碍">
+                  <input type="checkbox" name="health" value="听力障碍" title="听力障碍">
+                  <input type="checkbox" name="health" value="语言障碍" title="语言障碍">
+                  <input type="checkbox" name="health" value="其他" title="其他" lay-filter="checkboxFilter" class="checkbox-other">
+                  <div class="custom-input" id="health-custom">
+                    <div class="layui-inline">
+                      <input type="text" class="layui-input custom-value" placeholder="请输入其他健康状况">
+                      <button type="button" class="layui-btn layui-btn-xs add-custom-btn" data-type="health">添加</button>
+                    </div>
+                    <div class="custom-items-container" id="health-items"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="layui-form-item">
+                <label class="layui-form-label">用药情况</label>
+                <div class="layui-input-block">
+                  <textarea name="medication" placeholder="请描述老人正在服用的药物" class="layui-textarea"></textarea>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- 外貌特征 -->
+          <fieldset class="layui-elem-field">
+            <legend>外貌特征</legend>
+            <div class="layui-field-box">
+              <div class="layui-form-item">
+                <label class="layui-form-label">发型发色</label>
+                <div class="layui-input-block">
+                  <input type="checkbox" name="hair" value="白发" title="白发">
+                  <input type="checkbox" name="hair" value="花白" title="花白">
+                  <input type="checkbox" name="hair" value="短发" title="短发">
+                  <input type="checkbox" name="hair" value="长发" title="长发">
+                  <input type="checkbox" name="hair" value="光头" title="光头">
+                  <input type="checkbox" name="hair" value="其他" title="其他" lay-filter="checkboxFilter" class="checkbox-other">
+                  <div class="custom-input" id="hair-custom">
+                    <div class="layui-inline">
+                      <input type="text" class="layui-input custom-value" placeholder="请输入其他发型发色特征">
+                      <button type="button" class="layui-btn layui-btn-xs add-custom-btn" data-type="hair">添加</button>
+                    </div>
+                    <div class="custom-items-container" id="hair-items"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="layui-form-item">
+                <label class="layui-form-label">特殊标记</label>
+                <div class="layui-input-block">
+                  <input type="checkbox" name="marks" value="戴眼镜" title="戴眼镜">
+                  <input type="checkbox" name="marks" value="有疤痕" title="有疤痕">
+                  <input type="checkbox" name="marks" value="有纹身" title="有纹身">
+                  <input type="checkbox" name="marks" value="戴假牙" title="戴假牙">
+                  <input type="checkbox" name="marks" value="其他" title="其他" lay-filter="checkboxFilter" class="checkbox-other">
+                  <div class="custom-input" id="marks-custom">
+                    <div class="layui-inline">
+                      <input type="text" class="layui-input custom-value" placeholder="请输入其他特殊标记">
+                      <button type="button" class="layui-btn layui-btn-xs add-custom-btn" data-type="marks">添加</button>
+                    </div>
+                    <div class="custom-items-container" id="marks-items"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="layui-form-item">
+                <label class="layui-form-label">体型特征</label>
+                <div class="layui-input-block">
+                  <input type="checkbox" name="bodyType" value="偏瘦" title="偏瘦">
+                  <input type="checkbox" name="bodyType" value="偏胖" title="偏胖">
+                  <input type="checkbox" name="bodyType" value="中等身材" title="中等身材">
+                  <input type="checkbox" name="bodyType" value="驼背" title="驼背">
+                  <input type="checkbox" name="bodyType" value="其他" title="其他" lay-filter="checkboxFilter" class="checkbox-other">
+                  <div class="custom-input" id="bodyType-custom">
+                    <div class="layui-inline">
+                      <input type="text" class="layui-input custom-value" placeholder="请输入其他体型特征">
+                      <button type="button" class="layui-btn layui-btn-xs add-custom-btn" data-type="bodyType">添加</button>
+                    </div>
+                    <div class="custom-items-container" id="bodyType-items"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- 着装信息 -->
+          <fieldset class="layui-elem-field">
+            <legend>着装信息</legend>
+            <div class="layui-field-box">
+              <div class="layui-form-item">
+                <label class="layui-form-label">上衣</label>
+                <div class="layui-input-block">
+                  <input type="text" name="topClothing" placeholder="如：蓝色外套、白色衬衫等" class="layui-input">
+                </div>
+              </div>
+              
+              <div class="layui-form-item">
+                <label class="layui-form-label">下装</label>
+                <div class="layui-input-block">
+                  <input type="text" name="bottomClothing" placeholder="如：黑色裤子、深色裙子等" class="layui-input">
+                </div>
+              </div>
+              
+              <div class="layui-form-item">
+                <label class="layui-form-label">鞋子</label>
+                <div class="layui-input-block">
+                  <input type="text" name="shoes" placeholder="如：黑色皮鞋、运动鞋等" class="layui-input">
+                </div>
+              </div>
+              
+              <div class="layui-form-item">
+                <label class="layui-form-label">随身物品</label>
+                <div class="layui-input-block">
+                  <input type="checkbox" name="belongings" value="手机" title="手机">
+                  <input type="checkbox" name="belongings" value="钱包" title="钱包">
+                  <input type="checkbox" name="belongings" value="拐杖" title="拐杖">
+                  <input type="checkbox" name="belongings" value="药品" title="药品">
+                  <input type="checkbox" name="belongings" value="购物袋" title="购物袋">
+                  <input type="checkbox" name="belongings" value="其他" title="其他" lay-filter="checkboxFilter" class="checkbox-other">
+                  <div class="custom-input" id="belongings-custom">
+                    <div class="layui-inline">
+                      <input type="text" class="layui-input custom-value" placeholder="请输入其他随身物品">
+                      <button type="button" class="layui-btn layui-btn-xs add-custom-btn" data-type="belongings">添加</button>
+                    </div>
+                    <div class="custom-items-container" id="belongings-items"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- 爱好与习惯 -->
+          <fieldset class="layui-elem-field">
+            <legend>爱好与习惯</legend>
+            <div class="layui-field-box">
+              <div class="layui-form-item">
+                <label class="layui-form-label">日常爱好</label>
+                <div class="layui-input-block">
+                  <input type="checkbox" name="hobbies" value="看电视" title="看电视">
+                  <input type="checkbox" name="hobbies" value="打麻将" title="打麻将">
+                  <input type="checkbox" name="hobbies" value="下棋" title="下棋">
+                  <input type="checkbox" name="hobbies" value="钓鱼" title="钓鱼">
+                  <input type="checkbox" name="hobbies" value="跳广场舞" title="跳广场舞">
+                  <input type="checkbox" name="hobbies" value="散步" title="散步">
+                  <input type="checkbox" name="hobbies" value="唱歌" title="唱歌">
+                  <input type="checkbox" name="hobbies" value="其他" title="其他" lay-filter="checkboxFilter" class="checkbox-other">
+                  <div class="custom-input" id="hobbies-custom">
+                    <div class="layui-inline">
+                      <input type="text" class="layui-input custom-value" placeholder="请输入其他爱好">
+                      <button type="button" class="layui-btn layui-btn-xs add-custom-btn" data-type="hobbies">添加</button>
+                    </div>
+                    <div class="custom-items-container" id="hobbies-items"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="layui-form-item">
+                <label class="layui-form-label">日常活动</label>
+                <div class="layui-input-block">
+                  <input type="checkbox" name="activities" value="买菜" title="买菜">
+                  <input type="checkbox" name="activities" value="遛弯" title="遛弯">
+                  <input type="checkbox" name="activities" value="看报" title="看报">
+                  <input type="checkbox" name="activities" value="接送小孩" title="接送小孩">
+                  <input type="checkbox" name="activities" value="去广场" title="去广场">
+                  <input type="checkbox" name="activities" value="集市购物" title="集市购物">
+                  <input type="checkbox" name="activities" value="其他" title="其他" lay-filter="checkboxFilter" class="checkbox-other">
+                  <div class="custom-input" id="activities-custom">
+                    <div class="layui-inline">
+                      <input type="text" class="layui-input custom-value" placeholder="请输入其他日常活动">
+                      <button type="button" class="layui-btn layui-btn-xs add-custom-btn" data-type="activities">添加</button>
+                    </div>
+                    <div class="custom-items-container" id="activities-items"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="layui-form-item">
+                <label class="layui-form-label">生活习惯</label>
+                <div class="layui-input-block">
+                  <textarea name="habits" placeholder="请描述老人的其他生活习惯，如早起晚睡，固定时间做某事等" class="layui-textarea"></textarea>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- 行为习惯 -->
+          <fieldset class="layui-elem-field">
+            <legend>行为特点</legend>
+            <div class="layui-field-box">
+              <div class="layui-form-item">
+                <label class="layui-form-label">常去地点</label>
+                <div class="layui-input-block">
+                  <input type="checkbox" name="frequentPlaces" value="公园" title="公园">
+                  <input type="checkbox" name="frequentPlaces" value="超市" title="超市">
+                  <input type="checkbox" name="frequentPlaces" value="医院" title="医院">
+                  <input type="checkbox" name="frequentPlaces" value="菜市场" title="菜市场">
+                  <input type="checkbox" name="frequentPlaces" value="老家" title="老家">
+                  <input type="checkbox" name="frequentPlaces" value="朋友家" title="朋友家">
+                  <input type="checkbox" name="frequentPlaces" value="其他" title="其他" lay-filter="checkboxFilter" class="checkbox-other">
+                  <div class="custom-input" id="frequentPlaces-custom">
+                    <div class="layui-inline">
+                      <input type="text" class="layui-input custom-value" placeholder="请输入其他常去地点">
+                      <button type="button" class="layui-btn layui-btn-xs add-custom-btn" data-type="frequentPlaces">添加</button>
+                    </div>
+                    <div class="custom-items-container" id="frequentPlaces-items"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="layui-form-item">
+                <label class="layui-form-label">行为特点</label>
+                <div class="layui-input-block">
+                  <input type="checkbox" name="behavior" value="容易迷路" title="容易迷路">
+                  <input type="checkbox" name="behavior" value="记忆力差" title="记忆力差">
+                  <input type="checkbox" name="behavior" value="喜欢独自外出" title="喜欢独自外出">
+                  <input type="checkbox" name="behavior" value="害怕陌生人" title="害怕陌生人">
+                  <input type="checkbox" name="behavior" value="容易焦虑" title="容易焦虑">
+                  <input type="checkbox" name="behavior" value="其他" title="其他" lay-filter="checkboxFilter" class="checkbox-other">
+                  <div class="custom-input" id="behavior-custom">
+                    <div class="layui-inline">
+                      <input type="text" class="layui-input custom-value" placeholder="请输入其他行为特点">
+                      <button type="button" class="layui-btn layui-btn-xs add-custom-btn" data-type="behavior">添加</button>
+                    </div>
+                    <div class="custom-items-container" id="behavior-items"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="layui-form-item">
+                <label class="layui-form-label">语言能力</label>
+                <div class="layui-input-block">
+                  <input type="checkbox" name="language" value="说普通话" title="说普通话">
+                  <input type="checkbox" name="language" value="说方言" title="说方言">
+                  <input type="checkbox" name="language" value="表达困难" title="表达困难">
+                  <input type="checkbox" name="language" value="不会说话" title="不会说话">
+                  <input type="checkbox" name="language" value="其他" title="其他" lay-filter="checkboxFilter" class="checkbox-other">
+                  <div class="custom-input" id="language-custom">
+                    <div class="layui-inline">
+                      <input type="text" class="layui-input custom-value" placeholder="请输入其他语言能力特点">
+                      <button type="button" class="layui-btn layui-btn-xs add-custom-btn" data-type="language">添加</button>
+                    </div>
+                    <div class="custom-items-container" id="language-items"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- 紧急情况 -->
+          <fieldset class="layui-elem-field">
+            <legend>紧急情况处理</legend>
+            <div class="layui-field-box">
+              <div class="layui-form-item">
+                <label class="layui-form-label">紧急需求</label>
+                <div class="layui-input-block">
+                  <input type="checkbox" name="emergency" value="需要定时用药" title="需要定时用药">
+                  <input type="checkbox" name="emergency" value="不能受惊吓" title="不能受惊吓">
+                  <input type="checkbox" name="emergency" value="有心脏病史" title="有心脏病史">
+                  <input type="checkbox" name="emergency" value="容易跌倒" title="容易跌倒">
+                  <input type="checkbox" name="emergency" value="其他" title="其他" lay-filter="checkboxFilter" class="checkbox-other">
+                  <div class="custom-input" id="emergency-custom">
+                    <div class="layui-inline">
+                      <input type="text" class="layui-input custom-value" placeholder="请输入其他紧急需求">
+                      <button type="button" class="layui-btn layui-btn-xs add-custom-btn" data-type="emergency">添加</button>
+                    </div>
+                    <div class="custom-items-container" id="emergency-items"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- 其他补充信息 -->
+          <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">其他信息</label>
+            <div class="layui-input-block">
+              <textarea name="additionalInfo" placeholder="请补充其他重要信息" class="layui-textarea"></textarea>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div style="text-align:center;margin-top:20px;padding-bottom:10px;">
+        <button type="button" class="layui-btn" id="generateSummary">生成智能摘要</button>
+        <button type="button" class="layui-btn layui-btn-primary" id="manualFill">手动填写</button>
+        <button type="button" class="layui-btn layui-btn-primary" id="cancelTemplate">取消</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -104,6 +473,22 @@ layui.use(['form','laydate','upload','layer'], function(){
       ,laydate = layui.laydate
       ,upload = layui.upload
       ,layer = layui.layer;
+
+  // 自定义项的存储
+  var customItems = {
+    mobility: [],
+    health: [],
+    hair: [],
+    marks: [],
+    bodyType: [],
+    belongings: [],
+    hobbies: [],
+    activities: [],
+    frequentPlaces: [],
+    behavior: [],
+    language: [],
+    emergency: []
+  };
 
   // 初始化日期时间选择器
   laydate.render({
@@ -118,10 +503,8 @@ layui.use(['form','laydate','upload','layer'], function(){
     url :'/upload/image',
     accept:'images',
     done:function(res){
-      
       $('#imagePreview').html('<img src="'+res.url+'" width="120">');
       $('#photoUrl').val(res.url);  // 关键：同步写入input
-      
     }
   });
 
@@ -136,9 +519,354 @@ layui.use(['form','laydate','upload','layer'], function(){
         '<audio controls style="display:block;margin-top:5px;"><source src="'+res.url+'" type="audio/mpeg"></audio></div>'
       );
       $('#audioUrl').val(res.url);
-      
     }
   });
+  
+  // "其他"复选框监听
+  form.on('checkbox(checkboxFilter)', function(data){
+    var type = $(this).attr('name');
+    var checked = data.elem.checked;
+    $('#'+type+'-custom').css('display', checked ? 'block' : 'none');
+  });
+  
+  // 添加自定义项按钮点击事件
+  $('.add-custom-btn').on('click', function(){
+    var type = $(this).data('type');
+    var value = $(this).prev('.custom-value').val().trim();
+    
+    if(!value) {
+      layer.msg('请输入内容', {icon: 2});
+      return;
+    }
+    
+    // 添加到自定义项列表
+    addCustomItem(type, value);
+    
+    // 清空输入框
+    $(this).prev('.custom-value').val('');
+  });
+  
+  // 添加自定义项函数
+  function addCustomItem(type, value) {
+    // 检查是否已存在
+    if(customItems[type].indexOf(value) !== -1) {
+      layer.msg('该项已存在', {icon: 2});
+      return;
+    }
+    
+    // 添加到存储中
+    customItems[type].push(value);
+    
+    // 添加UI元素
+    var itemHtml = '<span class="custom-item" data-type="'+type+'" data-value="'+value+'">' + 
+                   value + '<i class="layui-icon layui-icon-close remove-item"></i></span>';
+    $('#'+type+'-items').append(itemHtml);
+    
+    // 绑定删除事件
+    $('.remove-item').off('click').on('click', function(){
+      var item = $(this).parent();
+      var itemType = item.data('type');
+      var itemValue = item.data('value');
+      
+      // 从存储中移除
+      var index = customItems[itemType].indexOf(itemValue);
+      if(index !== -1) {
+        customItems[itemType].splice(index, 1);
+      }
+      
+      // 移除UI元素
+      item.remove();
+    });
+  }
+  
+  // 详细信息模板按钮点击事件
+  $('#detailedInfoBtn').on('click', function(){
+    // 清空所有自定义项
+    clearCustomItems();
+    
+    layer.open({
+      type: 1,
+      title: '详细信息填写',
+      area: ['800px', '600px'],
+      content: $('#detailedInfoTemplate'),
+      success: function(layero, index){
+        form.render(); // 重新渲染表单元素
+        
+        // 生成摘要按钮事件
+        $('#generateSummary').off('click').on('click', function(){
+          generateAISummary(index);
+        });
+        
+        // 手动填写按钮事件
+        $('#manualFill').off('click').on('click', function(){
+          fillManually(index);
+        });
+        
+        // 取消按钮事件
+        $('#cancelTemplate').off('click').on('click', function(){
+          layer.close(index);
+        });
+      }
+    });
+  });
+  
+  // 清空所有自定义项
+  function clearCustomItems() {
+    for(var type in customItems) {
+      customItems[type] = [];
+      $('#'+type+'-items').empty();
+    }
+    
+    // 隐藏所有自定义输入框
+    $('.custom-input').hide();
+    
+    // 取消所有"其他"复选框的选中状态
+    $('input[lay-filter="checkboxFilter"]').each(function(){
+      $(this).prop('checked', false);
+    });
+    
+    // 重新渲染表单
+    form.render();
+  }
+  
+  // 生成AI摘要函数
+  function generateAISummary(layerIndex) {
+    // 收集表单数据
+    var templateData = collectTemplateData();
+    
+    // 检查是否有数据填写
+    if(isTemplateEmpty(templateData)) {
+      layer.msg('请至少填写一些信息', {icon: 2});
+      return;
+    }
+    
+    // 显示加载层
+    var loadIndex = layer.load(2, {shade: [0.3, '#000']});
+    
+    // 调用后端API生成摘要
+    $.ajax({
+      url: '/task/generate-summary',
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(templateData),
+      success: function(res){
+        layer.close(loadIndex);
+        if(res.code === 0){
+          // 将生成的摘要填入原表单的额外信息字段
+          $('#extraInfo').val(res.data.summary);
+          layer.msg('摘要生成成功', {icon: 1});
+          layer.close(layerIndex); // 关闭模板弹窗
+        } else {
+          layer.msg(res.msg || '摘要生成失败', {icon: 2});
+        }
+      },
+      error: function(){
+        layer.close(loadIndex);
+        layer.msg('服务器错误，请稍后重试', {icon: 2});
+      }
+    });
+  }
+  
+  // 手动填写函数
+  function fillManually(layerIndex) {
+    var templateData = collectTemplateData();
+    
+    // 检查是否有数据填写
+    if(isTemplateEmpty(templateData)) {
+      layer.msg('请至少填写一些信息', {icon: 2});
+      return;
+    }
+    
+    // 生成文本描述
+    var description = generateManualDescription(templateData);
+    
+    // 填入表单
+    $('#extraInfo').val(description);
+    layer.msg('信息已填写', {icon: 1});
+    layer.close(layerIndex);
+  }
+  
+  // 收集模板数据
+  function collectTemplateData() {
+    var templateData = {};
+    
+    // 基本信息
+    templateData.age = $('input[name="age"]').val();
+    templateData.gender = $('input[name="gender"]:checked').val();
+    templateData.height = $('input[name="height"]').val();
+    templateData.weight = $('input[name="weight"]').val();
+    
+    // 收集复选框数据和自定义项
+    function collectCheckboxValues(name) {
+      var values = [];
+      $('input[name="'+name+'"]:checked').each(function(){
+        var value = $(this).val();
+        if(value !== '其他') {
+          values.push(value);
+        }
+      });
+      
+      // 添加自定义项
+      if(customItems[name] && customItems[name].length > 0) {
+        values = values.concat(customItems[name]);
+      }
+      
+      return values;
+    }
+    
+    // 身体状况
+    templateData.mobility = collectCheckboxValues('mobility');
+    templateData.health = collectCheckboxValues('health');
+    templateData.medication = $('textarea[name="medication"]').val();
+    
+    // 外貌特征
+    templateData.hair = collectCheckboxValues('hair');
+    templateData.marks = collectCheckboxValues('marks');
+    templateData.bodyType = collectCheckboxValues('bodyType');
+    
+    // 着装信息
+    templateData.topClothing = $('input[name="topClothing"]').val();
+    templateData.bottomClothing = $('input[name="bottomClothing"]').val();
+    templateData.shoes = $('input[name="shoes"]').val();
+    templateData.belongings = collectCheckboxValues('belongings');
+    
+    // 爱好与习惯
+    templateData.hobbies = collectCheckboxValues('hobbies');
+    templateData.activities = collectCheckboxValues('activities');
+    templateData.habits = $('textarea[name="habits"]').val();
+    
+    // 行为特点
+    templateData.frequentPlaces = collectCheckboxValues('frequentPlaces');
+    templateData.behavior = collectCheckboxValues('behavior');
+    templateData.language = collectCheckboxValues('language');
+    
+    // 紧急情况
+    templateData.emergency = collectCheckboxValues('emergency');
+    
+    // 其他信息
+    templateData.additionalInfo = $('textarea[name="additionalInfo"]').val();
+    
+    return templateData;
+  }
+  
+  // 检查模板是否为空
+  function isTemplateEmpty(data) {
+    // 检查是否至少有一项非空数据
+    for(var key in data) {
+      if(Array.isArray(data[key]) && data[key].length > 0) return false;
+      if(typeof data[key] === 'string' && data[key].trim() !== '') return false;
+      if(data[key] !== undefined && data[key] !== null && data[key] !== '') return false;
+    }
+    return true;
+  }
+  
+  // 生成手动描述文本
+  function generateManualDescription(data) {
+    var parts = [];
+    
+    // 基本信息
+    var basicInfo = [];
+    if(data.age) basicInfo.push(data.age + "岁");
+    if(data.gender) basicInfo.push(data.gender + "性");
+    if(data.height) basicInfo.push("身高约" + data.height + "cm");
+    if(data.weight) basicInfo.push("体重约" + data.weight + "kg");
+    
+    if(basicInfo.length > 0) {
+      parts.push("基本特征：" + basicInfo.join("、") + "。");
+    }
+    
+    // 身体状况
+    var healthInfo = [];
+    if(data.health && data.health.length > 0) {
+      healthInfo.push("健康状况：" + data.health.join("、"));
+    }
+    if(data.mobility && data.mobility.length > 0) {
+      healthInfo.push("行动能力：" + data.mobility.join("、"));
+    }
+    if(data.medication) {
+      healthInfo.push("用药情况：" + data.medication);
+    }
+    
+    if(healthInfo.length > 0) {
+      parts.push("身体状况：" + healthInfo.join("。") + "。");
+    }
+    
+    // 外貌和着装
+    var appearanceInfo = [];
+    
+    if(data.bodyType && data.bodyType.length > 0) {
+      appearanceInfo.push("体型：" + data.bodyType.join("、"));
+    }
+    if(data.hair && data.hair.length > 0) {
+      appearanceInfo.push("头发：" + data.hair.join("、"));
+    }
+    if(data.marks && data.marks.length > 0) {
+      appearanceInfo.push("特征：" + data.marks.join("、"));
+    }
+    
+    var clothingInfo = [];
+    if(data.topClothing) clothingInfo.push("上衣：" + data.topClothing);
+    if(data.bottomClothing) clothingInfo.push("下装：" + data.bottomClothing);
+    if(data.shoes) clothingInfo.push("鞋子：" + data.shoes);
+    
+    if(clothingInfo.length > 0) {
+      appearanceInfo.push("着装：" + clothingInfo.join("，"));
+    }
+    
+    if(data.belongings && data.belongings.length > 0) {
+      appearanceInfo.push("随身物品：" + data.belongings.join("、"));
+    }
+    
+    if(appearanceInfo.length > 0) {
+      parts.push("外貌与着装：" + appearanceInfo.join("。") + "。");
+    }
+    
+    // 爱好与习惯
+    var hobbyInfo = [];
+    
+    if(data.hobbies && data.hobbies.length > 0) {
+      hobbyInfo.push("爱好：" + data.hobbies.join("、"));
+    }
+    if(data.activities && data.activities.length > 0) {
+      hobbyInfo.push("日常活动：" + data.activities.join("、"));
+    }
+    if(data.habits) {
+      hobbyInfo.push("生活习惯：" + data.habits);
+    }
+    
+    if(hobbyInfo.length > 0) {
+      parts.push("爱好与习惯：" + hobbyInfo.join("。") + "。");
+    }
+    
+    // 行为习惯
+    var behaviorInfo = [];
+    
+    if(data.behavior && data.behavior.length > 0) {
+      behaviorInfo.push("行为特点：" + data.behavior.join("、"));
+    }
+    if(data.language && data.language.length > 0) {
+      behaviorInfo.push("语言能力：" + data.language.join("、"));
+    }
+    if(data.frequentPlaces && data.frequentPlaces.length > 0) {
+      behaviorInfo.push("可能去往：" + data.frequentPlaces.join("、"));
+    }
+    
+    if(behaviorInfo.length > 0) {
+      parts.push("行为特点：" + behaviorInfo.join("。") + "。");
+    }
+    
+    // 紧急情况
+    if(data.emergency && data.emergency.length > 0) {
+      parts.push("紧急注意事项：" + data.emergency.join("、") + "。");
+    }
+    
+    // 其他信息
+    if(data.additionalInfo) {
+      parts.push("其他信息：" + data.additionalInfo);
+    }
+    
+    return parts.join("\n\n");
+  }
 
   // 表单提交
   form.on('submit(submitTask)', function(data){

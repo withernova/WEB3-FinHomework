@@ -33,4 +33,26 @@ public interface UserService {
      * @return 登录成功的用户，失败返回null
      */
     User login(String username, String password);
+
+
+        /**
+     * 获取用户类型
+     * @param uuid 用户UUID
+     * @return 用户类型："rescuer"、"family"或"unknown"
+     */
+    String getUserType(String uuid);
+    
+    /**
+     * 判断用户是否为救援者
+     * @param uuid 用户UUID
+     * @return 如果是救援者返回true，否则返回false
+     */
+    boolean isRescuer(String uuid);
+    
+    /**
+     * 判断用户是否为家属
+     * @param uuid 用户UUID
+     * @return 如果是家属返回true，否则返回false
+     */
+    boolean isFamily(String uuid);
 }

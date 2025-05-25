@@ -130,4 +130,98 @@ public class UserServiceImpl implements UserService {
         
         return null;
     }
+
+
+
+    /**
+     * 获取用户类型
+     * @param uuid 用户UUID
+     * @return 用户类型："rescuer"、"family"或"unknown"
+     */
+    @Override
+    public String getUserType(String uuid) {
+        if (uuid == null || uuid.trim().isEmpty()) {
+            return "unknown";
+        }
+        
+        try {
+            // 首先检查用户是否存在
+            User user = userMapper.getUserByUuid(uuid);
+            if (user == null) {
+                return "unknown";
+            }
+            
+            // 尝试从用户表中直接获取类型
+            if (user.getUserType() != null) {
+                return user.getUserType();
+            }
+            
+            // 如果用户表中没有类型信息，则通过查询相关表来确定
+            Rescuer rescuer = userMapper.getRescuerByUuid(uuid);
+            if (rescuer != null) {
+                return "rescuer";
+            }
+            
+            Family family = userMapper.getFamilyByUuid(uuid);
+            if (family != null) {
+                return "family";
+            }
+            
+            return "unknown";
+        } catch (Exception e) {
+            return "unknown";
+        }
+    }
+    
+    /**
+     * 判断用户是否为救援者
+     * @param uuid 用户UUID
+     * @return 如果是救援者返回true，否则返回false
+     */
+    @Override
+    public boolean isRescuer(String uuid) {
+        if (uuid == null || uuid.trim().isEmpty()) {
+            return false;
+        }
+        
+        try {
+            // 首先检查用户记录
+            User user = userMapper.getUserByUuid(uuid);
+            if (user != null && "rescuer".equals(user.getUserType())) {
+                return true;
+            }
+            
+            // 然后检查rescuers表
+            Rescuer rescuer = userMapper.getRescuerByUuid(uuid);
+            return rescuer != null;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    /**
+     * 判断用户是否为家属
+     * @param uuid 用户UUID
+     * @return 如果是家属返回true，否则返回false
+     */
+    @Override
+    public boolean isFamily(String uuid) {
+        if (uuid == null || uuid.trim().isEmpty()) {
+            return false;
+        }
+        
+        try {
+            // 首先检查用户记录
+            User user = userMapper.getUserByUuid(uuid);
+            if (user != null && "family".equals(user.getUserType())) {
+                return true;
+            }
+            
+            // 然后检查families表
+            Family family = userMapper.getFamilyByUuid(uuid);
+            return family != null;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
