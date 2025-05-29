@@ -114,6 +114,16 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    public int countTasks(String elderName, String location, String status) {
+        return taskMapper.countTasks(elderName, location, status);
+    }
+
+    @Override
+    public List<Task> selectTasksByPage(int offset, int limit, String elderName, String location, String status) {
+        return taskMapper.selectTasksByPage(offset, limit, elderName, location, status);
+    }
+
+    @Override
     public Map<String, Object> getTasksByFamilyId(String familyUuid, int page, int limit, String elderName, String status) {
         Map<String, Object> result = new HashMap<>();
         List<Task> taskList = new ArrayList<>();

@@ -31,19 +31,24 @@ public class TaskReceiveController {
     /* ========= 2. Layui 表格数据 ========= */
     @GetMapping("/list-data")
     @ResponseBody
-    public Map<String, Object> listData(
-            @RequestParam(defaultValue = "1")  int page,
-            @RequestParam(defaultValue = "15") int limit) {
+    public Map<String, Object> getAllTaskList(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer limit,
+            @RequestParam(required = false) String elderName,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) String status
+    ) {
+        int offset = (page - 1) * limit;
+        int count = taskService.countTasks(elderName, location, status);
+        List<Task> data = taskService.selectTasksByPage(offset, limit, elderName, location, status);
 
-        List<Task> rows = taskService.getTasksByStatus("waiting");
-        int total      = rows.size();
+        Map<String, Object> result = new HashMap<>();
+        result.put("code", 0);
+        result.put("msg", "");
+        result.put("count", count);
+        result.put("data", data);
 
-        Map<String, Object> res = new HashMap<>();
-        res.put("code", 0);
-        res.put("msg" , "success");
-        res.put("count", total);
-        res.put("data", rows);
-        return res;
+        return result;
     }
 
     /* ========= 3. 接受任务 ========= */

@@ -31,5 +31,8 @@ public interface TaskMapper {
     int updateStatusToRescuing(@Param("id") Integer id);
     int updateTaskStatus(Integer id, String status);
 
+    int countTasks(@Param("elderName") String elderName, @Param("location") String location, @Param("status") String status);
+    List<Task> selectTasksByPage(@Param("offset") int offset, @Param("limit") int limit,
+                                @Param("elderName") String elderName, @Param("location") String location, @Param("status") String status);
     
 }

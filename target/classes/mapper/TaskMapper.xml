@@ -108,4 +108,26 @@
         ORDER BY lost_time DESC
     </select>
 
+
+    <!-- 统计总数 -->
+    <select id="countTasks" resultType="int">
+    SELECT COUNT(*) FROM tasks
+    WHERE
+        (#{elderName} IS NULL OR elder_name LIKE CONCAT('%', #{elderName}, '%'))
+        AND (#{location} IS NULL OR location LIKE CONCAT('%', #{location}, '%'))
+        AND (#{status} IS NULL OR status = #{status})
+    </select>
+
+    <!-- 分页查询 -->
+    <select id="selectTasksByPage" resultMap="TaskResultMap">
+    SELECT *
+    FROM tasks
+    WHERE
+        (#{elderName} IS NULL OR elder_name LIKE CONCAT('%', #{elderName}, '%'))
+        AND (#{location} IS NULL OR location LIKE CONCAT('%', #{location}, '%'))
+        AND (#{status} IS NULL OR status = #{status})
+    ORDER BY lost_time DESC
+    LIMIT #{offset}, #{limit}
+    </select>
+
 </mapper>
