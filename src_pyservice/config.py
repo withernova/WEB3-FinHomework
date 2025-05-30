@@ -7,6 +7,8 @@ class Config:
     ZHIPU_API_KEY = os.environ.get('ZHIPUAI_API_KEY', '56206a5488ca043b2cbdc268186efe17.NM2JqxxMDgNbezB9')
     MODEL_NAME    = "glm-4-flash"
 
+    PSYCH_MODEL_NAME = "glm-4-flash"
+
     # ---------- Flask ----------
     HOST  = "0.0.0.0"
     PORT  = 5000

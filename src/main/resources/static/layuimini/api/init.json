@@ -156,6 +156,12 @@
           "href": "page/system-settings.html",
           "icon": "fa fa-gears",
           "target": "_self"
+        },
+        {
+          "title": "心理关怀 GPT",
+          "href": "rescuer/psych_care_chat",
+          "icon": "fa fa-heart",
+          "target": "_self"
         }
       ]
     }
