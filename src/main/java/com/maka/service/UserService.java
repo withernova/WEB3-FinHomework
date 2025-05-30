@@ -55,4 +55,7 @@ public interface UserService {
      * @return 如果是家属返回true，否则返回false
      */
     boolean isFamily(String uuid);
+    
+    User getUserByUUID(String uuid);
+
 }

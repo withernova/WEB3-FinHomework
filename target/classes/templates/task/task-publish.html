@@ -107,8 +107,12 @@
       <!-- 操作按钮 -->
       <div class="layui-form-item" style="text-align:center;margin-top:30px;">
         <button class="layui-btn layui-btn-normal" lay-submit lay-filter="submitTask">立即发布</button>
+        <button type="button" class="layui-btn layui-btn-warm" id="generatePoster">
+          <i class="layui-icon layui-icon-picture"></i> 生成寻人海报
+        </button>
         <button type="reset" class="layui-btn layui-btn-primary">重置</button>
       </div>
+      
     </form>
     
     <!-- 详细信息模板 - 隐藏 -->
@@ -504,11 +508,11 @@ layui.use(['form','laydate','upload','layer'], function(){
     accept:'images',
     done:function(res){
       $('#imagePreview').html('<img src="'+res.url+'" width="120">');
-      $('#photoUrl').val(res.url);  // 关键：同步写入input
+      $('#photoUrl').val(res.url);
     }
   });
 
-  /* 语音上传 */
+  // 语音上传
   upload.render({
     elem:'#uploadAudio',
     url :'/upload/audio',
@@ -539,49 +543,39 @@ layui.use(['form','laydate','upload','layer'], function(){
       return;
     }
     
-    // 添加到自定义项列表
     addCustomItem(type, value);
-    
-    // 清空输入框
     $(this).prev('.custom-value').val('');
   });
   
   // 添加自定义项函数
   function addCustomItem(type, value) {
-    // 检查是否已存在
     if(customItems[type].indexOf(value) !== -1) {
       layer.msg('该项已存在', {icon: 2});
       return;
     }
     
-    // 添加到存储中
     customItems[type].push(value);
     
-    // 添加UI元素
     var itemHtml = '<span class="custom-item" data-type="'+type+'" data-value="'+value+'">' + 
                    value + '<i class="layui-icon layui-icon-close remove-item"></i></span>';
     $('#'+type+'-items').append(itemHtml);
     
-    // 绑定删除事件
     $('.remove-item').off('click').on('click', function(){
       var item = $(this).parent();
       var itemType = item.data('type');
       var itemValue = item.data('value');
       
-      // 从存储中移除
       var index = customItems[itemType].indexOf(itemValue);
       if(index !== -1) {
         customItems[itemType].splice(index, 1);
       }
       
-      // 移除UI元素
       item.remove();
     });
   }
   
   // 详细信息模板按钮点击事件
   $('#detailedInfoBtn').on('click', function(){
-    // 清空所有自定义项
     clearCustomItems();
     
     layer.open({
@@ -590,19 +584,16 @@ layui.use(['form','laydate','upload','layer'], function(){
       area: ['800px', '600px'],
       content: $('#detailedInfoTemplate'),
       success: function(layero, index){
-        form.render(); // 重新渲染表单元素
+        form.render();
         
-        // 生成摘要按钮事件
         $('#generateSummary').off('click').on('click', function(){
           generateAISummary(index);
         });
         
-        // 手动填写按钮事件
         $('#manualFill').off('click').on('click', function(){
           fillManually(index);
         });
         
-        // 取消按钮事件
         $('#cancelTemplate').off('click').on('click', function(){
           layer.close(index);
         });
@@ -616,34 +607,24 @@ layui.use(['form','laydate','upload','layer'], function(){
       customItems[type] = [];
       $('#'+type+'-items').empty();
     }
-    
-    // 隐藏所有自定义输入框
     $('.custom-input').hide();
-    
-    // 取消所有"其他"复选框的选中状态
     $('input[lay-filter="checkboxFilter"]').each(function(){
       $(this).prop('checked', false);
     });
-    
-    // 重新渲染表单
     form.render();
   }
   
   // 生成AI摘要函数
   function generateAISummary(layerIndex) {
-    // 收集表单数据
     var templateData = collectTemplateData();
     
-    // 检查是否有数据填写
     if(isTemplateEmpty(templateData)) {
       layer.msg('请至少填写一些信息', {icon: 2});
       return;
     }
     
-    // 显示加载层
     var loadIndex = layer.load(2, {shade: [0.3, '#000']});
     
-    // 调用后端API生成摘要
     $.ajax({
       url: '/task/generate-summary',
       type: 'POST',
@@ -652,10 +633,9 @@ layui.use(['form','laydate','upload','layer'], function(){
       success: function(res){
         layer.close(loadIndex);
         if(res.code === 0){
-          // 将生成的摘要填入原表单的额外信息字段
           $('#extraInfo').val(res.data.summary);
           layer.msg('摘要生成成功', {icon: 1});
-          layer.close(layerIndex); // 关闭模板弹窗
+          layer.close(layerIndex);
         } else {
           layer.msg(res.msg || '摘要生成失败', {icon: 2});
         }
@@ -671,16 +651,12 @@ layui.use(['form','laydate','upload','layer'], function(){
   function fillManually(layerIndex) {
     var templateData = collectTemplateData();
     
-    // 检查是否有数据填写
     if(isTemplateEmpty(templateData)) {
       layer.msg('请至少填写一些信息', {icon: 2});
       return;
     }
     
-    // 生成文本描述
     var description = generateManualDescription(templateData);
-    
-    // 填入表单
     $('#extraInfo').val(description);
     layer.msg('信息已填写', {icon: 1});
     layer.close(layerIndex);
@@ -690,13 +666,11 @@ layui.use(['form','laydate','upload','layer'], function(){
   function collectTemplateData() {
     var templateData = {};
     
-    // 基本信息
     templateData.age = $('input[name="age"]').val();
     templateData.gender = $('input[name="gender"]:checked').val();
     templateData.height = $('input[name="height"]').val();
     templateData.weight = $('input[name="weight"]').val();
     
-    // 收集复选框数据和自定义项
     function collectCheckboxValues(name) {
       var values = [];
       $('input[name="'+name+'"]:checked').each(function(){
@@ -706,7 +680,6 @@ layui.use(['form','laydate','upload','layer'], function(){
         }
       });
       
-      // 添加自定义项
       if(customItems[name] && customItems[name].length > 0) {
         values = values.concat(customItems[name]);
       }
@@ -714,36 +687,23 @@ layui.use(['form','laydate','upload','layer'], function(){
       return values;
     }
     
-    // 身体状况
     templateData.mobility = collectCheckboxValues('mobility');
     templateData.health = collectCheckboxValues('health');
     templateData.medication = $('textarea[name="medication"]').val();
-    
-    // 外貌特征
     templateData.hair = collectCheckboxValues('hair');
     templateData.marks = collectCheckboxValues('marks');
     templateData.bodyType = collectCheckboxValues('bodyType');
-    
-    // 着装信息
     templateData.topClothing = $('input[name="topClothing"]').val();
     templateData.bottomClothing = $('input[name="bottomClothing"]').val();
     templateData.shoes = $('input[name="shoes"]').val();
     templateData.belongings = collectCheckboxValues('belongings');
-    
-    // 爱好与习惯
     templateData.hobbies = collectCheckboxValues('hobbies');
     templateData.activities = collectCheckboxValues('activities');
     templateData.habits = $('textarea[name="habits"]').val();
-    
-    // 行为特点
     templateData.frequentPlaces = collectCheckboxValues('frequentPlaces');
     templateData.behavior = collectCheckboxValues('behavior');
     templateData.language = collectCheckboxValues('language');
-    
-    // 紧急情况
     templateData.emergency = collectCheckboxValues('emergency');
-    
-    // 其他信息
     templateData.additionalInfo = $('textarea[name="additionalInfo"]').val();
     
     return templateData;
@@ -751,7 +711,6 @@ layui.use(['form','laydate','upload','layer'], function(){
   
   // 检查模板是否为空
   function isTemplateEmpty(data) {
-    // 检查是否至少有一项非空数据
     for(var key in data) {
       if(Array.isArray(data[key]) && data[key].length > 0) return false;
       if(typeof data[key] === 'string' && data[key].trim() !== '') return false;
@@ -764,7 +723,6 @@ layui.use(['form','laydate','upload','layer'], function(){
   function generateManualDescription(data) {
     var parts = [];
     
-    // 基本信息
     var basicInfo = [];
     if(data.age) basicInfo.push(data.age + "岁");
     if(data.gender) basicInfo.push(data.gender + "性");
@@ -775,7 +733,6 @@ layui.use(['form','laydate','upload','layer'], function(){
       parts.push("基本特征：" + basicInfo.join("、") + "。");
     }
     
-    // 身体状况
     var healthInfo = [];
     if(data.health && data.health.length > 0) {
       healthInfo.push("健康状况：" + data.health.join("、"));
@@ -791,7 +748,6 @@ layui.use(['form','laydate','upload','layer'], function(){
       parts.push("身体状况：" + healthInfo.join("。") + "。");
     }
     
-    // 外貌和着装
     var appearanceInfo = [];
     
     if(data.bodyType && data.bodyType.length > 0) {
@@ -821,7 +777,6 @@ layui.use(['form','laydate','upload','layer'], function(){
       parts.push("外貌与着装：" + appearanceInfo.join("。") + "。");
     }
     
-    // 爱好与习惯
     var hobbyInfo = [];
     
     if(data.hobbies && data.hobbies.length > 0) {
@@ -838,7 +793,6 @@ layui.use(['form','laydate','upload','layer'], function(){
       parts.push("爱好与习惯：" + hobbyInfo.join("。") + "。");
     }
     
-    // 行为习惯
     var behaviorInfo = [];
     
     if(data.behavior && data.behavior.length > 0) {
@@ -855,12 +809,10 @@ layui.use(['form','laydate','upload','layer'], function(){
       parts.push("行为特点：" + behaviorInfo.join("。") + "。");
     }
     
-    // 紧急情况
     if(data.emergency && data.emergency.length > 0) {
       parts.push("紧急注意事项：" + data.emergency.join("、") + "。");
     }
     
-    // 其他信息
     if(data.additionalInfo) {
       parts.push("其他信息：" + data.additionalInfo);
     }
@@ -870,13 +822,11 @@ layui.use(['form','laydate','upload','layer'], function(){
 
   // 表单提交
   form.on('submit(submitTask)', function(data){
-    // 验证照片是否上传
     if(!$('#photoUrl').val()){
       layer.msg('请上传老人照片', {icon: 2});
       return false;
     }
     
-    // 构建提交数据
     var formData = {
       elderName: data.field.elderName,
       lostTime: data.field.lostTime,
@@ -887,7 +837,6 @@ layui.use(['form','laydate','upload','layer'], function(){
       status: 'waiting'
     };
     
-    // 发送请求
     $.ajax({
       url: '/task/create',
       type: 'POST',
@@ -896,7 +845,6 @@ layui.use(['form','laydate','upload','layer'], function(){
       success: function(res){
         if(res.code === 0){
           layer.msg('发布成功', {icon: 1, time: 1500}, function(){
-            // 跳转到任务管理页面
             window.location.href = '/task/task-manage';
           });
         } else {
@@ -909,6 +857,138 @@ layui.use(['form','laydate','upload','layer'], function(){
     });
     return false;
   });
+
+  // 生成寻人海报按钮点击事件
+  $('#generatePoster').on('click', function() {
+    // 检查是否上传了照片
+    if(!$('#photoUrl').val()) {
+      layer.msg('请先上传老人照片，这对海报生成至关重要', {icon: 2});
+      return;
+    }
+    
+    // 收集表单数据
+    var elderName = $('input[name="elderName"]').val();
+    var lostTime = $('input[name="lostTime"]').val();
+    var location = $('input[name="location"]').val();
+    var photoUrl = $('#photoUrl').val();
+    var extraInfo = $('#extraInfo').val();
+    
+    // 基本验证
+    if(!elderName || !lostTime || !location) {
+      layer.msg('请填写老人姓名、走失时间和地点', {icon: 2});
+      return;
+    }
+    
+    // 收集详细信息模板数据
+    var templateData = collectTemplateData();
+    
+    // 构建请求数据
+    var requestData = {
+      elderName: elderName,
+      lostTime: lostTime,
+      location: location,
+      photoUrl: photoUrl,
+      extraInfo: extraInfo,
+      templateData: templateData
+    };
+    
+    // 显示加载层
+    var loadIndex = layer.load(2, {shade: [0.3, '#000']});
+    
+    // 发送请求生成海报
+    $.ajax({
+      url: '/task/generate-poster',
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(requestData),
+      success: function(res) {
+        layer.close(loadIndex);
+        
+        if(res.code === 0) {
+          // 显示海报预览弹窗
+          showPosterPreview(res.data.posterHtml, res.data.posterCss);
+        } else {
+          layer.msg(res.msg || '海报生成失败', {icon: 2});
+        }
+      },
+      error: function() {
+        layer.close(loadIndex);
+        layer.msg('服务器错误，请稍后重试', {icon: 2});
+      }
+    });
+  });
+
+  // 显示海报预览
+  function showPosterPreview(posterHtml, posterCss) {
+    layer.open({
+      type: 1,
+      title: '寻人海报预览',
+      area: ['650px', '90%'],
+      shadeClose: true,
+      content: '<div class="poster-preview-wrapper" style="overflow:hidden; padding:10px;">' +
+               '<style>' + posterCss + '</style>' + 
+               posterHtml + 
+               '</div>',
+      btn: ['打印海报', '关闭'],
+      yes: function(index, layero) {
+        printPoster(posterHtml);
+      },
+      btn2: function(index, layero) {
+        layer.close(index);
+        return false;
+      }
+    });
+  }
+
+  // 打印海报函数
+  function printPoster(posterHtml) {
+    // 创建打印窗口
+    var printWindow = window.open('', '_blank');
+    
+    // 构建完整HTML - 直接使用包含内联样式的HTML
+    var fullHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>寻人海报</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 20px; 
+            font-family: 'Microsoft YaHei', 'SimSun', Arial, sans-serif;
+        }
+        @page { 
+            size: A4; 
+            margin: 1cm; 
+        }
+        @media print {
+            body { 
+                margin: 0 !important; 
+                padding: 0 !important; 
+            }
+        }
+    </style>
+</head>
+<body>
+    ${posterHtml}
+</body>
+</html>`;
+    
+    printWindow.document.write(fullHtml);
+    printWindow.document.close();
+    
+    // 等待加载完成后打印
+    printWindow.onload = function() {
+      setTimeout(function() {
+        printWindow.focus();
+        printWindow.print();
+        printWindow.onafterprint = function() {
+          printWindow.close();
+        };
+      }, 500);
+    };
+  }
 });
 /*]]>*/
 </script>

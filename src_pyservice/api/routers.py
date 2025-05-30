@@ -186,3 +186,5 @@ def generate_elder_summary():
     except Exception as e:
         logger.error(f"生成摘要时发生错误: {str(e)}", exc_info=True)
         return jsonify({"success": False, "message": f"服务器错误: {str(e)}"}), 500
+    
+

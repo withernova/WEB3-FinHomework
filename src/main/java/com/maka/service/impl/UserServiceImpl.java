@@ -224,4 +224,16 @@ public class UserServiceImpl implements UserService {
             return false;
         }
     }
+
+    @Override
+    public User getUserByUUID(String uuid){
+
+        // 首先检查用户记录
+        User user = userMapper.getUserByUuid(uuid);
+        if (user != null) {
+            return user;
+        }
+        User u = new User();
+        return u;    
+    }
 }

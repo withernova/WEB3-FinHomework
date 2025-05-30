@@ -1,7 +1,6 @@
 file:
-  upload-dir: src/main/resources/static/rescue_informaition   # 保存目录（相对或绝对均可）
-  file.upload-dir: src/main/resources/static/rescue_informaition
-  access-prefix: /rescue_informaition/                        # 返回给前端的统一前缀
+  upload-dir: uploads           # 这里就是项目根目录下的uploads
+  access-prefix: /uploads/
 spring:
   thymeleaf:
     prefix: classpath:/templates/

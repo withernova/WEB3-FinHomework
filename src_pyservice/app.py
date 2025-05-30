@@ -10,6 +10,7 @@ from utils.logging_config import setup_logging
 # --- 蓝图导入 ----
 from api.routers import api_bp             # 原有接口
 from api.psych_care_router import psych_care_bp   # 心理关怀 GPT 接口
+from api.poster_router import poster_bp
 
 
 def create_app() -> Flask:
@@ -33,6 +34,7 @@ def create_app() -> Flask:
     # 4. 注册蓝图
     app.register_blueprint(api_bp, url_prefix="/api")
     app.register_blueprint(psych_care_bp, url_prefix="/api")
+    app.register_blueprint(poster_bp, url_prefix='/api')
 
     logger.info("Flask 应用初始化完成")
     return app
