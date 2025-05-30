@@ -140,7 +140,7 @@ public class RescueOldManController {
     public class PageController {
         @GetMapping("/login")
         public String loginPage() {
-            return "login"; // 自动去 templates/login.html
+            return "/"; // 自动去 templates/login.html
         }
 
         @GetMapping("/user-guide")

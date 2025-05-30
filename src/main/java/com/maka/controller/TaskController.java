@@ -54,7 +54,7 @@ public class TaskController {
         String userId = (String) session.getAttribute("userId");
         if (userId == null) {
             // 如果未登录，重定向到登录页面
-            return "redirect:/login";
+            return "common/no-login";
         }
         
         // 返回任务发布页面
@@ -70,7 +70,7 @@ public class TaskController {
         String userId = (String) session.getAttribute("userId");
         if (userId == null) {
             // 如果未登录，重定向到登录页面
-            return "redirect:/login";
+            return "common/no-login";
         }
         
         // 返回任务管理页面
@@ -85,9 +85,9 @@ public class TaskController {
         // 检查用户是否已登录
         String userId = (String) session.getAttribute("userId");
         if (userId == null) {
-            return "redirect:/login";
-        }
+            return "common/no-login";
         
+        }
         // 检查用户是否为救援者
         if (!userService.isRescuer(userId)) {
             // 如果不是救援者，重定向到适当的页面
@@ -143,7 +143,7 @@ public class TaskController {
         // 检查用户是否已登录
         String userId = (String) session.getAttribute("userId");
         if (userId == null) {
-            return "redirect:/login";
+            return "common/no-login";
         }
         
         // 获取用户类型
@@ -362,7 +362,7 @@ public class TaskController {
         
         String userId = (String) session.getAttribute("userId");
         if (userId == null) {
-            return "redirect:/login";
+            return "common/no-login";
         }
         
         // 获取任务详情
