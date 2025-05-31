@@ -1,0 +1,36 @@
+.chat-container {
+    height: 400px;
+    overflow-y: auto;
+    background: #f9f9f9;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 15px;
+}
+.message-item { margin-bottom: 15px; clear: both; }
+.message-bubble {
+    max-width: 70%;
+    padding: 10px 15px;
+    border-radius: 15px;
+    position: relative;
+    display: inline-block;
+}
+.message-sender { font-size: 12px; color: #999; margin-bottom: 3px; }
+.message-time { font-size: 11px; color: #aaa; margin-top: 5px; display: inline-block; }
+.message-sent { float: right; }
+.message-sent .message-bubble { background-color: #d9f4fe; border-top-right-radius: 5px; text-align: left; }
+.message-received { float: left; }
+.message-received .message-bubble { background-color: #f0f0f0; border-top-left-radius: 5px; text-align: left; }
+.message-image { max-width: 100%; max-height: 200px; border-radius: 5px; cursor: pointer; }
+.message-audio { width: 100%; max-width: 300px; }
+.message-system { text-align: center; margin: 15px 0; }
+.message-system .message-bubble {
+    background-color: #f5f5f5;
+    color: #888;
+    padding: 5px 15px;
+    border-radius: 15px;
+    max-width: 80%;
+    display: inline-block;
+    float: none;
+}
+.badge-rescuer { background-color: #1E9FFF; color: #fff; font-size: 12px; padding: 2px 5px; border-radius: 3px; margin-right: 5px; }
+.badge-family { background-color: #FF5722; color: #fff; font-size: 12px; padding: 2px 5px; border-radius: 3px; margin-right: 5px; }
