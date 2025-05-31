@@ -50,7 +50,7 @@ function initTaskChatByDom(dom) {
                 contentType: false,
                 success: function (res) {
                     layui.layer.closeAll('loading');
-                    if (res.code === 0) {
+                    if (res.success === true) {  // 或者只用 if (res.success)
                         mediaType = 'image';
                         mediaData = res.url;
                         $previewImage.attr('src', res.url).show();
