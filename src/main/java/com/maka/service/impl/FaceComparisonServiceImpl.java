@@ -20,7 +20,6 @@ import java.io.ByteArrayOutputStream;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.bytedeco.javacv.Java2DFrameConverter;
 
-
 @Service
 public class FaceComparisonServiceImpl implements FaceComparisonService {
     // 初始化百度API客户端
@@ -28,6 +27,54 @@ public class FaceComparisonServiceImpl implements FaceComparisonService {
     private static final String API_KEY = "VNSPEBw6uuHFjLqgV4w9WsnK";
     private static final String SECRET_KEY = "G2X1OaeqIgO6umffm5kdGTJuRIQZj5iB";
     private static final AipFace client = new AipFace(APP_ID, API_KEY, SECRET_KEY);
+
+    @Override
+    public boolean checkQuality(MultipartFile file) throws Exception {
+        // 将图片文件转换为Base64编码
+        byte[] bytes = file.getBytes();
+        String imgStr = Base64.getEncoder().encodeToString(bytes);
+
+        HashMap<String, String> options = new HashMap<>();
+        options.put("image_type", "BASE64");
+        options.put("liveness_control", "LOW");
+        options.put("quality_control", "NORMAL");
+        options.put("action_type", "REPLACE");
+
+        JSONObject response = client.addUser(imgStr, "BASE64","lost_people", "quality_check", options);
+        if (response.getInt("error_code") == 0) {
+            return true;
+        }
+        else if(response.getInt("error_code") == 222202 || response.getInt("error_code") == 222203){
+            return false;
+        }
+        throw new Exception("API Error: " + response.getString("error_msg"));
+    }
+
+    @Override
+    public void addFace(MultipartFile file, String userId, String userName) throws Exception{
+        // 将图片文件转换为Base64编码
+        byte[] bytes = file.getBytes();
+        String imgStr = Base64.getEncoder().encodeToString(bytes);
+
+        HashMap<String, String> options = new HashMap<>();
+        options.put("image_type", "BASE64");
+        options.put("action_type", "APPEND");
+        options.put("user_info", userName);
+
+        JSONObject response = client.addUser(imgStr, "BASE64","lost_people", userId, options);
+        if (response.getInt("error_code") != 0) {
+            throw new Exception("API Error: " + response.getString("error_msg"));
+        }
+    }
+    @Override
+    public void deleteUser(String userId) throws Exception{
+        HashMap<String, String> options = new HashMap<>();
+        JSONObject response = client.deleteUser(userId,"lost_people", options);
+        if (response.getInt("error_code") != 0) {
+            throw new Exception("API Error: " + response.getString("error_msg"));
+        }
+    }
+
     @Override
     public String compareFace(MultipartFile file) throws Exception {
         // 将图片文件转换为Base64编码
@@ -46,15 +93,16 @@ public class FaceComparisonServiceImpl implements FaceComparisonService {
             // 处理比对结果
             JSONObject result = response.getJSONObject("result").getJSONArray("user_list").getJSONObject(0);
             String uid = result.getString("user_id");
+            String name = result.getString("user_info");
             double similarity = result.getDouble("score");
 
             File jsonFile = new File("src/main/resources/static/data/table.json");
             ObjectMapper objectMapper = new ObjectMapper();
 
+            //TODO:改为从数据库获取照片
             Map<String, Object> table = objectMapper.readValue(jsonFile, Map.class);
             List<Map<String, Object>> data = (List<Map<String, Object>>)table.get("data");
 
-            String name = "无";
             String img = "";
             for (Map<String, Object> datum: data)
             {
