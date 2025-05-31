@@ -56,8 +56,8 @@ spring:
 # 阿里云短信配置
 aliyun:
   sms:
-    access-key-id: LTAI5tPRQ2mjozsgWb5qpgLZ
-    access-key-secret: bJklOOdXvXc2tctX92njTWI8ldTIkJ
+    access-key-id: LTAI5tPnjpyq2RfKmWyXFDsy
+    access-key-secret: 04ynGElOHbltHcVlugc0eNWl3MC9eK
     sign-name: 智寻归途
     template-code: SMS_474630233
 
@@ -87,3 +87,6 @@ logging:
     org.springframework.web: debug
 server:
   port: 8080
+
+# 高德地图API密钥
+amap.key: 2a73ff764995703ff9e17cc103851a1e
