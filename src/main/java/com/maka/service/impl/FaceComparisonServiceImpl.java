@@ -20,7 +20,6 @@ import java.io.ByteArrayOutputStream;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.bytedeco.javacv.Java2DFrameConverter;
 
-
 @Service
 public class FaceComparisonServiceImpl implements FaceComparisonService {
     // 初始化百度API客户端
@@ -28,6 +27,56 @@ public class FaceComparisonServiceImpl implements FaceComparisonService {
     private static final String API_KEY = "VNSPEBw6uuHFjLqgV4w9WsnK";
     private static final String SECRET_KEY = "G2X1OaeqIgO6umffm5kdGTJuRIQZj5iB";
     private static final AipFace client = new AipFace(APP_ID, API_KEY, SECRET_KEY);
+
+    @Override
+    public String addFace(MultipartFile file) throws Exception{
+        // 将图片文件转换为Base64编码
+        byte[] bytes = file.getBytes();
+        String imgStr = Base64.getEncoder().encodeToString(bytes);
+
+        // 设置百度API参数
+        HashMap<String, Object> options = new HashMap<>();
+        options.put("image_type", "BASE64");
+        options.put("liveness_control", "LOW");
+        options.put("match_threshold", "50");
+
+        // 调用百度API进行人脸比对
+        JSONObject response = client.search(imgStr, "BASE64","lost_people", options);
+        if (response.getInt("error_code") == 0) {
+            // 处理比对结果
+            JSONObject result = response.getJSONObject("result").getJSONArray("user_list").getJSONObject(0);
+            String uid = result.getString("user_id");
+            double similarity = result.getDouble("score");
+
+            File jsonFile = new File("src/main/resources/static/data/table.json");
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            Map<String, Object> table = objectMapper.readValue(jsonFile, Map.class);
+            List<Map<String, Object>> data = (List<Map<String, Object>>)table.get("data");
+
+            String name = "无";
+            String img = "";
+            for (Map<String, Object> datum: data)
+            {
+                if (Objects.equals(datum.get("uid"), uid))
+                {
+                    name = (String)datum.get("oldName");
+                    img = (String) datum.get("img");
+                }
+            }
+            return "{" +
+                    "\"lostPerson\": \"" + name + "\"," +
+                    "\"similarity\": " + similarity + ","+
+                    "\"img\": \"" + img + "\"" +
+                    "}";
+        } else {
+            if(response.getInt("error_code") == 222207)
+                return "{" +
+                        "\"lostPerson\": \"" + "无" + "\"" +
+                        "}";
+            throw new Exception("API Error: " + response.getString("error_msg"));
+        }
+    }
     @Override
     public String compareFace(MultipartFile file) throws Exception {
         // 将图片文件转换为Base64编码
