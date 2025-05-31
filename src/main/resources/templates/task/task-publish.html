@@ -501,40 +501,50 @@ layui.use(['form','laydate','upload','layer'], function(){
     format: 'yyyy-MM-dd HH:mm:ss'
   });
 
-  // 图片上传
   upload.render({
     elem: "#uploadImage",
-    url : "/upload/image",           // 原有上传接口
+    url : "/upload/image",
     accept: "images",
+    choose: function(obj){            // 记录原始文件，供质量检测
+      obj.preview(function(index, file){ selectedImageFile = file; });
+    },
     done: function(res){
-      // 显示缩略图
+      // 前端缩略图
       $("#imagePreview").html('<img src="'+res.url+'" width="120">');
       $("#photoUrl").val(res.url);
 
-      // 先重置显示
+      // 重置显示
       $("#imageScore").html("评分计算中...");
       imageQualified = false;
 
-      // 调用评分接口
-      $.getJSON("/api/score-image", {url: res.url}, function(resp){
-        // 期望返回 {score: 87.5, qualified: true, msg: "清晰度良好"}
-        var scoreTxt = "评分：" + resp.score.toFixed(1);
-        if(resp.qualified){
-          imageQualified = true;
-          $("#imageScore").html('<span style="color:green">'+ scoreTxt +'，合格</span>');
-        }else{
+      // 调质量检测接口
+      var fd = new FormData();
+      fd.append('file', selectedImageFile);
+      $.ajax({
+        url: '/face/checkQuality',
+        type: 'POST',
+        data: fd,
+        processData: false,
+        contentType: false,
+        success: function(resp){
+          var scoreTxt = "合格"; // resp 没带分就仅展示合格
+          if(resp.qualified){
+            imageQualified = true;
+            $("#imageScore").html('<span style="color:green">'+ scoreTxt +'</span>');
+          }else{
+            imageQualified = false;
+            $("#imageScore").html('<span style="color:red">不合格</span>');
+            layer.alert("照片不合格：" + (resp.msg || "请更换更清晰照片"), {icon: 2});
+          }
+        },
+        error: function(){
           imageQualified = false;
-          $("#imageScore").html('<span style="color:red">'+ scoreTxt +'，不合格</span>');
-          layer.alert("照片不合格：" + (resp.msg || "请更换更清晰照片"), {icon: 2});
+          $("#imageScore").html('<span style="color:red">评分失败，请稍后重试</span>');
+          layer.alert("评分接口调用失败，请稍后重试", {icon: 2});
         }
-      }).fail(function(){
-        imageQualified = false;
-        $("#imageScore").html('<span style="color:red">评分失败，请稍后重试</span>');
-        layer.alert("评分接口调用失败，请稍后重试", {icon: 2});
       });
     }
   });
-
 
   // 语音上传
   upload.render({

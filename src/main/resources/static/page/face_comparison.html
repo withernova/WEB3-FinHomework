@@ -3,223 +3,42 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>人脸比对</title>
+  <title>人脸图片比对</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #e0f7fa, #80deea);
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      overflow: auto;
-    }
-
-    .container {
-      display: flex;
-      justify-content: space-between;
-      width: 90%; /* 增加整体宽度 */
-      max-width: 1400px;
-      background-color: white;
-      padding: 40px;
-      border-radius: 20px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      animation: fadeIn 1s ease-in-out;
-      transform: scale(1);
-      transition: transform 0.3s ease-in-out;
-    }
-
-    /* 鼠标悬停时容器略微放大 */
-    .container:hover {
-      transform: scale(1.02);
-    }
-
-    .main-card, .side-card {
-      background-color: #fff;
-      border-radius: 20px;
-      padding: 40px; /* 调整padding */
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    }
-
-    /* 添加鼠标悬停时卡片放大效果 */
-    .main-card:hover, .side-card:hover {
-      transform: translateY(-10px);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-    }
-
-    .main-card {
-      flex: 2;
-      margin-right: 30px; /* 调整卡片间距 */
-    }
-
-    h1 {
-      font-size: 30px; /* 放大标题字体 */
-      color: #007bff;
-      margin-bottom: 20px;
-    }
-
-    .instructions {
-      font-size: 18px;
-      color: #666;
-      margin-bottom: 20px;
-    }
-
-    .input-container {
-      position: relative;
-      margin-bottom: 30px;
-    }
-
-    label {
-      display: block;
-      font-size: 18px; /* 增大label字体 */
-      margin-bottom: 10px;
-      color: #333;
-    }
-
-    .input-icon input {
-      width: 75%; /* 调整宽度 */
-      max-width: 500px;
-      padding: 12px 20px;
-      font-size: 16px;
-      border: 2px solid #007bff;
-      border-radius: 10px;
-      outline: none;
-      margin-top: 10px;
-    }
-
-    .input-icon .icon {
-      position: absolute;
-      left: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 18px;
-      color: #007bff;
-    }
-
-    /* 预览区域 */
-    #preview-container {
-      margin-top: 40px;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .preview-box {
-      flex: 1;
-      margin: 0 20px; /* 调整预览框之间的间距 */
-      text-align: center;
-    }
-
-    .preview-box label {
-      font-size: 18px; /* 增大字体 */
-      color: #007bff;
-      display: block;
-      margin-bottom: 15px;
-    }
-
-    .preview-box img {
-      max-width: 100%;
-      max-height: 350px; /* 增加图片预览框高度 */
-      border-radius: 10px;
-      border: 2px solid #007bff;
-    }
-
-    button {
-      background-color: #007bff;
-      color: white;
-      padding: 18px 40px; /* 增大按钮 */
-      font-size: 20px; /* 增大按钮字体 */
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
-      width: 100%;
-      margin-top: 30px;
-    }
-
-    button:hover {
-      background-color: #0056b3;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    }
-
-    #result {
-      font-size: 18px;
-      color: #333;
-      margin-top: 30px;
-      text-align: center;
-    }
-
-    .side-card {
-      flex: 1;
-      background-color: #fff;
-      border-radius: 20px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      padding: 30px;
-      text-align: left;
-      animation: fadeIn 1s ease-in-out;
-    }
-
-    .side-card h2 {
-      font-size: 22px;
-      margin-bottom: 20px;
-      color: #007bff;
-    }
-
-    .side-card ul {
-      list-style: none;
-      padding: 0;
-      margin: 0 0 20px 0;
-    }
-
-    .side-card li {
-      font-size: 16px;
-      color: #333;
-      margin-bottom: 8px;
-    }
-
-    .side-card p {
-      font-size: 14px;
-      color: #555;
-    }
-    /* 移动文字向上 */
-    .text-move-up {
-      display: inline-block;
-      position: relative;
-      top: -25px; /* 调整这个值来控制向上移动的距离 */
-    }
-
-    /* GIF 图片的样式 */
-    .gif-image {
-      width: 70px;
-      height: 70px;
-      margin-left: 10px;
-      margin-top: 10px;
-    }
-
-    @keyframes fadeIn {
-      0% {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
+    body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#e0f7fa,#80deea);margin:0;padding:0;display:flex;justify-content:center;align-items:center;height:100vh;overflow:auto;}
+    .container{display:flex;justify-content:space-between;width:90%;max-width:1400px;background:#fff;padding:40px;border-radius:20px;box-shadow:0 4px 12px rgba(0,0,0,.2);transform:scale(1);transition:.3s ease-in-out;animation:fadeIn 1s ease-in-out;}
+    .container:hover{transform:scale(1.02);}
+    .main-card,.side-card{background:#fff;border-radius:20px;padding:40px;box-shadow:0 4px 12px rgba(0,0,0,.2);transition:.3s ease-in-out;}
+    .main-card:hover,.side-card:hover{transform:translateY(-10px);box-shadow:0 8px 16px rgba(0,0,0,.3);}
+    .main-card{flex:2;margin-right:30px;}
+    h1{font-size:30px;color:#007bff;margin-bottom:20px;}
+    .instructions{font-size:18px;color:#666;margin-bottom:20px;}
+    .input-container{position:relative;margin-bottom:30px;}
+    label{display:block;font-size:18px;margin-bottom:10px;color:#333;}
+    .input-icon input{width:75%;max-width:500px;padding:12px 20px;font-size:16px;border:2px solid #007bff;border-radius:10px;outline:none;margin-top:10px;}
+    .input-icon .icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:18px;color:#007bff;}
+    #preview-container{margin-top:40px;display:flex;justify-content:space-between;}
+    .preview-box{flex:1;margin:0 20px;text-align:center;}
+    .preview-box label{font-size:18px;color:#007bff;display:block;margin-bottom:15px;}
+    .preview-box img{max-width:100%;max-height:350px;border-radius:10px;border:2px solid #007bff;}
+    button{background:#007bff;color:#fff;padding:18px 40px;font-size:20px;border:none;border-radius:10px;cursor:pointer;transition:.3s ease;width:100%;margin-top:30px;}
+    button:hover{background:#0056b3;box-shadow:0 4px 12px rgba(0,0,0,.2);}
+    #result{font-size:18px;color:#333;margin-top:30px;text-align:center;}
+    .side-card{flex:1;padding:30px;text-align:left;}
+    .side-card h2{font-size:22px;margin-bottom:20px;color:#007bff;}
+    .side-card ul{list-style:none;padding:0;margin:0 0 20px;}
+    .side-card li{font-size:16px;color:#333;margin-bottom:8px;}
+    .side-card p{font-size:14px;color:#555;}
+    .text-move-up{display:inline-block;position:relative;top:-25px;}
+    .gif-image{width:70px;height:70px;margin-left:10px;margin-top:10px;}
+    @keyframes fadeIn{0%{opacity:0;transform:translateY(20px);}100%{opacity:1;transform:translateY(0);}}
   </style>
 </head>
 <body>
-
 <div class="container">
-  <!-- 左侧主要卡片 -->
   <div class="main-card">
-    <h1>
-      <span class="text-move-up">人脸图片比对</span>
-      <img src="../img/face.gif" alt="GIF 动画" class="gif-image">
-    </h1>
+    <h1><span class="text-move-up">人脸图片比对</span><img src="../img/face.gif" alt="GIF" class="gif-image"></h1>
     <p class="instructions">请上传清晰的照片进行人脸比对，比对结果会在几秒钟内显示。</p>
     <form id="uploadForm">
       <div class="input-container">
@@ -229,82 +48,71 @@
           <span class="icon"><i class="fas fa-camera"></i></span>
         </div>
       </div>
-
-      <!-- 双图预览区域 -->
       <div id="preview-container">
-        <!-- 左侧上传图片预览 -->
-        <div class="preview-box">
-          <label>上传的图片</label>
-          <img id="preview-left" src="#" alt="预览上传的图片" style="display:none;">
-        </div>
-        <!-- 右侧数据库图片预览 -->
-        <div class="preview-box">
-          <label>数据库中的匹配图片</label>
-          <img id="preview-right" src="#" alt="数据库中的图片" style="display:none;">
-        </div>
+        <div class="preview-box"><label>上传的图片</label><img id="preview-left" style="display:none;"></div>
+        <div class="preview-box"><label>数据库中的匹配图片</label><img id="preview-right" style="display:none;"></div>
       </div>
-
-      <button type="submit">立即比对</button>
+      <button type="submit" id="compareBtn" disabled>立即比对</button>
     </form>
     <p id="result"></p>
     <p id="result_temp"></p>
   </div>
-
-  <!-- 右侧信息卡片 -->
   <div class="side-card">
-    <h2>最近比对记录</h2>
-    <ul>
-      <li>王建国 - 85.6%相似度</li>
-      <li>张德胜 - 59.2%相似度</li>
-      <li>李桂英 - 95.1%相似度</li>
-    </ul>
     <h2>帮助信息</h2>
-    <p>请确保上传的图片清晰，避免阴影和模糊，增加比对准确度。</p>
+    <p>系统会对上传的照片先做质量检测，通过后才能进行人脸搜索。</p>
+    <p>请确保图片清晰、无遮挡。</p>
   </div>
 </div>
 
 <script src="../js/jquery-2.2.1.min.js"></script>
 <script>
-  // 处理图片预览（左侧上传图片）
-  $('#faceImage').change(function() {
-    const file = this.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        $('#preview-left').attr('src', event.target.result).show();
+let photoQualified = false;
+
+/* 1. 选图预览 + 质量检测 */
+$('#faceImage').on('change', function(){
+  const file = this.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => $('#preview-left').attr('src', e.target.result).show();
+  reader.readAsDataURL(file);
+
+  $('#compareBtn').prop('disabled', true);
+  $('#result').text('正在检测照片质量...').css('color','#333');
+
+  const fd = new FormData(); fd.append('file', file);
+  $.ajax({ url:'/face/checkQuality', type:'POST', data:fd, processData:false, contentType:false,
+    success: res => {
+      photoQualified = res.qualified;
+      if(photoQualified){
+        $('#result').text('照片质量检测通过 ✔').css('color','green');
+        $('#compareBtn').prop('disabled', false);
+      }else{
+        $('#result').text('照片质量不合格 ✘，请重新选择').css('color','red');
       }
-      reader.readAsDataURL(file);
-    } else {
-      $('#preview-left').hide();
+    },
+    error: _=>{ photoQualified = false; $('#result').text('质量检测失败，请重试').css('color','red'); }
+  });
+});
+
+/* 2. 提交表单进行人脸搜索 */
+$('#uploadForm').submit(function(e){
+  e.preventDefault();
+  if(!photoQualified){ alert('请先上传一张合格的照片'); return; }
+
+  const fd = new FormData(); fd.append('file', $('#faceImage')[0].files[0]);
+  $.ajax({ url:'/face/compare', type:'POST', data:fd, processData:false, contentType:false,
+    success: raw => {
+      const res = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if(res.lostPerson && res.lostPerson !== '无'){
+        $('#result_temp').text('走失人员：'+res.lostPerson);
+        $('#result').text('相似度：'+res.similarity+'%');
+        $('#preview-right').attr('src', res.img).show();
+      }else{
+        $('#result').text('未找到匹配人员');
+        $('#preview-right').hide();
+      }
     }
   });
-
-  // 处理表单提交，进行人脸比对
-  $('#uploadForm').submit(function(event) {
-    event.preventDefault();
-    var formData = new FormData();
-    formData.append('file', $('#faceImage')[0].files[0]);
-
-    $.ajax({
-      url: '/faceCompare',
-      type: 'POST',
-      data: formData,
-      processData: false,
-      contentType: false,
-      success: function(response) {
-        const res = JSON.parse(response)
-        if (res) {
-          $('#result_temp').text('走失人员为：' + res.lostPerson);
-          $('#result').text('相似度为：' + res.similarity + '%');
-          $('#preview-right').show();
-          document.getElementById("preview-right").src = res.img;
-        } else {
-          $('#result').text('未找到匹配的图片');
-          $('#preview-right').hide();
-        }
-      }
-    });
-  });
+});
 </script>
 </body>
 </html>
