@@ -36,6 +36,22 @@ public class FaceComparisonController {
             return ResponseEntity.ok(resp);           // 依旧 200
         }
     }
+    @PostMapping("/addFace")
+    public ResponseEntity<?> addFace(@RequestParam("file") MultipartFile file,
+                                    @RequestParam("userId") String userId,
+                                    @RequestParam("userName") String userName) {
+        Map<String,Object> map = new HashMap<>();
+        try {
+            faceService.addFace(file, userId, userName);
+            map.put("success", true);
+            return ResponseEntity.ok(map);
+        } catch (Exception e) {
+            map.put("success", false);
+            map.put("msg", e.getMessage());
+            return ResponseEntity.ok(map);
+        }
+    }
+
 
     /* ---------- 2. 照片比对 ---------- */
     @PostMapping("/compare")

@@ -106,7 +106,11 @@
 
       <!-- 操作按钮 -->
       <div class="layui-form-item" style="text-align:center;margin-top:30px;">
-        <button class="layui-btn layui-btn-normal" lay-submit lay-filter="submitTask">立即发布</button>
+        <button id="submitBtn"
+          class="layui-btn layui-btn-normal"
+          lay-submit
+          lay-filter="submitTask"
+          disabled>立即发布</button>
         <button type="button" class="layui-btn layui-btn-warm" id="generatePoster">
           <i class="layui-icon layui-icon-picture"></i> 生成寻人海报
         </button>
@@ -501,50 +505,72 @@ layui.use(['form','laydate','upload','layer'], function(){
     format: 'yyyy-MM-dd HH:mm:ss'
   });
 
+  var qualifiedFiles = [];      // 保存 {file,url}
+
+  function toggleBtn(){
+      $('#submitBtn').prop('disabled', qualifiedFiles.length === 0);
+  }
+
+  /* 多图上传 + 质检  ----------------------------------------------------*/
   upload.render({
-    elem: "#uploadImage",
-    url : "/upload/image",
-    accept: "images",
-    choose: function(obj){            // 记录原始文件，供质量检测
-      obj.preview(function(index, file){ selectedImageFile = file; });
-    },
-    done: function(res){
-      // 前端缩略图
-      $("#imagePreview").html('<img src="'+res.url+'" width="120">');
-      $("#photoUrl").val(res.url);
+    elem:'#uploadImage',
+    url :'/upload/image',      // 先把原图存到你的本地 /uploads/img 下
+    accept:'images',
+    multiple:true,
+    choose:function(obj){
+      obj.preview(function(index,file,result){
+        // ① 本地预览一张灰色待检图片
+        var $item = $('<div class="preview-item" style="margin-right:10px">'+
+                        '<img src="'+result+'" style="width:120px;height:120px;border:1px solid #eee">'+
+                        '<p class="score" style="text-align:center;color:#666">检测中...</p>'+
+                      '</div>');
+        $('#imagePreview').append($item);
 
-      // 重置显示
-      $("#imageScore").html("评分计算中...");
-      imageQualified = false;
-
-      // 调质量检测接口
-      var fd = new FormData();
-      fd.append('file', selectedImageFile);
-      $.ajax({
-        url: '/face/checkQuality',
-        type: 'POST',
-        data: fd,
-        processData: false,
-        contentType: false,
-        success: function(resp){
-          var scoreTxt = "合格"; // resp 没带分就仅展示合格
-          if(resp.qualified){
-            imageQualified = true;
-            $("#imageScore").html('<span style="color:green">'+ scoreTxt +'</span>');
-          }else{
-            imageQualified = false;
-            $("#imageScore").html('<span style="color:red">不合格</span>');
-            layer.alert("照片不合格：" + (resp.msg || "请更换更清晰照片"), {icon: 2});
+        // ② 上传文件到 /upload/image
+        var fdUpload = new FormData();
+        fdUpload.append('file', file);
+        $.ajax({
+          url:'/upload/image',
+          type:'POST',
+          data:fdUpload,
+          processData:false,
+          contentType:false,
+          success:function(uRes){
+            if(!uRes.success){ 
+                $item.find('.score').text('上传失败').css('color','red'); 
+                return;
+            }
+            // ③ 质检
+            var fdQc = new FormData();
+            fdQc.append('file', file);
+            $.ajax({
+              url:'/face/checkQuality',
+              type:'POST',
+              data:fdQc,
+              processData:false,
+              contentType:false,
+              success:function(qRes){
+                if(qRes.qualified){
+                    $item.find('.score').text('合格').css('color','green');
+                    qualifiedFiles.push({file, url: uRes.url});
+                    $('#photoUrl').val(uRes.url);   // 只写一次，或始终写第一张
+                    toggleBtn();
+                }else{
+                    $item.find('.score').text('不合格').css('color','red');
+                }
+                toggleBtn();                 // 质检完成后刷新按钮
+              },
+              error:function(){
+                $item.find('.score').text('检测失败').css('color','red');
+                toggleBtn();
+              }
+            });
           }
-        },
-        error: function(){
-          imageQualified = false;
-          $("#imageScore").html('<span style="color:red">评分失败，请稍后重试</span>');
-          layer.alert("评分接口调用失败，请稍后重试", {icon: 2});
-        }
+        });
       });
     }
   });
+
 
   // 语音上传
   upload.render({
@@ -854,46 +880,48 @@ layui.use(['form','laydate','upload','layer'], function(){
     return parts.join("\n\n");
   }
 
+  function checkSubmitBtn(){
+      $('#submitBtn').prop('disabled', qualifiedFiles.length === 0);
+  }
+
   // 表单提交
-  form.on("submit(submitTask)", function(data){
-    if(!$("#photoUrl").val()){
-      layer.msg("请上传老人照片", {icon: 2});
-      return false;
+  form.on('submit(submitTask)', function(data){
+    if(qualifiedFiles.length===0){
+        layer.msg('请至少上传一张合格照片',{icon:2});
+        return false;
     }
-    if(!imageQualified){
-      layer.msg("请上传一张评分合格的照片", {icon: 2});
-      return false;
-    }
-    
-    var formData = {
-      elderName: data.field.elderName,
-      lostTime: data.field.lostTime,
-      location: data.field.location,
-      photoUrl: $('#photoUrl').val(),
-      audioUrl: $('#audioUrl').val() || '',
-      extraInfo: data.field.extraInfo || '',
-      status: 'waiting'
+    var mainPhoto = $('#photoUrl').val();
+    // 1) 先创建任务
+    var dto = {
+        elderName: data.field.elderName,
+        lostTime : data.field.lostTime,
+        location : data.field.location,
+        photoUrl  : $('#photoUrl').val(), 
+        photoUrls: qualifiedFiles.map(f=>f.url),
+        status   : 'waiting'
     };
-    
     $.ajax({
-      url: '/task/create',
-      type: 'POST',
-      contentType: 'application/json',
-      data: JSON.stringify(formData),
-      success: function(res){
-        if(res.code === 0){
-          layer.msg('发布成功', {icon: 1, time: 1500}, function(){
-            window.location.href = '/task/task-manage';
-          });
-        } else {
-          layer.msg(res.msg || '发布失败', {icon: 2});
+        url:'/task/create',
+        type:'POST',
+        contentType:'application/json',
+        data:JSON.stringify(dto),
+        success:function(res){
+            if(res.code===0){
+                var taskId = res.data.taskId;
+                // 2) 逐张 addFace
+                qualifiedFiles.forEach(function(p){
+                    var fd = new FormData();
+                    fd.append('file', p.file);
+                    $.ajax({url:'/face/addFace?userId='+taskId+'&userName='+encodeURIComponent(dto.elderName),
+                            type:'POST', data:fd, processData:false, contentType:false});
+                });
+                layer.msg('发布成功',{icon:1,time:1500},function(){location.href='/task/task-manage';});
+            }else{
+                layer.msg(res.msg||'发布失败',{icon:2});
+            }
         }
-      },
-      error: function(){
-        layer.msg('服务器错误，请稍后重试', {icon: 2});
-      }
     });
-    return false;
+    return false;  // 阻止表单跳转
   });
 
   // 生成寻人海报按钮点击事件
