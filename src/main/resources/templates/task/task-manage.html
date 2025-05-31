@@ -51,7 +51,6 @@
         <div class="layui-inline">
           <button class="layui-btn" id="searchBtn" data-type="reload">搜索</button>
           <button class="layui-btn layui-btn-primary" id="resetBtn">重置</button>
-          <a href="/task/task-publish" class="layui-btn layui-btn-normal">发布新任务</a>
         </div>
       </div>
     </div>
@@ -179,10 +178,17 @@ layui.use(['table', 'form', 'layer', 'util'], function(){
     var data = obj.data;  // 获得当前行数据
     var layEvent = obj.event;  // 获得 lay-event 对应的值
     
-    if(layEvent === 'detail'){  // 查看详情
-      // 跳转到详情页
-      window.location.href = '/task/task-detail/' + data.id;
-    } else if(layEvent === 'cancel'){  // 取消任务
+      if(layEvent === 'detail'){  // 查看详情
+        // 跳转到详情页
+        var url = '/task/task-detail/' + data.id;
+        var title = '任务详情'; // 可自定义
+        window.location.href = '/task/task-detail/' + data.id;
+        if(window.parent && window.parent.layui && window.parent.layui.index){
+            window.parent.layui.index.openTab({
+            title: title,
+            href: url
+          });}
+      } else if(layEvent === 'cancel'){  // 取消任务
       layer.confirm('确定要取消该任务吗？', function(index){
         // 发送请求取消任务
         $.ajax({

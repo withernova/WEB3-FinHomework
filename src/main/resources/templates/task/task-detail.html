@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <link rel="stylesheet" th:href="@{/layuimini/lib/layui-v2.5.5/css/layui.css}">
   <link rel="stylesheet" th:href="@{/layuimini/css/public.css}">
+  <link rel="stylesheet" th:href="@{/css/task-chat.css}">
   <style>
     body{background:#f2f2f2;}
     .layuimini-container{margin:20px auto;background:#fff;border-radius:8px;
@@ -65,7 +66,9 @@
 <div class="layuimini-container">
   <div class="layuimini-main">
     <div class="layui-breadcrumb" style="margin-bottom:20px;">
-      <a href="/task/task-manage">任务管理</a>
+      <a th:href="${userType == 'rescuer' ? '/task/task-management' : '/task/task-manage'}">
+        <span th:text="${userType == 'rescuer' ? '任务接收' : '任务管理'}"></span>
+      </a>
       <a><cite>任务详情</cite></a>
     </div>
     
@@ -161,26 +164,73 @@
       
       <!-- 操作按钮 -->
       <div class="task-buttons">
-        <a href="/task/task-manage" class="layui-btn layui-btn-primary">返回列表</a>
-        <a th:href="@{'/task/task-edit/' + ${task.id}}" class="layui-btn">编辑任务</a>
-        <!-- 只有等待救援状态才显示智能推荐按钮 -->
-        <button th:if="${task.status == 'waiting'}" class="layui-btn layui-btn-warm" id="recommendRescuers">
+        <!-- 根据用户类型显示不同的返回链接 -->
+        <a th:href="${userType == 'rescuer' ? '/task/task-track' : '/task/task-manage'}" class="layui-btn layui-btn-primary">返回列表</a>
+        
+        <!-- 仅家属可以编辑和取消任务 -->
+        <a th:if="${userType == 'family'}" th:href="@{'/task/task-edit/' + ${task.id}}" class="layui-btn">编辑任务</a>
+        <!-- 只有等待救援状态才显示智能推荐按钮，且只有家属可见 -->
+        <button th:if="${task.status == 'waiting' && userType == 'family'}" class="layui-btn layui-btn-warm" id="recommendRescuers">
           <i class="layui-icon layui-icon-group"></i> 智能推荐救援人员
         </button>
-        <button th:if="${task.status == 'waiting'}" class="layui-btn layui-btn-danger" id="cancelTask">取消任务</button>
+        <button th:if="${task.status == 'waiting' && userType == 'family'}" class="layui-btn layui-btn-danger" id="cancelTask">取消任务</button>
+        
+        <!-- 只有救援者在救援中状态才显示完成任务按钮 -->
+        <button th:if="${task.status == 'rescuing' && userType == 'rescuer'}" class="layui-btn layui-btn-normal" id="finishTask">
+          <i class="layui-icon layui-icon-ok"></i> 完成任务
+        </button>
       </div>
+      
+      <div th:if="${task != null}" th:replace="task/task-chat :: taskChat(${task}, ${userType}, ${session.userId}, ${userName})"></div>
+
     </div>
   </div>
 </div>
 
 <script th:src="@{/layuimini/lib/layui-v2.5.5/layui.js}"></script>
 <script th:src="@{/layuimini/lib/jquery-3.4.1/jquery-3.4.1.min.js}"></script>
+<script th:src="@{/js/task-chat.js}"></script>
 <script th:inline="javascript">
 /*<![CDATA[*/
 layui.use(['layer'], function(){
   var layer = layui.layer;
   var taskId = [[${task?.id}]];
-  
+
+  if(taskId && ([[${task?.status}]] === 'rescuing' || [[${task?.status}]] === 'finished')) {
+    // 确保传递的是数字类型
+    initTaskChat({
+      taskId: parseInt(taskId),
+      userId: [[${session.userId}]],
+      userType: [[${userType}]],
+      userName: [[${userName}]],
+      taskStatus: [[${task?.status}]]
+    });
+  }
+  // 完成任务（仅救援者可见）
+  $('#finishTask').on('click', function(){
+    layer.confirm('确认将此任务标记为已完成吗？', function(index){
+      // 发送请求完成任务
+      $.ajax({
+        url: '/task/finish/' + taskId,
+        type: 'POST',
+        success: function(res){
+          if(res.code === 0){
+            layer.msg('任务已完成', {icon: 1, time: 1500}, function(){
+              // 跳转回任务列表
+              window.location.href = '/task/task-track';
+            });
+          } else {
+            layer.msg(res.msg || '操作失败', {icon: 2});
+          }
+          layer.close(index);
+        },
+        error: function(){
+          layer.msg('服务器错误，请稍后重试', {icon: 2});
+          layer.close(index);
+        }
+      });
+    });
+  });
   // 取消任务
   $('#cancelTask').on('click', function(){
     layer.confirm('确定要取消该任务吗？', function(index){

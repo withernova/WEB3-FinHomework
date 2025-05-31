@@ -25,6 +25,9 @@ public class UploadController {
     @Value("${file.upload-dir}")
     private String baseDir;
 
+    @Value("${file.access-prefix:/uploads/}")
+    private String accessPrefix;
+
     private static final DateTimeFormatter TS_FMT =
             DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
@@ -57,7 +60,7 @@ public class UploadController {
         FileCopyUtils.copy(file.getInputStream(), Files.newOutputStream(savePath));
 
         // 4) 返回给前端 / 数据库的相对 URL
-        String relativeUrl = "/rescue_informaition/" + subDir + "/" + fname;
+        String relativeUrl = accessPrefix + subDir + "/" + fname;
 
         Map<String, Object> res = new HashMap<>();
         res.put("code", 0);

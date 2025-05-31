@@ -38,4 +38,12 @@ public interface TaskService {
 
     List<Task> getTasksByRescuer(String rescuerUid);
     boolean finishTask(Integer taskId, String rescuerUid);
+
+    Map<String, Object> generateElderInfoSummary(Map<String, Object> templateData);
+
+    // TaskService.java
+    int countTasks(String elderName, String location, String status);
+    List<Task> selectTasksByPage(int offset, int limit, String elderName, String location, String status);
+
+
 }

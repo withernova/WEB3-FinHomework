@@ -111,7 +111,7 @@
       <!-- 操作按钮 -->
       <div class="layui-form-item" style="text-align:center;margin-top:30px;">
         <button class="layui-btn layui-btn-normal" lay-submit lay-filter="updateTask">保存修改</button>
-        <a th:href="@{'/task/task-detail/' + ${task.id}}" class="layui-btn layui-btn-primary">返回详情</a>
+        <button type="button" class="layui-btn layui-btn-primary" id="backToDetailBtn">返回详情</button>
       </div>
     </form>
   </div>
@@ -201,6 +201,22 @@ layui.use(['form','laydate','upload','layer'], function(){
       }
     });
     return false;
+  });
+  $('#backToDetailBtn').on('click', function(){
+    var taskId = $('input[name="id"]').val(); // 或其他方式获取id
+    var url = '/task/task-detail/' + taskId;
+    if(window.parent && window.parent.layui && window.parent.layui.index){
+      // 打开详情tab
+      window.parent.layui.index.openTab({
+        title: '任务详情',
+        href: url
+      });
+      // 关闭当前tab
+      window.parent.layui.index.closeCurrentTab();
+    } else {
+      // 兼容：如果不在layuimini下，普通跳转
+      window.location.href = url;
+    }
   });
 });
 /*]]>*/

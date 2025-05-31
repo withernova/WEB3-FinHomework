@@ -29,7 +29,7 @@ public class RescuerController {
     public String toApplyPage(HttpSession session, Model model) {
         String userId = (String) session.getAttribute("userId");
         if (userId == null) {
-            return "redirect:/login";
+            return"common/no-login";
         }
         
         // 检查是否已经申请过
@@ -79,7 +79,7 @@ public class RescuerController {
     public String generateTagsPage(HttpSession session, Model model) {
         String userId = (String) session.getAttribute("userId");
         if (userId == null) {
-            return "redirect:/login";
+            return "common/no-login";
         }
         
         Rescuer rescuer = rescuerService.getRescuerByUuid(userId);
@@ -172,7 +172,7 @@ public class RescuerController {
     public String getRescuerList(HttpSession session) {
         String userId = (String) session.getAttribute("userId");
         if (userId == null) {
-            return "redirect:/login";
+            return "common/no-login";
         }
         
         // 获取当前用户的搜救队员信息
@@ -184,7 +184,7 @@ public class RescuerController {
         }
         
         // 重定向到静态HTML页面
-        return "redirect:page/rescuer_list.html";
+        return "common/no-login";
     }
     @GetMapping("/list-data")
     @ResponseBody
@@ -273,7 +273,7 @@ public class RescuerController {
         
         if (userId == null) {
             System.out.println("[profile] userId is null, redirecting to login");
-            return "redirect:/login";
+            return "common/no-login";
         }
         
         Rescuer rescuer = rescuerService.getRescuerByUuid(userId);
@@ -293,7 +293,7 @@ public class RescuerController {
     public String saveProfile(@RequestParam Map<String, String> params, HttpSession session, Model model) {
         String userId = (String) session.getAttribute("userId");
         if (userId == null) {
-            return "redirect:/login";
+            return "common/no-login";
         }
 
         Rescuer rescuer = rescuerService.getRescuerByUuid(userId);

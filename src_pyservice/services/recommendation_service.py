@@ -640,3 +640,244 @@ class RecommendationService:
         html_report = self._generate_html_report(task, top_rescuers, relevant_tags, markdown_report)
         
         return html_report, markdown_report
+    
+
+
+    def generate_elder_summary(self, template_data):
+        """
+        根据结构化模板数据生成走失老人的智能摘要
+        
+        Args:
+            template_data (dict): 模板收集的详细信息
+        
+        Returns:
+            str: 生成的摘要文本
+        """
+        try:
+            logger.info("开始生成老人信息摘要")
+            
+            # 构建提示词
+            prompt = self._build_summary_prompt(template_data)
+            
+            logger.info("调用智谱AI生成摘要")
+            # 调用智谱AI模型
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "你是一个专业的走失老人信息摘要生成系统，擅长将详细信息整理成简洁、重点突出的描述，便于救援人员快速理解关键信息。"},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3,
+                max_tokens=500
+            )
+            
+            # 获取生成的摘要
+            summary = response.choices[0].message.content
+            logger.info(f"智谱AI返回摘要: {summary}")
+            
+            return summary.strip()
+            
+        except Exception as e:
+            logger.error(f"生成摘要时发生错误: {str(e)}", exc_info=True)
+            # 发生错误时使用本地方法生成摘要
+            return self._generate_fallback_summary(template_data)
+
+    def _build_summary_prompt(self, data):
+        """构建摘要生成的提示词"""
+        prompt = """
+        请根据以下详细信息，生成一份简洁而全面的走失老人描述，重点突出对救援有帮助的关键信息：
+        
+        """
+        
+        # 基本信息
+        basic_info = []
+        if data.get('age'):
+            basic_info.append(f"年龄：{data['age']}岁")
+        if data.get('gender'):
+            basic_info.append(f"性别：{data['gender']}")
+        if data.get('height') or data.get('weight'):
+            height_weight = "身高体重："
+            if data.get('height'):
+                height_weight += f"{data['height']}cm"
+            if data.get('weight'):
+                if data.get('height'):
+                    height_weight += f"、{data['weight']}kg"
+                else:
+                    height_weight += f"{data['weight']}kg"
+            basic_info.append(height_weight)
+        
+        if basic_info:
+            prompt += "【基本信息】\n" + "\n".join(basic_info) + "\n\n"
+        
+        # 身体状况
+        health_info = []
+        if data.get('health'):
+            health_info.append(f"健康状况：{', '.join(data['health'])}")
+        if data.get('mobility'):
+            health_info.append(f"行动能力：{', '.join(data['mobility'])}")
+        if data.get('medication'):
+            health_info.append(f"用药情况：{data['medication']}")
+        
+        if health_info:
+            prompt += "【身体状况】\n" + "\n".join(health_info) + "\n\n"
+        
+        # 外貌特征
+        appearance_info = []
+        if data.get('bodyType'):
+            appearance_info.append(f"体型：{', '.join(data['bodyType'])}")
+        if data.get('hair'):
+            appearance_info.append(f"发型：{', '.join(data['hair'])}")
+        if data.get('marks'):
+            appearance_info.append(f"特殊标记：{', '.join(data['marks'])}")
+        
+        clothing_info = []
+        if data.get('topClothing'):
+            clothing_info.append(f"上衣：{data['topClothing']}")
+        if data.get('bottomClothing'):
+            clothing_info.append(f"下装：{data['bottomClothing']}")
+        if data.get('shoes'):
+            clothing_info.append(f"鞋子：{data['shoes']}")
+        
+        if clothing_info:
+            appearance_info.append("着装：" + "，".join(clothing_info))
+        
+        if data.get('belongings'):
+            appearance_info.append(f"随身物品：{', '.join(data['belongings'])}")
+        
+        if appearance_info:
+            prompt += "【外貌特征】\n" + "\n".join(appearance_info) + "\n\n"
+        
+        # 爱好与习惯
+        hobby_info = []
+        if data.get('hobbies'):
+            hobby_info.append(f"爱好：{', '.join(data['hobbies'])}")
+        if data.get('activities'):
+            hobby_info.append(f"日常活动：{', '.join(data['activities'])}")
+        if data.get('habits'):
+            hobby_info.append(f"生活习惯：{data['habits']}")
+        
+        if hobby_info:
+            prompt += "【爱好与习惯】\n" + "\n".join(hobby_info) + "\n\n"
+        
+        # 行为特点
+        behavior_info = []
+        if data.get('behavior'):
+            behavior_info.append(f"行为特点：{', '.join(data['behavior'])}")
+        if data.get('language'):
+            behavior_info.append(f"语言能力：{', '.join(data['language'])}")
+        if data.get('frequentPlaces'):
+            behavior_info.append(f"常去地点：{', '.join(data['frequentPlaces'])}")
+        
+        if behavior_info:
+            prompt += "【行为特点】\n" + "\n".join(behavior_info) + "\n\n"
+        
+        # 紧急情况
+        if data.get('emergency'):
+            prompt += f"【紧急注意事项】\n{', '.join(data['emergency'])}\n\n"
+        
+        # 其他信息
+        if data.get('additionalInfo'):
+            prompt += f"【其他信息】\n{data['additionalInfo']}\n\n"
+        
+        prompt += """
+        请基于以上信息，生成一份结构清晰、重点突出的走失老人描述摘要，摘要应该：
+        1. 包含老人最显著的特征，便于识别
+        2. 突出需要特别注意的健康问题和紧急情况
+        3. 提供可能的活动范围和习惯
+        4. 语言简洁明了，避免冗余
+        5. 总长度控制在200-300字以内
+        
+        直接返回摘要内容，不要加额外的标题或解释。
+        """
+        
+        return prompt
+
+    def _generate_fallback_summary(self, data):
+        """生成备用摘要（当AI调用失败时）"""
+        try:
+            logger.info("使用本地方法生成备用摘要")
+            
+            summary_parts = []
+            
+            # 基本信息
+            basic_info = []
+            if data.get('age'):
+                basic_info.append(f"{data['age']}岁")
+            if data.get('gender'):
+                basic_info.append(data['gender'])
+            if data.get('height'):
+                basic_info.append(f"身高约{data['height']}cm")
+            if data.get('weight'):
+                basic_info.append(f"体重约{data['weight']}kg")
+            
+            if basic_info:
+                summary_parts.append("【基本特征】" + "、".join(basic_info))
+            
+            # 身体状况
+            health_info = []
+            if data.get('health'):
+                health_info.append(f"健康：{', '.join(data['health'])}")
+            if data.get('mobility'):
+                health_info.append(f"行动：{', '.join(data['mobility'])}")
+            if data.get('medication'):
+                health_info.append(f"用药：{data['medication']}")
+            
+            if health_info:
+                summary_parts.append("【身体状况】" + "；".join(health_info))
+            
+            # 外貌和着装
+            appearance_info = []
+            if data.get('bodyType'):
+                appearance_info.append(f"体型：{', '.join(data['bodyType'])}")
+            if data.get('hair'):
+                appearance_info.append(f"发型：{', '.join(data['hair'])}")
+            if data.get('marks'):
+                appearance_info.append(f"特征：{', '.join(data['marks'])}")
+            
+            clothing = []
+            if data.get('topClothing'):
+                clothing.append(data['topClothing'])
+            if data.get('bottomClothing'):
+                clothing.append(data['bottomClothing'])
+            if clothing:
+                appearance_info.append(f"着装：{', '.join(clothing)}")
+            
+            if data.get('belongings'):
+                appearance_info.append(f"随身物品：{', '.join(data['belongings'])}")
+            
+            if appearance_info:
+                summary_parts.append("【外貌特征】" + "；".join(appearance_info))
+            
+            # 爱好与习惯
+            hobby_info = []
+            if data.get('hobbies'):
+                hobby_info.append(f"爱好：{', '.join(data['hobbies'])}")
+            if data.get('activities'):
+                hobby_info.append(f"活动：{', '.join(data['activities'])}")
+            
+            if hobby_info:
+                summary_parts.append("【爱好习惯】" + "；".join(hobby_info))
+            
+            # 行为特点
+            behavior_info = []
+            if data.get('behavior'):
+                behavior_info.append(f"特点：{', '.join(data['behavior'])}")
+            if data.get('frequentPlaces'):
+                behavior_info.append(f"常去：{', '.join(data['frequentPlaces'])}")
+            
+            if behavior_info:
+                summary_parts.append("【行为特点】" + "；".join(behavior_info))
+            
+            # 紧急情况
+            if data.get('emergency'):
+                summary_parts.append(f"【紧急注意】{', '.join(data['emergency'])}")
+            
+            # 其他信息
+            if data.get('additionalInfo'):
+                summary_parts.append(f"【其他信息】{data['additionalInfo']}")
+            
+            return "\n\n".join(summary_parts) if summary_parts else "详细信息已收集，但无法自动生成摘要。请查看完整信息。"
+        
+        except Exception as e:
+            logger.error(f"生成备用摘要时发生错误: {str(e)}", exc_info=True)
+            return "无法生成老人信息摘要，请手动填写详细信息。"

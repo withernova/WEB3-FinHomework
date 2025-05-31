@@ -26,7 +26,7 @@ import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 @Configuration
 public class WebConfig implements WebMvcConfigurer{
     
-
+    
 
 
     @Autowired
@@ -66,6 +66,8 @@ public class WebConfig implements WebMvcConfigurer{
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/static/**").addResourceLocations("classpath:/static/");
+        registry.addResourceHandler("/uploads/**")
+            .addResourceLocations("file:uploads/");
     }
 
     @Bean
@@ -94,4 +96,5 @@ public class WebConfig implements WebMvcConfigurer{
         resolver.setCharacterEncoding("UTF-8");
         return resolver;
     }
+
 }

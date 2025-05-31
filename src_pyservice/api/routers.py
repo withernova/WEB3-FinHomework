@@ -158,3 +158,33 @@ def cleanup_temp_files():
     except Exception as e:
         logger.error(f"清理临时文件时发生错误: {str(e)}", exc_info=True)
         return jsonify({"success": False, "message": f"服务器错误: {str(e)}"}), 500
+    
+
+@api_bp.route("/generate-summary", methods=["POST"])
+def generate_elder_summary():
+    print("114514")
+    try:
+        logger.info("收到/generate-summary请求")
+        
+        data = request.json
+        if not data:
+            logger.warning("请求数据为空")
+            return jsonify({"success": False, "message": "请求数据为空"}), 400
+        
+        logger.debug(f"模板数据字段: {list(data.keys())}")
+        
+        # 调用服务生成摘要
+        summary = recommendation_service.generate_elder_summary(data)
+        
+        logger.info(f"生成摘要完成，长度: {len(summary)}")
+        
+        return jsonify({
+            "success": True,
+            "summary": summary
+        }), 200
+    
+    except Exception as e:
+        logger.error(f"生成摘要时发生错误: {str(e)}", exc_info=True)
+        return jsonify({"success": False, "message": f"服务器错误: {str(e)}"}), 500
+    
+

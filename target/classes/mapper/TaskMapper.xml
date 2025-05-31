@@ -77,11 +77,6 @@
         UPDATE tasks SET status = #{status} WHERE id = #{id}
     </update>
 
-    <update id="updateTaskStatus">
-        UPDATE tasks
-        SET   status = #{status}
-        WHERE id = #{id} AND status = 'waiting'
-    </update>
 
 
     <!-- 根据ID删除任务 -->
@@ -107,5 +102,53 @@
         </foreach>
         ORDER BY lost_time DESC
     </select>
+
+
+    <!-- 统计总数 -->
+    <select id="countTasks" resultType="int">
+    SELECT COUNT(*) FROM tasks
+    WHERE
+        (#{elderName} IS NULL OR elder_name LIKE CONCAT('%', #{elderName}, '%'))
+        AND (#{location} IS NULL OR location LIKE CONCAT('%', #{location}, '%'))
+        AND (#{status} IS NULL OR status = #{status})
+    </select>
+
+    <!-- 分页查询 -->
+    <!-- 4-1  分页查询，等待任务优先，其次 rescuing -->
+    <select id="selectTasksByPage" resultType="com.maka.pojo.Task">
+    SELECT * FROM tasks
+    <where>
+        <if test="elderName != null and elderName != ''">
+            AND elder_name LIKE CONCAT('%',#{elderName},'%')
+        </if>
+        <if test="location != null and location != ''">
+            AND location LIKE CONCAT('%',#{location},'%')
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+    </where>
+    ORDER BY
+        CASE
+            WHEN status = 'waiting'   THEN 0
+            WHEN status = 'rescuing'  THEN 1
+            WHEN status = 'finished'  THEN 2
+            ELSE 3
+        END,
+        id DESC
+    LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <!-- 4-2  仅当任务仍为 waiting 时才更新为 rescuing -->
+    <update id="updateTaskStatus">
+    UPDATE tasks
+    SET status = #{status}
+    WHERE id = #{id}
+        <if test="_parameter == 'rescuing'">
+            /* 若只想在 waiting → rescuing 时更新可在此加判断 */
+            AND status = 'waiting'
+        </if>
+    </update>
+
 
 </mapper>
