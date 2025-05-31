@@ -56,8 +56,8 @@ spring:
 # 阿里云短信配置
 aliyun:
   sms:
-    access-key-id: LTAI5tPRQ2mjozsgWb5qpgLZ
-    access-key-secret: bJklOOdXvXc2tctX92njTWI8ldTIkJ
+    access-key-id: LTAI5tPnjpyq2RfKmWyXFDsy
+    access-key-secret: 04ynGElOHbltHcVlugc0eNWl3MC9eK
     sign-name: 智寻归途
     template-code: SMS_474630233
 
