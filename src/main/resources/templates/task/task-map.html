@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>救援地图</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/layui@2.9.6/dist/css/layui.css">
+  <style>
+    body { background: #f2f2f2; margin: 0; padding: 0; }
+    .layuimini-container { margin: 20px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.1); padding: 20px; }
+    .map-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .map-title { font-size: 18px; font-weight: bold; }
+    .map-toolbar { display: flex; gap: 10px; margin-bottom: 15px; }
+    #map-container { width: 100%; height: 600px; border-radius: 5px; overflow: hidden; position: relative; }
+    #map { width: 100%; height: 100%; }
+    #draw-canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 99; pointer-events: none; display: none; }
+    #draw-hint { position:absolute;left:50%;top:15px;z-index:100; font-size:14px;padding:6px 18px;transform:translateX(-50%); background:rgba(255,255,0,.85);border-radius:6px;display:none;}
+    .map-legend { background: #fff; position: absolute; top: 10px; right: 10px; border-radius: 4px; padding: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); z-index: 100; font-size: 12px;}
+    .legend-item { display: flex; align-items: center; margin-bottom: 5px; }
+    .legend-color { width: 16px; height: 16px; border-radius: 3px; margin-right: 8px; }
+    .legend-text { color: #666; }
+    .marker-info { margin-top: 15px; padding: 15px; background: #f9f9f9; border-radius: 5px; display: none; position:absolute; left:50%; top:80px; z-index:200; min-width:280px; transform:translateX(-50%);}
+    .marker-info textarea { width: 100%; min-height: 80px; padding: 10px; border: 1px solid #e6e6e6; border-radius: 4px; margin-bottom: 10px; resize: none; }
+    .color-options { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; }
+    .type-options { display: flex; gap: 10px; margin-bottom: 15px; }
+    .marker-actions { display: flex; justify-content: flex-end; gap: 10px; }
+  </style>
+  <!-- 高德地图API -->
+  <script src="https://webapi.amap.com/maps?v=2.0&key=2a73ff764995703ff9e17cc103851a1e"></script>
+</head>
+<body>
+<div class="layuimini-container">
+  <div class="layuimini-main">
+    <div class="map-header">
+      <div class="map-title">救援地图</div>
+    </div>
+    <div class="map-toolbar">
+      <button type="button" class="layui-btn layui-btn-normal" id="draw-area">绘制区域</button>
+      <button type="button" class="layui-btn layui-btn-normal" id="draw-path">绘制路径</button>
+      <button type="button" class="layui-btn layui-btn-normal" id="add-marker">添加标记</button>
+      <button type="button" class="layui-btn layui-btn-primary" id="clear-current">清除当前</button>
+    </div>
+    <div id="map-container">
+      <div id="map"></div>
+      <canvas id="draw-canvas"></canvas>
+      <div id="draw-hint">正在绘制，地图已锁定。单击添加，双击结束，ESC取消</div>
+      <!-- 图例 -->
+      <div class="map-legend">
+        <div class="legend-title">图例说明</div>
+        <div class="legend-item">
+          <div class="legend-color" style="background-color: #FF5722;"></div>
+          <div class="legend-text">危险区域</div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background-color: #5FB878;"></div>
+          <div class="legend-text">已搜索区域</div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background-color: #1E9FFF;"></div>
+          <div class="legend-text">搜索路径</div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background-color: #FFB800;"></div>
+          <div class="legend-text">兴趣点</div>
+        </div>
+      </div>
+    </div>
+    <!-- 标记信息输入区域 -->
+    <div class="marker-info" id="marker-info">
+      <div class="layui-form">
+        <div class="layui-form-item">
+          <label class="layui-form-label">描述</label>
+          <div class="layui-input-block">
+            <textarea id="marker-description" placeholder="请输入标记描述信息..." class="layui-textarea"></textarea>
+          </div>
+        </div>
+        <div class="layui-form-item">
+          <label class="layui-form-label">类型</label>
+          <div class="layui-input-block type-options">
+            <input type="radio" name="marker-type" value="searched" title="已搜索区域" checked>
+            <input type="radio" name="marker-type" value="danger" title="危险区域">
+            <input type="radio" name="marker-type" value="poi" title="兴趣点">
+            <input type="radio" name="marker-type" value="path" title="搜索路径">
+          </div>
+        </div>
+        <div class="layui-form-item">
+          <label class="layui-form-label">颜色</label>
+          <div class="layui-input-block color-options">
+            <input type="color" id="marker-color" value="#5FB878">
+            <span id="color-preview" style="display:inline-block; width:20px; height:20px; background:#5FB878; border-radius:4px;"></span>
+          </div>
+        </div>
+        <div class="layui-form-item marker-actions">
+          <button type="button" class="layui-btn layui-btn-primary" id="cancel-marker">取消</button>
+          <button type="button" class="layui-btn" id="save-marker">保存标记</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/layui@2.9.6/dist/layui.js"></script>
+<script>
+// 类型-颜色-填充色
+const TYPE_COLORS = {
+  searched: '#5FB878',
+  danger:   '#FF5722',
+  path:     '#1E9FFF',
+  poi:      '#FFB800'
+};
+const TYPE_FILL = {
+  searched: 'rgba(95,184,120,0.18)',
+  danger:   'rgba(255,87,34,0.13)',
+  path:     'rgba(30,159,255,0.09)',
+  poi:      'rgba(255,184,0,0.18)'
+};
+
+let drawCanvas, drawCtx, drawHint;
+let drawMode = null; // polygon|polyline|marker
+let drawEnable = false;
+let drawPoints = [];
+let map, overlays = [];
+
+// 用于持久化和加载的接口
+const API_SAVE = '/api/map/marker';
+const API_LIST = '/map/markers/'; // + taskId
+
+// 这里模拟参数
+var taskId = 1;
+var userName = "demoUser";
+// END模拟参数
+
+function resizeDrawCanvas() {
+  const mapDom = document.getElementById('map');
+  drawCanvas.width = mapDom.offsetWidth;
+  drawCanvas.height = mapDom.offsetHeight;
+  drawCanvas.style.width = mapDom.offsetWidth + "px";
+  drawCanvas.style.height = mapDom.offsetHeight + "px";
+  drawPolygonOnCanvas();
+}
+
+function drawPolygonOnCanvas() {
+  drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+  if (drawPoints.length === 0 || !drawMode) return;
+  const type = drawMode === 'polygon'
+      ? $('input[name="marker-type"]:checked').val() || 'searched'
+      : drawMode === 'polyline'
+      ? 'path'
+      : 'poi';
+  const color = TYPE_COLORS[type];
+  const fill = TYPE_FILL[type];
+
+  if (drawMode === 'polygon' && drawPoints.length > 1) {
+    drawCtx.strokeStyle = color;
+    drawCtx.lineWidth = 2;
+    drawCtx.fillStyle = fill;
+    drawCtx.beginPath();
+    drawCtx.moveTo(drawPoints[0].x, drawPoints[0].y);
+    for(let i=1;i<drawPoints.length;i++) drawCtx.lineTo(drawPoints[i].x, drawPoints[i].y);
+    drawCtx.closePath();
+    drawCtx.stroke();
+    if (drawPoints.length > 2) drawCtx.fill();
+  }
+  if (drawMode === 'polyline' && drawPoints.length > 1) {
+    drawCtx.strokeStyle = color;
+    drawCtx.lineWidth = 4;
+    drawCtx.beginPath();
+    drawCtx.moveTo(drawPoints[0].x, drawPoints[0].y);
+    for(let i=1;i<drawPoints.length;i++) drawCtx.lineTo(drawPoints[i].x, drawPoints[i].y);
+    drawCtx.stroke();
+  }
+  // 点渲染
+  for(let pt of drawPoints){
+    drawCtx.beginPath();
+    drawCtx.arc(pt.x, pt.y, 6, 0, 2*Math.PI);
+    drawCtx.fillStyle = color;
+    drawCtx.fill();
+    drawCtx.strokeStyle="#fff";
+    drawCtx.lineWidth=2;
+    drawCtx.stroke();
+  }
+  // 单点模式
+  if(drawMode === 'marker' && drawPoints.length === 1){
+    drawCtx.beginPath();
+    drawCtx.arc(drawPoints[0].x, drawPoints[0].y, 10, 0, 2*Math.PI);
+    drawCtx.fillStyle = color;
+    drawCtx.fill();
+    drawCtx.strokeStyle="#fff";
+    drawCtx.lineWidth=3;
+    drawCtx.stroke();
+  }
+}
+
+function closeDrawCanvas() {
+  drawEnable = false;
+  drawMode = null;
+  drawPoints = [];
+  drawCanvas.style.display = 'none';
+  drawCanvas.style.pointerEvents = 'none';
+  drawHint.style.display = 'none';
+  drawPolygonOnCanvas();
+}
+
+function openDrawCanvas(mode) {
+  drawEnable = true;
+  drawMode = mode;
+  drawPoints = [];
+  resizeDrawCanvas();
+  drawCanvas.style.display = 'block';
+  drawCanvas.style.pointerEvents = 'auto';
+  drawHint.style.display = 'block';
+  drawHint.innerText = mode==='polygon' ? '正在绘制区域，单击添加顶点，双击结束，ESC取消'
+    : mode==='polyline' ? '正在绘制路径，单击添加节点，双击结束，ESC取消'
+    : '点击地图添加标记点，ESC取消';
+  drawPolygonOnCanvas();
+}
+
+function openMarkerInput(x, y) {
+  $('#marker-info').show();
+  $('#marker-description').val('');
+  $('#marker-color').val('#5FB878');
+  $('#color-preview').css('background', '#5FB878');
+  $('input[name="marker-type"][value="searched"]').prop('checked', true);
+  $('#marker-info').data('pos', {x,y});
+}
+function closeMarkerInput() { $('#marker-info').hide(); }
+function clearMapOverlays() {
+  overlays.forEach(o=>o.setMap(null));
+  overlays = [];
+}
+
+// 将像素点数组转经纬度数组
+function pointsToLngLats(points){
+  return points.map(pt=>{
+    const lnglat = map.containerToLngLat([pt.x, pt.y]);
+    return [lnglat.lng, lnglat.lat];
+  });
+}
+
+// 绘制后保存区域/路径
+function saveCurrentDraw() {
+  if(drawMode === 'polygon' && drawPoints.length >= 3){
+    const lnglatArr = pointsToLngLats(drawPoints);
+    const type = $('input[name="marker-type"]:checked').val() || 'searched';
+    const geometry = { type: "Polygon", coordinates: [lnglatArr] };
+    const props = {
+      color: TYPE_COLORS[type],
+      markerType: type,
+      description: "新绘制区域",
+      createdBy: userName
+    };
+    saveToBackend('polygon', geometry, props);
+    closeDrawCanvas();
+  } else if(drawMode === 'polyline' && drawPoints.length >= 2) {
+    const lnglatArr = pointsToLngLats(drawPoints);
+    const geometry = { type: "LineString", coordinates: lnglatArr };
+    const props = {
+      color: TYPE_COLORS['path'],
+      markerType: 'path',
+      description: "新路径",
+      createdBy: userName
+    };
+    saveToBackend('polyline', geometry, props);
+    closeDrawCanvas();
+  }
+}
+function saveToBackend(markerType, geometry, properties){
+  $.ajax({
+    url: API_SAVE,
+    type: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify({
+      taskId: taskId,
+      markerType: markerType,
+      geometry: JSON.stringify(geometry),
+      properties: JSON.stringify(properties)
+    }),
+    success: function(res){
+      if(res.code===0){
+        layui.layer.msg('保存成功', {icon:1});
+        renderMarker({
+          markerType, geometry: JSON.stringify(geometry), properties: JSON.stringify(properties)
+        });
+      } else {
+        layui.layer.msg('保存失败: '+(res.msg||'未知错误'), {icon:2});
+      }
+    },
+    error: function(err){
+      layui.layer.msg('网络错误，请重试', {icon:2});
+    }
+  });
+}
+
+// 渲染区域/路径/点
+function renderMarker(marker){
+  const geometry = typeof marker.geometry === 'string' ? JSON.parse(marker.geometry) : marker.geometry;
+  const properties = typeof marker.properties === 'string' ? JSON.parse(marker.properties) : marker.properties;
+  let overlay = null;
+  if(marker.markerType === 'polygon'){
+    overlay = new AMap.Polygon({
+      path: geometry.coordinates[0],
+      strokeColor: properties.color,
+      strokeWeight: 2,
+      fillColor: properties.color,
+      fillOpacity: 0.3
+    });
+    overlay.setMap(map);
+  } else if(marker.markerType === 'polyline'){
+    overlay = new AMap.Polyline({
+      path: geometry.coordinates,
+      strokeColor: properties.color,
+      strokeWeight: 4
+    });
+    overlay.setMap(map);
+  } else if(marker.markerType === 'marker' || geometry.type==='Point'){
+    overlay = new AMap.Marker({
+      position: geometry.coordinates,
+      title: properties.description,
+      icon: new AMap.Icon({
+        size: new AMap.Size(25, 34),
+        image: '//a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-default.png',
+        imageSize: new AMap.Size(25, 34)
+      })
+    });
+    overlay.setMap(map);
+  }
+  if(overlay && properties && properties.description){
+    overlay.on('click',function(){
+      let info = `<div style="padding:10px;">
+        <div style="font-weight:bold;margin-bottom:5px;">${properties.markerType||'标记'}</div>
+        <div>${properties.description}</div>
+        <div style="font-size:12px;color:#999;margin-top:5px;">${properties.createdBy?('创建者: '+properties.createdBy):''}</div>
+      </div>`;
+      const infoWindow = new AMap.InfoWindow({content: info, offset: new AMap.Pixel(0, -30)});
+      // marker点用坐标，其他类型用中心
+      if(geometry.type==='Point'){
+        infoWindow.open(map, geometry.coordinates);
+      }else{
+        infoWindow.open(map, map.getCenter());
+      }
+    });
+  }
+  overlays.push(overlay);
+}
+
+// 加载后端所有区域/路径/标记
+function loadMarkers(){
+  clearMapOverlays();
+  $.ajax({
+    url: API_LIST + taskId,
+    type: 'GET',
+    success: function(res){
+      if(res.code===0 && res.data){
+        res.data.forEach(renderMarker);
+      }
+    }
+  });
+}
+
+$(document).ready(function(){
+
+  // 地图初始化
+  // 以下 mapConfig 应来自后端渲染或ajax接口
+  var mapConfig = window.mapConfig || { centerLat: 31.92, centerLng: 120.01, zoomLevel: 13 };
+
+  var map = new AMap.Map('map', {
+    center: [mapConfig.centerLng, mapConfig.centerLat],
+    zoom: mapConfig.zoomLevel
+  });
+  drawCanvas = document.getElementById('draw-canvas');
+  drawHint = document.getElementById('draw-hint');
+  drawCtx = drawCanvas.getContext('2d');
+  window.addEventListener('resize', resizeDrawCanvas);
+  resizeDrawCanvas();
+
+  // 加载后端数据
+  loadMarkers();
+
+  // 按钮绑定
+  $('#draw-area').on('click', function(){ openDrawCanvas('polygon'); });
+  $('#draw-path').on('click', function(){ openDrawCanvas('polyline'); });
+  $('#add-marker').on('click', function(){ openDrawCanvas('marker'); });
+  $('#clear-current').on('click', function(){ closeDrawCanvas(); });
+
+  // canvas事件
+  drawCanvas.addEventListener('mousedown', function(e){
+    if(!drawEnable) return;
+    const rect = drawCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left, y = e.clientY - rect.top;
+    if(drawMode==='polygon' || drawMode==='polyline'){
+      drawPoints.push({x,y});
+      drawPolygonOnCanvas();
+    }
+    else if(drawMode==='marker'){
+      drawPoints = [{x,y}];
+      drawPolygonOnCanvas();
+      openMarkerInput(x,y);
+      closeDrawCanvas();
+    }
+  });
+  drawCanvas.addEventListener('dblclick', function(e){
+    if(!drawEnable) return;
+    if(drawMode==='polygon' && drawPoints.length>=3){
+      saveCurrentDraw();
+    }
+    else if(drawMode==='polyline' && drawPoints.length>=2){
+      saveCurrentDraw();
+    }
+  });
+  document.addEventListener('keydown', function(e){
+    if(drawEnable && e.key==='Escape'){
+      closeDrawCanvas();
+    }
+  });
+
+  // marker保存
+  $('#save-marker').on('click', function(){
+    let type = $('input[name="marker-type"]:checked').val() || 'searched';
+    let color = $('#marker-color').val();
+    let desc = $('#marker-description').val();
+    let pos = $('#marker-info').data('pos');
+    // 坐标转经纬度
+    const lnglat = map.containerToLngLat([pos.x, pos.y]);
+    const geometry = { type: "Point", coordinates: [lnglat.lng, lnglat.lat] };
+    const props = {
+      color,
+      markerType: type,
+      description: desc,
+      createdBy: userName
+    };
+    saveToBackend('marker', geometry, props);
+    closeMarkerInput();
+  });
+  $('#cancel-marker').on('click', function(){ closeMarkerInput(); });
+
+  // 类型颜色联动
+  $('input[name="marker-type"]').on('change', function(){
+    let type = $(this).val();
+    let color = TYPE_COLORS[type];
+    $('#marker-color').val(color);
+    $('#color-preview').css('background', color);
+  });
+  $('#marker-color').on('input', function(){ $('#color-preview').css('background', $(this).val()); });
+});
+</script>
+</body>
+</html>

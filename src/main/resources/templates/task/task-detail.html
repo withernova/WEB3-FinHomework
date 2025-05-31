@@ -169,6 +169,10 @@
         
         <!-- 仅家属可以编辑和取消任务 -->
         <a th:if="${userType == 'family'}" th:href="@{'/task/task-edit/' + ${task.id}}" class="layui-btn">编辑任务</a>
+        
+        <a th:href="@{'/task/task-map/' + ${task.id}}" class="layui-btn layui-btn-normal">
+          <i class="layui-icon layui-icon-location"></i> 救援地图
+        </a>
         <!-- 只有等待救援状态才显示智能推荐按钮，且只有家属可见 -->
         <button th:if="${task.status == 'waiting' && userType == 'family'}" class="layui-btn layui-btn-warm" id="recommendRescuers">
           <i class="layui-icon layui-icon-group"></i> 智能推荐救援人员

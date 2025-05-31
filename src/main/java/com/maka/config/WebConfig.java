@@ -55,12 +55,17 @@ public class WebConfig implements WebMvcConfigurer{
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
         registry.addViewController("/").setViewName("login");
+        registry.addViewController("/login").setViewName("login");
         registry.setOrder(Ordered.HIGHEST_PRECEDENCE);
     }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(webInterceptor).addPathPatterns("/**").excludePathPatterns("/static/**");
+        registry.addInterceptor(webInterceptor).addPathPatterns("/**")
+        .excludePathPatterns(
+            "/static/**", "/", "/login", "/register", "/api/users/**",
+            "/css/**", "/js/**", "/images/**"
+        );
     }
 
     @Override

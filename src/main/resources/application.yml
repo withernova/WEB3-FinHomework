@@ -87,3 +87,6 @@ logging:
     org.springframework.web: debug
 server:
   port: 8080
+
+# 高德地图API密钥
+amap.key: 2a73ff764995703ff9e17cc103851a1e
