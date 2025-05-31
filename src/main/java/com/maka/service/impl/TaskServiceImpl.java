@@ -59,19 +59,11 @@ public class TaskServiceImpl implements TaskService {
     @Autowired
     private RescuerService rescuerService;
 
-    @Override
-    @Transactional
+    @Override @Transactional
     public int createTaskAndAssignToFamily(Task task, String familyUuid) {
-        // 插入任务
         taskMapper.insert(task);
-
-        // 获取生成的任务ID
-        int taskId = task.getId();
-
-        // 将任务ID添加到家庭成员的task_ids中
-        familyMapper.addTaskId(familyUuid, taskId);
-
-        return taskId;
+        familyMapper.addTaskId(familyUuid, task.getId());
+        return task.getId();
     }
 
     @Override
@@ -79,29 +71,22 @@ public class TaskServiceImpl implements TaskService {
         return taskMapper.selectById(id);
     }
 
-    @Override
-    public boolean isTaskBelongsToFamily(Integer taskId, String familyUuid) {
-        Family family = familyMapper.selectByUuid(familyUuid);
-        return family != null && family.getTaskIds() != null && family.getTaskIds().contains(taskId);
+    @Override public boolean isTaskBelongsToFamily(Integer taskId,String familyUuid){
+        Family f = familyMapper.selectByUuid(familyUuid);
+        return f!=null && f.getTaskIds()!=null && f.getTaskIds().contains(taskId);
     }
 
-    @Override
-    @Transactional
-    public boolean deleteTask(String uuid,Integer taskId) {
+    @Override @Transactional
+    public boolean deleteTask(String uuid,Integer taskId){
         familyMapper.deleteTaskId(uuid,taskId);
-        return taskMapper.deleteById(taskId) > 0;
-
+        return taskMapper.deleteById(taskId)>0;
     }
 
-    @Override
-    public boolean updateTaskStatus(Integer id, String status) {
-        Task task = taskMapper.selectById(id);
-        if (task == null) {
-            return false;
-        }
-
-        task.setStatus(status);
-        return taskMapper.update(task) > 0;
+    @Override public boolean updateTaskStatus(Integer id,String status){
+        Task t = taskMapper.selectById(id);
+        if (t==null) return false;
+        t.setStatus(status);
+        return taskMapper.update(t)>0;
     }
 
     @Override
@@ -112,6 +97,31 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public List<Task> getTasksByStatus(String status) {
         return taskMapper.selectByStatus(status);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean acceptTask(Integer taskId, String rescuerUid) {
+
+        /* ① 查询任务 */
+        Task task = taskMapper.selectById(taskId);
+        if (task == null) return false;
+        if ("finished".equals(task.getStatus())) return false;      // 已完成不可再接
+
+        /* ② 若还是 waiting → 改成 rescuing；若已 rescui ng 保持原状 */
+        if ("waiting".equals(task.getStatus())) {
+            int u = taskMapper.updateTaskStatus(taskId,"rescuing");
+            if (u == 0) {
+                // 并发下被他人改变为 finished / 其它状态
+                task = taskMapper.selectById(taskId);
+                if (!"rescuing".equals(task.getStatus())) return false;
+            }
+        }
+
+        /* ③ 将任务 ID 写入救援者 task_ids（需去重） */
+        boolean ok = rescuerService.addTaskToRescuer(rescuerUid, taskId);
+        if (!ok) throw new IllegalStateException("写入 rescuer.task_ids 失败");
+        return true;
     }
 
     @Override
@@ -282,23 +292,7 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public boolean acceptTask(Integer taskId, String rescuerUid) {
 
-        /* ① 抢单更新 */
-        int updated = taskMapper.updateTaskStatus(taskId, "rescuing");
-        if (updated == 0) {
-            return false;   // 被别人抢了
-        }
-
-        /* ② 写入 rescuer.task_ids */
-        boolean ok = rescuerService.addTaskToRescuer(rescuerUid, taskId);
-        if (!ok) {
-            throw new IllegalStateException("Rescuer 不存在或写入失败");
-        }
-        return true;
-    }
     @Override
     public List<Task> getTasksByRescuer(String rescuerUid) {
         Rescuer r = rescuerService.getRescuerByUuid(rescuerUid);
