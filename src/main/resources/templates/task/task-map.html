@@ -38,6 +38,7 @@
       <button type="button" class="layui-btn layui-btn-normal" id="draw-area">绘制区域</button>
       <button type="button" class="layui-btn layui-btn-normal" id="draw-path">绘制路径</button>
       <button type="button" class="layui-btn layui-btn-normal" id="add-marker">添加标记</button>
+      <button type="button" class="layui-btn layui-btn-warm" id="toggle-weather">天气图层</button>
       <button type="button" class="layui-btn layui-btn-primary" id="clear-current">清除当前</button>
     </div>
     <div id="map-container">
@@ -45,7 +46,7 @@
       <canvas id="draw-canvas"></canvas>
       <div id="draw-hint">正在绘制，地图已锁定。单击添加，双击结束，ESC取消</div>
       <!-- 图例 -->
-      <div class="map-legend">
+      <!-- <div class="map-legend">
         <div class="legend-title">图例说明</div>
         <div class="legend-item">
           <div class="legend-color" style="background-color: #FF5722;"></div>
@@ -63,7 +64,7 @@
           <div class="legend-color" style="background-color: #FFB800;"></div>
           <div class="legend-text">兴趣点</div>
         </div>
-      </div>
+      </div> -->
     </div>
     <!-- 标记信息输入区域 -->
     <div class="marker-info" id="marker-info">
@@ -123,6 +124,14 @@ const TYPE_FILL = {
   danger:   'rgba(255,87,34,0.13)',
   path:     'rgba(30,159,255,0.09)',
   poi:      'rgba(255,184,0,0.18)'
+};
+
+const TYPE_LABELS = {
+  searched: '已搜索区域',
+  danger: '危险区域',
+  poi: '兴趣点',
+  path: '搜索路径',
+  marker: '标记'
 };
 
 let drawCanvas, drawCtx, drawHint;
@@ -377,7 +386,7 @@ function renderMarker(marker){
 
 function showInfoWindow(type, description, createdBy, lnglat){
   let info = `<div style="padding:10px;">
-    <div style="font-weight:bold;margin-bottom:5px;">${type||'标记'}</div>
+    <div style="font-weight:bold;margin-bottom:5px;">${TYPE_LABELS[type] || type || '标记'}</div>
     <div>${description}</div>
     <div style="font-size:12px;color:#999;margin-top:5px;">${createdBy?('创建者: '+createdBy):''}</div>
   </div>`;
@@ -415,6 +424,22 @@ $(document).ready(function(){
   $('#draw-path').on('click', function(){ openDrawCanvas('polyline'); });
   $('#add-marker').on('click', function(){ openDrawCanvas('marker'); });
   $('#clear-current').on('click', function(){ closeDrawCanvas(); });
+
+  let weatherLayer = null;
+  let weatherLayerVisible = false;
+
+  $('#toggle-weather').on('click', function(){
+    if(weatherLayerVisible){
+      if(weatherLayer) map.remove(weatherLayer);
+      weatherLayerVisible = false;
+      $(this).text('天气图层');
+    }else{
+      weatherLayer = new AMap.WeatherLayer({ weather: 'clouds' }); // clouds|precipitation|radar
+      map.add(weatherLayer);
+      weatherLayerVisible = true;
+      $(this).text('关闭天气');
+    }
+  });
 
   // canvas事件
   drawCanvas.addEventListener('mousedown', function(e){

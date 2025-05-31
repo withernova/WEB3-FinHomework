@@ -3,8 +3,11 @@ package com.maka.service.impl;
 import cn.hutool.http.useragent.UserAgent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.maka.service.FaceComparisonService;
+import com.maka.mapper.TaskMapper;
+import com.maka.pojo.Task;
 import com.baidu.aip.face.AipFace;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,6 +30,9 @@ public class FaceComparisonServiceImpl implements FaceComparisonService {
     private static final String API_KEY = "VNSPEBw6uuHFjLqgV4w9WsnK";
     private static final String SECRET_KEY = "G2X1OaeqIgO6umffm5kdGTJuRIQZj5iB";
     private static final AipFace client = new AipFace(APP_ID, API_KEY, SECRET_KEY);
+
+    @Autowired
+    public TaskMapper taskMapper;
 
     @Override
     public boolean checkQuality(MultipartFile file) throws Exception {
@@ -92,6 +98,7 @@ public class FaceComparisonServiceImpl implements FaceComparisonService {
         if (response.getInt("error_code") == 0) {
             // 处理比对结果
             JSONObject result = response.getJSONObject("result").getJSONArray("user_list").getJSONObject(0);
+            //taskid
             String uid = result.getString("user_id");
             String name = result.getString("user_info");
             double similarity = result.getDouble("score");
@@ -100,6 +107,11 @@ public class FaceComparisonServiceImpl implements FaceComparisonService {
             ObjectMapper objectMapper = new ObjectMapper();
 
             //TODO:改为从数据库获取照片
+            Task task = taskMapper.selectById(Integer.parseInt(uid));
+            String url = task.getPhotoUrl();
+            //TODO:講這個url放到前端，然後顯示對應的圖片
+
+
             Map<String, Object> table = objectMapper.readValue(jsonFile, Map.class);
             List<Map<String, Object>> data = (List<Map<String, Object>>)table.get("data");
 
