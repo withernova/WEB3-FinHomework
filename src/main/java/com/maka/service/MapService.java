@@ -30,4 +30,6 @@ public interface MapService {
      * 删除地图标记
      */
     boolean deleteMarker(Integer markerId);
+
+
 }

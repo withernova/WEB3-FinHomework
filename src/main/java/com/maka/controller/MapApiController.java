@@ -2,6 +2,7 @@ package com.maka.controller;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
@@ -69,6 +70,19 @@ public class MapApiController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Collections.singletonMap("message", e.getMessage()));
+        }
+    }
+
+    /**
+     * 获取AI生成的热力图数据
+     */
+    @GetMapping("/heatmap/{taskId}")
+    public ResponseEntity<?> getHeatmapData(@PathVariable Integer taskId) {
+        try {
+            List<Map<String, Object>> heatmapPoints = mapMarkerService.generateHeatmapData(taskId);
+            return ResponseEntity.ok(ApiResponse.success(heatmapPoints));
+        } catch (Exception e) {
+            return ResponseEntity.ok(ApiResponse.error("获取热力图数据失败: " + e.getMessage()));
         }
     }
 } 
