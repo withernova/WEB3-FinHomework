@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>场景演练训练室</title>
+<meta name="renderer" content="webkit">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<link rel="stylesheet" href="/layuimini/lib/layui-v2.5.5/css/layui.css">
+<style>
+body{margin:0;font-family:system-ui,Arial;background:#f6f7f9}
+#chat{width:90%;max-width:860px;margin:40px auto}
+.msg{display:flex;margin:12px 0}
+.msg.user{justify-content:flex-end}
+.bubble{max-width:70%;padding:10px 14px;border-radius:18px;line-height:1.55}
+.user .bubble{background:#0b65ff;color:#fff;border-bottom-right-radius:2px}
+.bot  .bubble{background:#e6e8eb;color:#000;border-bottom-left-radius:2px}
+#scoreCard{position:fixed;right:24px;top:24px;width:240px;display:none}
+</style>
+</head>
+<body>
+<div id="chat">
+  <div class="layui-form">
+    <select id="sceneSelect" lay-filter="sceneSel">
+      <option value="">请选择训练场景</option>
+      <option value="fear">老人情绪激动</option>
+      <option value="refuse">老人拒绝配合</option>
+      <option value="night">深夜寒冷救助</option>
+    </select>
+  </div>
+
+  <div id="msgBox" style="min-height:300px;margin:20px 0 10px;"></div>
+
+  <textarea id="input" class="layui-textarea" style="height:80px;"></textarea>
+  <button id="sendBtn" class="layui-btn layui-btn-fluid" disabled>发送</button>
+</div>
+
+<!-- 评语卡片 -->
+<div id="scoreCard" class="layui-card">
+  <div class="layui-card-header">即时评语</div>
+  <div class="layui-card-body" id="scoreBody"></div>
+</div>
+
+<!-- 依赖 -->
+<script src="/layuimini/lib/jquery-3.4.1/jquery-3.4.1.min.js"></script>
+<script src="/layuimini/lib/layui-v2.5.5/layui.js"></script>
+
+<!-- 绝对 API 地址直指 5000 端口 -->
+<script>
+  window.SCENE_API_URL = "http://127.0.0.1:5000/api/scene-train";
+</script>
+
+<script src="/js/scene-train.js?v=4"></script>
+
+<script>
+layui.use(['form'],function(){ layui.form.render();});
+</script>
+</body>
+</html>

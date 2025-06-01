@@ -162,6 +162,12 @@
           "href": "rescuer/psych_care_chat",
           "icon": "fa fa-heart",
           "target": "_self"
+        },
+        {
+          "title": "场景演练训练室",
+          "href": "rescuer/scene_train",
+          "icon": "fa fa-gamepad",
+          "target": "_self"
         }
       ]
     }
