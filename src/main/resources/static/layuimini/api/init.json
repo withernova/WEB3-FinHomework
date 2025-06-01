@@ -168,7 +168,14 @@
           "href": "rescuer/scene_train",
           "icon": "fa fa-gamepad",
           "target": "_self"
+        },
+        {
+          "title":"微课程中心",
+          "href":"rescuer/course_center",
+          "icon":"fa fa-play-circle",
+          "target":"_self"
         }
+
       ]
     }
   ]
