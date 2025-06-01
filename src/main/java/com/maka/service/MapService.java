@@ -31,5 +31,7 @@ public interface MapService {
      */
     boolean deleteMarker(Integer markerId);
 
+    Map<String, Object> geocodeAddress(String address);
+
 
 }

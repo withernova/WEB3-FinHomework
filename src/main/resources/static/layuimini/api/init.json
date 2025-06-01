@@ -102,6 +102,12 @@
               "href": "page/rescuer_list.html",
               "icon": "fa fa-file-text-o",
               "target": "_self"
+            },
+            {
+              "title": "展示",
+              "href": "show/show-dummy",
+              "icon": "fa fa-file-text-o",
+              "target": "_self"
             }
           ]
         },
