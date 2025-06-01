@@ -14,6 +14,10 @@ from api.poster_router import poster_bp
 from api.scene_train_router import scene_bp
 
 
+logging.basicConfig(
+    level=logging.INFO,  # 或 logging.DEBUG
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s"
+)
 
 def create_app() -> Flask:
     """
