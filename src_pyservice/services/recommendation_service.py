@@ -57,14 +57,16 @@ class RecommendationService:
                     task["location"], 
                     rescuer["location"]
                 )
-                
-                # 如果无法计算距离，设置默认值
                 if distance is None:
-                    distance = 10.0  # 默认10公里
-                    distance_score = 5.0  # 默认中等分数
+                    distance = 100.0
+                    distance_score = 0.0
                 else:
-                    # 距离越近，分数越高，最高10分
-                    distance_score = max(0, 10 - distance / 5)  # 每5公里减1分
+                    if distance <= 3:
+                        distance_score = 10.0
+                    else:
+                        # 超过3公里，每5公里减1分
+                        # 3公里时=10分，8公里时=9分，13公里时=8分，以此类推
+                        distance_score = max(0, 10 - ((distance - 3) / 5))
                 
                 # 计算技能标签匹配度
                 skill_tags = rescuer.get("skillTags", [])
@@ -310,49 +312,56 @@ class RecommendationService:
 
     def calculate_tag_match_improved(self, rescuer_tags, relevant_tags, tag_importance):
         """
-        计算改进版的技能标签匹配度
-        
-        Args:
-            rescuer_tags (list): 救援人员的技能标签
-            relevant_tags (list): 任务相关的标签
-            tag_importance (dict): 标签重要性
-        
-        Returns:
-            tuple: (匹配分数, 匹配详情)
+        技能得分=保底分（最多5分）+ 匹配分（最多5分）
+        - 保底分：每有一个技能标签加0.4分，最多5分（13个标签封顶）
+        - 匹配分：有匹配才有分，按匹配重要性/总重要性比例*5分
+        - 如果没有任何标签，得分为0
         """
-        if not rescuer_tags or not relevant_tags:
-            return 5.0, {"matched": [], "missing": relevant_tags, "reason": "无技能标签或无任务相关标签，给予中等评分"}
-        
-        # 计算匹配的标签和缺失的标签
-        matched_tags = []
-        missing_tags = []
-        
-        for tag in relevant_tags:
-            if tag in rescuer_tags:
-                matched_tags.append(tag)
+        # 没有技能标签，直接0分
+        if not rescuer_tags or len(rescuer_tags) == 0:
+            return 0.0, {
+                "matched": [],
+                "missing": relevant_tags,
+                "reason": "无技能标签，得分为0"
+            }
+        # 没有任务相关标签，只有保底分
+        if not relevant_tags or len(relevant_tags) == 0:
+            base_score = min(len(rescuer_tags) * 0.4, 5.0)
+            return base_score, {
+                "matched": [],
+                "missing": [],
+                "reason": f"无任务相关标签，仅按技能标签数量给予保底分{base_score}分"
+            }
+
+        # 计算匹配标签
+        matched_tags = [tag for tag in relevant_tags if tag in rescuer_tags]
+        missing_tags = [tag for tag in relevant_tags if tag not in rescuer_tags]
+
+        # 保底分：每有一个技能标签加0.4分，最多5分
+        base_score = min(len(rescuer_tags) * 0.4, 5.0)
+
+        # 匹配分：有匹配才有分，否则为0分
+        if matched_tags:
+            total_importance = sum(tag_importance.get(tag, {}).get("importance", 3) for tag in relevant_tags)
+            matched_importance = sum(tag_importance.get(tag, {}).get("importance", 3) for tag in matched_tags)
+            if total_importance > 0:
+                match_score = (matched_importance / total_importance) * 5.0
             else:
-                missing_tags.append(tag)
-        
-        # 计算匹配分数
-        total_importance = sum(tag_importance.get(tag, {}).get("importance", 3) for tag in relevant_tags)
-        matched_importance = sum(tag_importance.get(tag, {}).get("importance", 3) for tag in matched_tags)
-        
-        if total_importance == 0:
-            match_score = 5.0  # 默认中等分数
+                match_score = 0.0
         else:
-            # 基于匹配的重要性计算分数
-            match_ratio = matched_importance / total_importance
-            match_score = match_ratio * 10
-        
-        # 生成匹配详情
+            match_score = 0.0
+
+        final_score = base_score + match_score
+
         match_details = {
             "matched": matched_tags,
             "missing": missing_tags,
-            "match_ratio": f"{matched_importance}/{total_importance}",
-            "reason": self._generate_match_reason(matched_tags, missing_tags, tag_importance)
+            "reason": (
+                f"技能标签数量保底{base_score}分，"
+                + (f"匹配相关标签比例得{match_score:.2f}分" if matched_tags else "无相关标签匹配，匹配分为0")
+            )
         }
-        
-        return match_score, match_details
+        return final_score, match_details
 
     def _generate_match_reason(self, matched_tags, missing_tags, tag_importance):
         """生成标签匹配的原因说明"""
