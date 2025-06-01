@@ -82,7 +82,7 @@
                                                         <h5>队员数量统计</h5>
                                                     </div>
                                                     <div class="panel-content">
-                                                        <h1 class="no-margins">58</h1>
+                                                        <h1 class="no-margins" id = "total_people">-1</h1>
                                                         <small>当前分类总记录数</small>
                                                     </div>
                                                 </div>
@@ -96,7 +96,7 @@
                                                         <h5>救援行动数量统计</h5>
                                                     </div>
                                                     <div class="panel-content">
-                                                        <h1 class="no-margins">364</h1>
+                                                        <h1 class="no-margins" id = "rescuing">-1</h1>
                                                         <small>正在进行的总记录数</small>
                                                     </div>
                                                 </div>
@@ -110,7 +110,7 @@
                                                         <h5>已完成救援数量统计</h5>
                                                     </div>
                                                     <div class="panel-content">
-                                                        <h1 class="no-margins">543</h1>
+                                                        <h1 class="no-margins" id = "rescued">-1</h1>
                                                         <small>当前分类总记录数</small>
                                                     </div>
                                                 </div>
@@ -124,7 +124,7 @@
                                                         <h5>救援行动成功率</h5>
                                                     </div>
                                                     <div class="panel-content">
-                                                        <h1 class="no-margins">89%</h1>
+                                                        <h1 class="no-margins" id="success_rate">-1</h1>
                                                         <small>目前所有救援行动总记录数</small>
                                                     </div>
                                                 </div>
@@ -196,62 +196,44 @@
                         </div>
                     </div>
                 </div>
-                <!-- 系统公告 -->
-                <div class="layui-card-body">
-                    <div class="layuimini-notice" onclick="showNoticeDetail('系统维护公告', '为了提升系统性能，计划于2024年10月15日进行系统维护', '2024-10-12')">
-                        <span class="layuimini-notice-title">系统维护公告</span>
-                        <span class="layuimini-notice-label">为了提升系统性能，计划于2024年10月15日进行系统维护</span>
-                        <span class="layuimini-notice-extra">2024-10-12</span>
-                        <div class="layuimini-notice-content" style="display:none;">为了提升系统性能，计划于2024年10月15日进行系统维护</div> <!-- 添加此行 -->
-                    </div>
-                    <div class="layuimini-notice" onclick="showNoticeDetail('志愿者招募信息', '我们正在招募志愿者参与下周的救援行动，欢迎大家踊跃报名！', '2024-10-11')">
-                        <span class="layuimini-notice-title">志愿者招募信息</span>
-                        <span class="layuimini-notice-label">我们正在招募志愿者参与下周的救援行动，欢迎大家踊跃报名！</span>
-                        <span class="layuimini-notice-extra">2024-10-11</span>
-                        <div class="layuimini-notice-content" style="display:none;">我们正在招募志愿者参与下周的救援行动，欢迎大家踊跃报名！</div> <!-- 添加此行 -->
-                    </div>
-                    <div class="layuimini-notice" onclick="showNoticeDetail('安全提示', '近期天气多变，请各位队员注意自身安全，确保装备齐全。', '2024-10-10')">
-                        <span class="layuimini-notice-title">安全提示</span>
-                        <span class="layuimini-notice-label">近期天气多变，请各位队员注意自身安全，确保装备齐全。</span>
-                        <span class="layuimini-notice-extra">2024-10-10</span>
-                        <div class="layuimini-notice-content" style="display:none;">近期天气多变，请各位队员注意自身安全，确保装备齐全。</div> <!-- 添加此行 -->
+                <div class="layui-row layui-col-space15">
+                    <div class="layui-col-md6">
+                        <div class="layui-card-body">
+                            <div class="layui-card-header"><i class="fa fa-bell icon"></i>系统公告</div>
+                            <div class="layui-card-body">
+                                <div class="welcome-module">
+                                    <div class="layui-row layui-col-space10">
+                                        <div class="layuimini-notice" onclick="showNoticeDetail('系统维护公告', '为了提升系统性能，计划于2024年10月15日进行系统维护', '2024-10-12')">
+                                            <span class="layuimini-notice-title">系统维护公告</span>
+                                            <span class="layuimini-notice-label">为了提升系统性能，计划于2025年5月31日进行系统维护</span>
+                                            <span class="layuimini-notice-extra">2025-5-31</span>
+                                            <div class="layuimini-notice-content" style="display:none;">为了提升系统性能，计划于2024年10月15日进行系统维护</div> <!-- 添加此行 -->
+                                        </div>
+                                        <div class="layuimini-notice" onclick="showNoticeDetail('志愿者招募信息', '我们正在招募志愿者参与下周的救援行动，欢迎大家踊跃报名！', '2024-10-11')">
+                                            <span class="layuimini-notice-title">志愿者招募信息</span>
+                                            <span class="layuimini-notice-label">我们正在招募志愿者参与下周的救援行动，欢迎大家踊跃报名！</span>
+                                            <span class="layuimini-notice-extra">2025-5-31</span>
+                                            <div class="layuimini-notice-content" style="display:none;">我们正在招募志愿者参与下周的救援行动，欢迎大家踊跃报名！</div> <!-- 添加此行 -->
+                                        </div>
+                                        <div class="layuimini-notice" onclick="showNoticeDetail('安全提示', '近期天气多变，请各位队员注意自身安全，确保装备齐全。', '2024-10-10')">
+                                            <span class="layuimini-notice-title">安全提示</span>
+                                            <span class="layuimini-notice-label">近期天气多变，请各位队员注意自身安全，确保装备齐全。</span>
+                                            <span class="layuimini-notice-extra">2025-5-31</span>
+                                            <div class="layuimini-notice-content" style="display:none;">近期天气多变，请各位队员注意自身安全，确保装备齐全。</div> <!-- 添加此行 -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
             </div>
             <div class="layui-col-md4">
                 <div class="layui-card">
                     <div class="layui-card-header"><i class="fa fa-calendar icon"></i>日历</div>
                     <div class="layui-card-body">
                         <div id="calendar"></div>
-                    </div>
-                </div>
-                <!-- 最新消息 -->
-                <div class="layui-card">
-                    <div class="layui-card-header"><i class="fa fa-bell icon"></i>最新消息</div>
-                    <div class="layui-card-body">
-                        <ul class="layui-timeline">
-                            <li class="layui-timeline-item">
-                                <i class="layui-icon layui-timeline-icon layui-icon-tips"></i>
-                                <div class="layui-timeline-content layui-text">
-                                    <h3 class="layui-timeline-title">2024年10月12日</h3>
-                                    <p>救援行动已成功结束，感谢所有参与队员的努力！</p>
-                                </div>
-                            </li>
-                            <li class="layui-timeline-item">
-                                <i class="layui-icon layui-timeline-icon layui-icon-tips"></i>
-                                <div class="layui-timeline-content layui-text">
-                                    <h3 class="layui-timeline-title">2024年10月11日</h3>
-                                    <p>有新的走失老人的信息发布，请大家留意！</p>
-                                </div>
-                            </li>
-                            <li class="layui-timeline-item">
-                                <i class="layui-icon layui-timeline-icon layui-icon-tips"></i>
-                                <div class="layui-timeline-content layui-text">
-                                    <h3 class="layui-timeline-title">2024年10月10日</h3>
-                                    <p>下周将举行志愿者培训，请大家提前报名！</p>
-                                </div>
-                            </li>
-                        </ul>
                     </div>
                 </div>
             </div>
@@ -266,8 +248,9 @@
             </div>
         </div>
     </div>
-    </div>
-<script src="../layuimini/lib/layui-v2.5.5/layui.js"></script>
+</div>
+<script src="../layuimini/lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+<script src="../layuimini/js/lay-config.js?v=1.0.4" charset="utf-8"></script>
 <script>
     layui.use(['element', 'calendar'], function() {
         var element = layui.element;
@@ -351,8 +334,6 @@
 </body>
 </html>
 
-<script src="../layuimini/lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
-<script src="../layuimini/js/lay-config.js?v=1.0.4" charset="utf-8"></script>
 <script>
     layui.use(['layer', 'miniTab','echarts'], function () {
         var $ = layui.jquery,
@@ -361,7 +342,22 @@
             echarts = layui.echarts;
 
         miniTab.listen();
+        $(function(){
+            // 页面加载后，立刻发 AJAX 请求拿到后端返回的统计数据
+            $.getJSON('/data_view/data_visualizer', function(data){
 
+                $('#rescuing').text(data.RescuingCount);
+                $('#rescued').text(data.RescuedCount);
+
+                $('#total_people').text(data.TotalPeopleNum);
+
+                $('#total_rescue').text(data.TotalTaskNum);
+                $('#success_rate').text((100 * data.RescuedCount / (data.RescuedCount + data.RescuingCount)) + "%");
+            })
+                .fail(function(jqXHR, textStatus, errorThrown){
+                    console.error('请求 /data_view/data_visualizer 失败：', textStatus, errorThrown);
+                });
+        });
         $('body').on('click', '.layuimini-notice', function () {
             var title = $(this).children('.layuimini-notice-title').text(),
                 noticeTime = $(this).children('.layuimini-notice-extra').text(),

@@ -103,30 +103,16 @@ public class FaceComparisonServiceImpl implements FaceComparisonService {
             String name = result.getString("user_info");
             double similarity = result.getDouble("score");
 
-            File jsonFile = new File("src/main/resources/static/data/table.json");
-            ObjectMapper objectMapper = new ObjectMapper();
 
             //TODO:改为从数据库获取照片
             Task task = taskMapper.selectById(Integer.parseInt(uid));
             String url = task.getPhotoUrl();
             //TODO:講這個url放到前端，然後顯示對應的圖片
 
-
-            Map<String, Object> table = objectMapper.readValue(jsonFile, Map.class);
-            List<Map<String, Object>> data = (List<Map<String, Object>>)table.get("data");
-
-            String img = "";
-            for (Map<String, Object> datum: data)
-            {
-                if (Objects.equals(datum.get("uid"), uid))
-                {
-                    img = (String) datum.get("img");
-                }
-            }
             return "{" +
                     "\"lostPerson\": \"" + name + "\"," +
                     "\"similarity\": " + similarity + ","+
-                    "\"img\": \"" + img + "\"" +
+                    "\"img\": \"" + url + "\"" +
                     "}";
         } else {
             if(response.getInt("error_code") == 222207)

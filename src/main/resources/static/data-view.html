@@ -20,20 +20,15 @@
     <main class="t_main">
         <div class="t_left_box">
             <img class="t_l_line" src="img/left_line.png" alt="">
-            <div class="t_mbox t_rbox">
-                <i></i>
-                <span>当前在线人数</span>
-                <h2>30</h2>
-            </div>
             <div class="t_mbox t_gbox">
                 <i></i>
                 <span>正在进行的救援</span>
-                <h2>27</h2>
+                <h2 id="rescuing">-1</h2>
             </div>
             <div class="t_mbox t_ybox">
                 <i></i>
                 <span>已完成的救援</span>
-                <h2>468</h2>
+                <h2 id="rescued">-1</h2>
             </div>
             <img class="t_r_line" src="img/right_line.png" alt="">
         </div>
@@ -43,17 +38,8 @@
                 <ul class="t_nav">
                     <li>
                         <span>救援队总人数</span>
-                        <h1>90</h1>
+                        <h1 id="total_people">-1</h1>
                         <i></i>
-                    </li>
-                    <li>
-                        <span>男性</span>
-                        <h1>54</h1>
-                        <i></i>
-                    </li>
-                    <li>
-                        <span>女性</span>
-                        <h1>36</h1>
                     </li>
                 </ul>
                 <img class="t_r_line" src="img/right_line.png" alt="">
@@ -72,7 +58,7 @@
                 <span style="top: 11px; font-size: larger; margin-left: -20px;">救援总次数</span> <!-- 向左移动 -->
                 <img src="img/test.png" alt="">
                 <h3 style="display: inline-block;">
-                    <span style="color: #e62626; font-size: larger; margin-left: -80px;">495</span> <!-- 495数字的样式 -->
+                    <span id="total_rescue" style="color: #e62626; font-size: larger; margin-left: -80px;">-1</span> <!-- 数字的样式 -->
                     <span style="color: #ffffff; font-size: larger; vertical-align: baseline;">次</span> <!-- 次的样式 -->
                 </h3>
             </header>
@@ -120,5 +106,21 @@
             </div>
     </main>
 </div>
+<script>
+    $(function(){
+        // 页面加载后，立刻发 AJAX 请求拿到后端返回的统计数据
+        $.getJSON('/data_view/data_visualizer', function(data){
+            $('#rescuing').text(data.RescuingCount);
+            $('#rescued').text(data.RescuedCount);
+
+            $('#total_people').text(data.TotalPeopleNum);
+
+            $('#total_rescue').text(data.TotalTaskNum);
+        })
+            .fail(function(jqXHR, textStatus, errorThrown){
+                console.error('请求 /data_view/data_visualizer 失败：', textStatus, errorThrown);
+            });
+    });
+</script>
 </body>
 </html>
