@@ -46,7 +46,7 @@ public class FaceComparisonServiceImpl implements FaceComparisonService {
         options.put("quality_control", "NORMAL");
         options.put("action_type", "REPLACE");
 
-        JSONObject response = client.addUser(imgStr, "BASE64","lost_people", "quality_check", options);
+        JSONObject response = client.addUser(imgStr, "BASE64","quality_check", "quality_check", options);
         if (response.getInt("error_code") == 0) {
             return true;
         }
@@ -120,7 +120,6 @@ public class FaceComparisonServiceImpl implements FaceComparisonService {
             {
                 if (Objects.equals(datum.get("uid"), uid))
                 {
-                    name = (String)datum.get("oldName");
                     img = (String) datum.get("img");
                 }
             }
