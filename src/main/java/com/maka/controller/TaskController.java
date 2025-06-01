@@ -1,5 +1,6 @@
 package com.maka.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.maka.pojo.Family;
 import com.maka.pojo.Rescuer;
 import com.maka.pojo.Task;
@@ -673,45 +674,73 @@ public class TaskController {
         
         // 获取任务ID和消息数据
         Integer taskId = (Integer) messageData.get("taskId");
-        String msgData = (String) messageData.get("messageData");
+        String msgDataStr = (String) messageData.get("messageData");
         
-        if (taskId == null || msgData == null) {
+        if (taskId == null || msgDataStr == null) {
             result.put("code", 400);
             result.put("msg", "参数错误");
             return result;
         }
         
-        // 获取用户类型
+        // 获取用户类型和用户名
         String userType = userService.getUserType(userId);
-        
-        // 检查任务是否存在以及用户是否有权限发送消息
-        Task task = taskService.getTaskById(taskId);
-        boolean hasPermission = false;
-        
-        if (task != null && "rescuing".equals(task.getStatus())) {
-            if ("family".equals(userType) && taskService.isTaskBelongsToFamily(taskId, userId)) {
-                hasPermission = true;
-            } else if ("rescuer".equals(userType)) {
-                Rescuer rescuer = rescuerService.getRescuerByUuid(userId);
-                if (rescuer != null && rescuer.getTaskIds() != null) {
-                    hasPermission = rescuer.getTaskIds().contains(taskId);
-                }
+        String userName = "";
+        if ("rescuer".equals(userType)) {
+            Rescuer rescuer = rescuerService.getRescuerByUuid(userId);
+            if (rescuer != null) {
+                userName = rescuer.getName();
+            }
+        } else if ("family".equals(userType)) {
+            Family family = familyService.getFamilyByUuid(userId);
+            if (family != null) {
+                userName = family.getName();
             }
         }
         
-        if (!hasPermission) {
-            result.put("code", 403);
-            result.put("msg", "无权限发送消息或任务状态不允许发送消息");
-            return result;
-        }
-        
         try {
-            // 保存消息
-            TaskMessage message = taskMessageService.saveMessage(taskId, msgData);
+            // 解析前端发送的消息数据
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> msgData = mapper.readValue(msgDataStr, Map.class);
+            
+            // 修正消息数据中的发送者信息
+            Map<String, Object> sender = (Map<String, Object>) msgData.get("sender");
+            if (sender != null) {
+                sender.put("id", userId);      // 使用实际的用户ID
+                sender.put("name", userName);  // 使用实际的用户名
+                sender.put("type", userType);  // 使用实际的用户类型
+            }
+            
+            // 重新序列化消息数据
+            String correctedMsgData = mapper.writeValueAsString(msgData);
+            
+            // 检查权限...
+            Task task = taskService.getTaskById(taskId);
+            boolean hasPermission = false;
+            
+            if (task != null && "rescuing".equals(task.getStatus())) {
+                if ("family".equals(userType) && taskService.isTaskBelongsToFamily(taskId, userId)) {
+                    hasPermission = true;
+                } else if ("rescuer".equals(userType)) {
+                    Rescuer rescuer = rescuerService.getRescuerByUuid(userId);
+                    if (rescuer != null && rescuer.getTaskIds() != null) {
+                        hasPermission = rescuer.getTaskIds().contains(taskId);
+                    }
+                }
+            }
+            
+            if (!hasPermission) {
+                result.put("code", 403);
+                result.put("msg", "无权限发送消息或任务状态不允许发送消息");
+                return result;
+            }
+            
+            // 保存修正后的消息
+            TaskMessage message = taskMessageService.saveMessage(taskId, correctedMsgData);
             
             result.put("code", 0);
             result.put("msg", "发送成功");
             result.put("data", Map.of("messageId", message.getId()));
+            
         } catch (Exception e) {
             result.put("code", 500);
             result.put("msg", "服务器错误: " + e.getMessage());
@@ -719,5 +748,4 @@ public class TaskController {
         
         return result;
     }
-
 }

@@ -200,15 +200,29 @@ layui.use(['layer'], function(){
   var layer = layui.layer;
   var taskId = [[${task?.id}]];
 
+  // 修改这部分代码
   if(taskId && ([[${task?.status}]] === 'rescuing' || [[${task?.status}]] === 'finished')) {
-    // 确保传递的是数字类型
-    initTaskChat({
-      taskId: parseInt(taskId),
-      userId: [[${session.userId}]],
-      userType: [[${userType}]],
-      userName: [[${userName}]],
-      taskStatus: [[${task?.status}]]
-    });
+      // 确保传递的是正确的字符串类型，并添加调试信息
+      var userIdValue = /*[[${session.userId}]]*/ 'defaultUserId';
+      var userTypeValue = /*[[${userType}]]*/ 'defaultUserType';
+      var userNameValue = /*[[${userName}]]*/ 'defaultUserName';
+      var taskStatusValue = /*[[${task?.status}]]*/ 'waiting';
+      
+      console.log('传递给聊天的参数:', {
+          taskId: parseInt(taskId),
+          userId: userIdValue,
+          userType: userTypeValue,
+          userName: userNameValue,
+          taskStatus: taskStatusValue
+      });
+      
+      initTaskChat({
+          taskId: parseInt(taskId),
+          userId: userIdValue,
+          userType: userTypeValue,
+          userName: userNameValue,
+          taskStatus: taskStatusValue
+      });
   }
   // 完成任务（仅救援者可见）
   $('#finishTask').on('click', function(){

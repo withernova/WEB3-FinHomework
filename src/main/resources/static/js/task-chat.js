@@ -177,7 +177,7 @@ function initTaskChatByDom(dom) {
     }
     function appendMessage(message, isNew) {
         var msgData = JSON.parse(message.messageData);
-        var isSelf = msgData.sender.id == userId;
+        var isSelf = String(msgData.sender.id) === String(userId);
         var msgClass = isSelf ? 'message-sent' : 'message-received';
         var msgTime = formatTime(new Date(msgData.timestamp));
         var badgeClass = msgData.sender.type === 'rescuer' ? 'badge-rescuer' : 'badge-family';
@@ -210,18 +210,29 @@ function initTaskChatByDom(dom) {
             layui.layer.msg('请输入消息内容或添加媒体', { icon: 2 });
             return;
         }
+        
+        // 构建消息数据时不要包含具体的用户信息，让后端来填充
         var msgData = {
-            sender: { id: userId, type: userType, name: userName },
+            sender: {
+                id: "PLACEHOLDER_USER_ID",      // 后端会替换
+                type: "PLACEHOLDER_USER_TYPE",   // 后端会替换
+                name: "PLACEHOLDER_USER_NAME"    // 后端会替换
+            },
             content: content,
             type: mediaType || 'text',
             timestamp: new Date().getTime()
         };
+        
         if (mediaData) msgData.media = { url: mediaData };
+        
         $.ajax({
             url: '/task/send-message',
             type: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ taskId: taskId, messageData: JSON.stringify(msgData) }),
+            data: JSON.stringify({ 
+                taskId: taskId, 
+                messageData: JSON.stringify(msgData) 
+            }),
             beforeSend: function () {
                 $sendMsg.prop('disabled', true).text('发送中...');
             },
@@ -230,9 +241,23 @@ function initTaskChatByDom(dom) {
                 if (res.code === 0) {
                     $msgInput.val('');
                     clearMedia();
-                    var tempMessage = { id: 'temp-' + new Date().getTime(), messageData: JSON.stringify(msgData) };
+                    
+                    // 构建用于显示的消息数据（使用实际的用户信息）
+                    var displayMsgData = {
+                        sender: { id: userId, type: userType, name: userName },
+                        content: content,
+                        type: mediaType || 'text',
+                        timestamp: new Date().getTime()
+                    };
+                    if (mediaData) displayMsgData.media = { url: mediaData };
+                    
+                    var tempMessage = { 
+                        id: 'temp-' + new Date().getTime(), 
+                        messageData: JSON.stringify(displayMsgData) 
+                    };
                     appendMessage(tempMessage, true);
                     scrollToBottom();
+                    
                     if (res.data && res.data.messageId) lastMessageId = res.data.messageId;
                 } else {
                     layui.layer.msg(res.msg || '发送失败', { icon: 2 });

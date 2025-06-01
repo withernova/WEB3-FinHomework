@@ -32,7 +32,7 @@ public class RescuerServiceImpl implements RescuerService {
     @Autowired
     private RestTemplate restTemplate;
     
-    @Value("${flask.api.url:http://localhost:5000/extract_tags}")
+    @Value("${flask.api.url:http://localhost:5000/api/extract_tags}")
     private String flaskApiUrl;
     
     @Override
