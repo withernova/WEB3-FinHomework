@@ -201,7 +201,7 @@
 
     // 1. 统一底色
     heatCtx.globalCompositeOperation = 'source-over';
-    heatCtx.fillStyle = 'rgba(200, 230, 255, 0.62)';
+    heatCtx.fillStyle = 'rgba(30, 30, 245, 0.62)';
     heatCtx.fillRect(0, 0, width, height);
 
     // 2. 画点
@@ -214,17 +214,24 @@
       radius *= (0.85 + 0.3 * Math.abs(pt.value));
 
       if (pt.value > 0) {
-        // 热点：中心红→外圈蓝
         let gradient = heatCtx.createRadialGradient(cX, cY, 0, cX, cY, radius);
-        gradient.addColorStop(0, 'rgba(255,60,60,.38)');
-        gradient.addColorStop(0.45, 'rgba(255,135,135,.22)');
-        gradient.addColorStop(0.8, 'rgba(180,220,255,.10)');
-        gradient.addColorStop(1, 'rgba(180,220,255,0)');
-        heatCtx.globalCompositeOperation = 'source-over';
+        // 中心白色光晕
+        gradient.addColorStop(0,   'rgba(255,255,255,0.95)');
+        // 亮黄
+        gradient.addColorStop(0.18, 'rgba(255,220,80,0.70)');
+        // 亮橙
+        gradient.addColorStop(0.35, 'rgba(255,150,30,0.55)');
+        // 亮红
+        gradient.addColorStop(0.55, 'rgba(255,60,60,0.30)');
+        // 外圈淡蓝/透明
+        gradient.addColorStop(0.85, 'rgba(30,60,255,0.07)');
+        gradient.addColorStop(1,   'rgba(30,60,255,0)');
+        heatCtx.globalCompositeOperation = 'lighter'; // 用lighter模式增强发光感
         heatCtx.beginPath();
         heatCtx.arc(cX, cY, radius, 0, 2 * Math.PI);
         heatCtx.fillStyle = gradient;
         heatCtx.fill();
+        heatCtx.globalCompositeOperation = 'source-over';
       } else if (pt.value < 0) {
         // 负值：中间蓝色区域"抹去"
         let gradient = heatCtx.createRadialGradient(cX, cY, 0, cX, cY, radius * (0.75 + 0.25 * Math.abs(pt.value)));

@@ -34,7 +34,7 @@ def mapheat():
         markers = data.get("markers") or []
         if not markers:
             return jsonify(status="error", message="没有标注数据", heatmapPoints=[])
-
+        print(markers)
         # 1. 先收集所有marker_copy用于AI打分
         marker_copys = []
         centers = []
