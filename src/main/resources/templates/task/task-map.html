@@ -15,17 +15,12 @@
     #map { width: 100%; height: 100%; }
     #draw-canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 99; pointer-events: none; display: none; }
     #draw-hint { position:absolute;left:50%;top:15px;z-index:100; font-size:14px;padding:6px 18px;transform:translateX(-50%); background:rgba(255,255,0,.85);border-radius:6px;display:none;}
-    .map-legend { background: #fff; position: absolute; top: 10px; right: 10px; border-radius: 4px; padding: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); z-index: 100; font-size: 12px;}
-    .legend-item { display: flex; align-items: center; margin-bottom: 5px; }
-    .legend-color { width: 16px; height: 16px; border-radius: 3px; margin-right: 8px; }
-    .legend-text { color: #666; }
     .marker-info { margin-top: 15px; padding: 15px; background: #f9f9f9; border-radius: 5px; display: none; position:absolute; left:50%; top:80px; z-index:200; min-width:280px; transform:translateX(-50%);}
     .marker-info textarea { width: 100%; min-height: 80px; padding: 10px; border: 1px solid #e6e6e6; border-radius: 4px; margin-bottom: 10px; resize: none; }
     .color-options { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; }
     .type-options { display: flex; gap: 10px; margin-bottom: 15px; }
     .marker-actions { display: flex; justify-content: flex-end; gap: 10px; }
   </style>
-  <!-- 高德地图API -->
   <script src="https://webapi.amap.com/maps?v=2.0&key=2a73ff764995703ff9e17cc103851a1e"></script>
 </head>
 <body>
@@ -38,35 +33,15 @@
       <button type="button" class="layui-btn layui-btn-normal" id="draw-area">绘制区域</button>
       <button type="button" class="layui-btn layui-btn-normal" id="draw-path">绘制路径</button>
       <button type="button" class="layui-btn layui-btn-normal" id="add-marker">添加标记</button>
-      <button type="button" class="layui-btn layui-btn-warm" id="toggle-weather">天气图层</button>
+      <button type="button" class="layui-btn layui-btn-danger" id="toggle-heatmap">热力掩码</button>
       <button type="button" class="layui-btn layui-btn-primary" id="clear-current">清除当前</button>
+      <button type="button" class="layui-btn layui-btn-primary" id="backToDetailBtn">返回細節</button>
     </div>
     <div id="map-container">
       <div id="map"></div>
       <canvas id="draw-canvas"></canvas>
       <div id="draw-hint">正在绘制，地图已锁定。单击添加，双击结束，ESC取消</div>
-      <!-- 图例 -->
-      <!-- <div class="map-legend">
-        <div class="legend-title">图例说明</div>
-        <div class="legend-item">
-          <div class="legend-color" style="background-color: #FF5722;"></div>
-          <div class="legend-text">危险区域</div>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color" style="background-color: #5FB878;"></div>
-          <div class="legend-text">已搜索区域</div>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color" style="background-color: #1E9FFF;"></div>
-          <div class="legend-text">搜索路径</div>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color" style="background-color: #FFB800;"></div>
-          <div class="legend-text">兴趣点</div>
-        </div>
-      </div> -->
     </div>
-    <!-- 标记信息输入区域 -->
     <div class="marker-info" id="marker-info">
       <div class="layui-form">
         <div class="layui-form-item">
@@ -106,440 +81,658 @@
   var taskId = [[${taskId}]];
   var userName = '[[${userName}]]';
 </script>
-<script>
+<script th:inline="none">
+  // 地图初始化
   var map = new AMap.Map('map', {
     center: [mapConfig.centerLng, mapConfig.centerLat],
     zoom: mapConfig.zoomLevel
   });
-</script>
-<script>
-const TYPE_COLORS = {
-  searched: '#5FB878',
-  danger:   '#FF5722',
-  path:     '#1E9FFF',
-  poi:      '#FFB800'
-};
-const TYPE_FILL = {
-  searched: 'rgba(95,184,120,0.18)',
-  danger:   'rgba(255,87,34,0.13)',
-  path:     'rgba(30,159,255,0.09)',
-  poi:      'rgba(255,184,0,0.18)'
-};
 
-const TYPE_LABELS = {
-  searched: '已搜索区域',
-  danger: '危险区域',
-  poi: '兴趣点',
-  path: '搜索路径',
-  marker: '标记'
-};
+  // 类型颜色等定义
+  const TYPE_COLORS = {
+    searched: '#5FB878',
+    danger:   '#FF5722',
+    path:     '#1E9FFF',
+    poi:      '#FFB800'
+  };
+  const TYPE_FILL = {
+    searched: 'rgba(95,184,120,0.18)',
+    danger:   'rgba(255,87,34,0.13)',
+    path:     'rgba(30,159,255,0.09)',
+    poi:      'rgba(255,184,0,0.18)'
+  };
 
-let drawCanvas, drawCtx, drawHint;
-let drawMode = null; // polygon|polyline|marker
-let drawEnable = false;
-let drawPoints = [];
-let overlays = [];
-let pendingDrawType = null;
-let pendingDrawGeometry = null;
+  const TYPE_LABELS = {
+    searched: '已搜索区域',
+    danger: '危险区域',
+    poi: '兴趣点',
+    path: '搜索路径',
+    marker: '标记'
+  };
 
-const API_SAVE = '/api/map/savemarker';
-const API_LIST = '/api/map/markers/'; // + taskId
+  let drawCanvas, drawCtx, drawHint;
+  let drawMode = null; // polygon|polyline|marker
+  let drawEnable = false;
+  let drawPoints = [];
+  let overlays = [];
+  let pendingDrawType = null;
+  let pendingDrawGeometry = null;
 
-function resizeDrawCanvas() {
-  const mapDom = document.getElementById('map');
-  drawCanvas.width = mapDom.offsetWidth;
-  drawCanvas.height = mapDom.offsetHeight;
-  drawCanvas.style.width = mapDom.offsetWidth + "px";
-  drawCanvas.style.height = mapDom.offsetHeight + "px";
-  drawPolygonOnCanvas();
-}
+  // ----------- 热力掩码CanvasLayer部分 -------------
+  // 动态热力点数据，可由AI/后端实时赋值
+  let heatmapData = [
+    { lng: mapConfig.centerLng, lat: mapConfig.centerLat, value: 1.0 }
+  ];
+  let heatVisible = false;
+  let heatCanvas = null, heatCtx = null, heatmapLayer = null, heatAnimId = null;
 
-function drawPolygonOnCanvas() {
-  drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
-  if (drawPoints.length === 0 || !drawMode) return;
-  const type = drawMode === 'polygon'
-      ? $('input[name="marker-type"]:checked').val() || 'searched'
-      : drawMode === 'polyline'
-      ? 'path'
-      : 'poi';
-  const color = TYPE_COLORS[type];
-  const fill = TYPE_FILL[type];
+  // 创建CanvasLayer
+  function createHeatmapLayer() {
+    const mapDom = document.getElementById('map');
+    const width = mapDom.offsetWidth;
+    const height = mapDom.offsetHeight;
+    heatCanvas = document.createElement('canvas');
+    heatCanvas.width = width;
+    heatCanvas.height = height;
+    heatCtx = heatCanvas.getContext('2d');
 
-  if (drawMode === 'polygon' && drawPoints.length > 1) {
-    drawCtx.strokeStyle = color;
-    drawCtx.lineWidth = 2;
-    drawCtx.fillStyle = fill;
-    drawCtx.beginPath();
-    drawCtx.moveTo(drawPoints[0].x, drawPoints[0].y);
-    for(let i=1;i<drawPoints.length;i++) drawCtx.lineTo(drawPoints[i].x, drawPoints[i].y);
-    drawCtx.closePath();
-    drawCtx.stroke();
-    if (drawPoints.length > 2) drawCtx.fill();
+    let layer = new AMap.CanvasLayer({
+      canvas: heatCanvas,
+      bounds: map.getBounds(),
+      zooms: [3, 20],
+      zIndex: 120
+    });
+
+    return layer;
   }
-  if (drawMode === 'polyline' && drawPoints.length > 1) {
-    drawCtx.strokeStyle = color;
-    drawCtx.lineWidth = 4;
-    drawCtx.beginPath();
-    drawCtx.moveTo(drawPoints[0].x, drawPoints[0].y);
-    for(let i=1;i<drawPoints.length;i++) drawCtx.lineTo(drawPoints[i].x, drawPoints[i].y);
-    drawCtx.stroke();
+
+  function getRadiusPixels(centerLng, centerLat, km) {
+      // 经纬度向东偏移km公里
+      var earthRadius = 6378.137; // 地球半径，单位km
+      var lngOffset = km / (earthRadius * Math.cos(Math.PI * centerLat / 180) * Math.PI / 180);
+      var targetLng = centerLng + lngOffset;
+      var px1 = map.lngLatToContainer([centerLng, centerLat]);
+      var px2 = map.lngLatToContainer([targetLng, centerLat]);
+      return Math.abs(px2.x - px1.x);
+    }
+
+    // 从AI服务获取热力图数据
+  let aiLoading = false; // 防止并发
+
+  function fetchHeatmapDataAndReplace() {
+    if (aiLoading) return;
+    aiLoading = true;
+    // 只保留第一个点
+    if (heatmapData.length > 1) {
+      heatmapData = [heatmapData[0]];
+      updateHeatmapData(heatmapData);
+    }
+    $.ajax({
+      url: '/api/map/heatmap/' + taskId,
+      type: 'GET',
+      success: function(res) {
+        aiLoading = false;
+        if (res.code === 0 && res.data) {
+          // 只保留第一个点，然后添加AI给的新点
+          heatmapData = [heatmapData[0]].concat(res.data);
+          updateHeatmapData(heatmapData);
+        } else {
+          layui.layer.msg('获取热力图数据失败: ' + (res.msg || '未知错误'), {icon: 2});
+        }
+      },
+      error: function() {
+        aiLoading = false;
+        layui.layer.msg('网络错误，热力图数据加载失败', {icon: 2});
+      }
+    });
   }
-  // 点渲染
-  for(let pt of drawPoints){
-    drawCtx.beginPath();
-    drawCtx.arc(pt.x, pt.y, 6, 0, 2*Math.PI);
-    drawCtx.fillStyle = color;
-    drawCtx.fill();
-    drawCtx.strokeStyle="#fff";
-    drawCtx.lineWidth=2;
-    drawCtx.stroke();
+
+  // 改进版renderHeatFrame函数 - 红色到蓝色渐变过渡
+  function renderHeatFrame() {
+    if (!heatVisible || !heatmapLayer) return;
+    const mapDom = document.getElementById('map');
+    const width = mapDom.offsetWidth;
+    const height = mapDom.offsetHeight;
+    if (heatCanvas.width !== width || heatCanvas.height !== height) {
+      heatCanvas.width = width;
+      heatCanvas.height = height;
+    }
+    heatCtx.clearRect(0, 0, heatCanvas.width, heatCanvas.height);
+
+    // 1. 统一底色
+    heatCtx.globalCompositeOperation = 'source-over';
+    heatCtx.fillStyle = 'rgba(30, 30, 245, 0.62)';
+    heatCtx.fillRect(0, 0, width, height);
+
+    // 2. 画点
+    const sortedPoints = [...heatmapData].sort((a, b) => a.value - b.value);
+    sortedPoints.forEach(pt => {
+      let pixel = map.lngLatToContainer([pt.lng, pt.lat]);
+      let cX = pixel.x;
+      let cY = pixel.y;
+      let radius = getRadiusPixels(pt.lng, pt.lat, 3);
+      radius *= (0.85 + 0.3 * Math.abs(pt.value));
+
+      if (pt.value > 0) {
+        let gradient = heatCtx.createRadialGradient(cX, cY, 0, cX, cY, radius);
+        // 中心白色光晕
+        gradient.addColorStop(0,   'rgba(255,255,255,0.95)');
+        // 亮黄
+        gradient.addColorStop(0.18, 'rgba(255,220,80,0.70)');
+        // 亮橙
+        gradient.addColorStop(0.35, 'rgba(255,150,30,0.55)');
+        // 亮红
+        gradient.addColorStop(0.55, 'rgba(255,60,60,0.30)');
+        // 外圈淡蓝/透明
+        gradient.addColorStop(0.85, 'rgba(30,60,255,0.07)');
+        gradient.addColorStop(1,   'rgba(30,60,255,0)');
+        heatCtx.globalCompositeOperation = 'lighter'; // 用lighter模式增强发光感
+        heatCtx.beginPath();
+        heatCtx.arc(cX, cY, radius, 0, 2 * Math.PI);
+        heatCtx.fillStyle = gradient;
+        heatCtx.fill();
+        heatCtx.globalCompositeOperation = 'source-over';
+      } else if (pt.value < 0) {
+        // 负值：中间蓝色区域"抹去"
+        let gradient = heatCtx.createRadialGradient(cX, cY, 0, cX, cY, radius * (0.75 + 0.25 * Math.abs(pt.value)));
+        gradient.addColorStop(0, 'rgba(255,255,255,0.8)');
+        gradient.addColorStop(0.3 + 0.4*Math.abs(pt.value), 'rgba(255,255,255,0.3)');
+        gradient.addColorStop(1, 'rgba(255,255,255,0)');
+        heatCtx.globalCompositeOperation = 'destination-out';
+        heatCtx.beginPath();
+        heatCtx.arc(cX, cY, radius, 0, 2 * Math.PI);
+        heatCtx.fillStyle = gradient;
+        heatCtx.fill();
+      }
+      // value==0 不渲染
+      heatCtx.globalCompositeOperation = 'source-over';
+    });
+
+    heatmapLayer.setBounds(map.getBounds());
+    heatmapLayer.reFresh();
+
+    heatAnimId = window.requestAnimationFrame(renderHeatFrame);
   }
-  if(drawMode === 'marker' && drawPoints.length === 1){
-    drawCtx.beginPath();
-    drawCtx.arc(drawPoints[0].x, drawPoints[0].y, 10, 0, 2*Math.PI);
-    drawCtx.fillStyle = color;
-    drawCtx.fill();
-    drawCtx.strokeStyle="#fff";
-    drawCtx.lineWidth=3;
-    drawCtx.stroke();
+
+  // 线性插值两个颜色（RGB空间）
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function lerpColorHSL(a, b, t) {
+    return [
+      lerp(a[0], b[0], t),
+      lerp(a[1], b[1], t),
+      lerp(a[2], b[2], t)
+    ];
   }
-}
+  function hslToRgba(h, s, l, a=1) {
+    s /= 100; l /= 100;
+    let c = (1 - Math.abs(2 * l - 1)) * s;
+    let x = c * (1 - Math.abs((h/60)%2 - 1));
+    let m = l - c/2;
+    let r=0,g=0,b=0;
+    if(h<60){r=c;g=x;}
+    else if(h<120){r=x;g=c;}
+    else if(h<180){g=c;b=x;}
+    else if(h<240){g=x;b=c;}
+    else if(h<300){r=x;b=c;}
+    else{r=c;b=x;}
+    return `rgba(${Math.round((r+m)*255)},${Math.round((g+m)*255)},${Math.round((b+m)*255)},${a})`;
+  }
 
-function closeDrawCanvas() {
-  drawEnable = false;
-  drawMode = null;
-  drawPoints = [];
-  drawCanvas.style.display = 'none';
-  drawCanvas.style.pointerEvents = 'none';
-  drawHint.style.display = 'none';
-  drawPolygonOnCanvas();
-}
+  function getHeatColor(value, alpha=1) {
+    if (value < 0) {
+      let t = (value + 1);
+      let c1 = [210, 70, 70], c2 = [0, 0, 90];
+      let c = lerpColorHSL(c1, c2, t);
+      return hslToRgba(c[0], c[1], c[2], 0.30 + 0.30 * Math.abs(value));
+    } else if (value === 0) {
+      return hslToRgba(0, 0, 90, 0.25);
+    } else if (value > 0 && value < 0.6) {
+      let t = value / 0.6;
+      let c1 = [0, 0, 90], c2 = [30, 100, 65];
+      let c = lerpColorHSL(c1, c2, t);
+      return hslToRgba(c[0], c[1], c[2], 0.30 + 0.25 * value);
+    } else {
+      let t = (value - 0.6) / 0.4;
+      let c1 = [30, 100, 65], c2 = [0, 100, 50];
+      let c = lerpColorHSL(c1, c2, t);
+      return hslToRgba(c[0], c[1], c[2], 0.40 + 0.20 * (value-0.6)/0.4);
+    }
+  }
 
-function openDrawCanvas(mode) {
-  drawEnable = true;
-  drawMode = mode;
-  drawPoints = [];
-  resizeDrawCanvas();
-  drawCanvas.style.display = 'block';
-  drawCanvas.style.pointerEvents = 'auto';
-  drawHint.style.display = 'block';
-  drawHint.innerText = mode==='polygon' ? '正在绘制区域，单击添加顶点，双击结束，ESC取消'
-    : mode==='polyline' ? '正在绘制路径，单击添加节点，双击结束，ESC取消'
-    : '点击地图添加标记点，ESC取消';
-  drawPolygonOnCanvas();
-}
+  function startHeatmap() {
+    if (!heatmapLayer) {
+      heatmapLayer = createHeatmapLayer();
+      map.addLayer(heatmapLayer);
+    }
+    heatVisible = true;
+    $('#toggle-heatmap').text('关闭热力');
+    if (heatAnimId) cancelAnimationFrame(heatAnimId);
+    renderHeatFrame();
+  }
+  function stopHeatmap() {
+    heatVisible = false;
+    $('#toggle-heatmap').text('热力掩码');
+    if (heatAnimId) cancelAnimationFrame(heatAnimId);
+    if (heatCtx) heatCtx.clearRect(0, 0, heatCanvas.width, heatCanvas.height);
+    if (heatmapLayer) { heatmapLayer.setBounds(map.getBounds()); heatmapLayer.reFresh(); }
+  }
+  // 修改toggleHeatmap函数
+  function toggleHeatmap() {
+    if (heatVisible) {
+      // 关闭
+      stopHeatmap();
+    } else {
+      // 打开时才请求AI
+      heatVisible = true;
+      $('#toggle-heatmap').text('关闭热力');
+      if (!heatmapLayer) {
+        heatmapLayer = createHeatmapLayer();
+        map.addLayer(heatmapLayer);
+      }
+      fetchHeatmapDataAndReplace(); // 只在这里请求AI
+      renderHeatFrame();
+    }
+  }
+  function updateHeatmapData(newPoints) {
+    heatmapData = newPoints;
+    // 立即刷新一帧
+    if (heatVisible) renderHeatFrame();
+  }
 
-function openMarkerInput(x, y, geometryType) {
-  $('#marker-info').show();
-  $('#marker-description').val('');
-  $('#marker-color').val('#5FB878');
-  $('#color-preview').css('background', '#5FB878');
-  $('input[name="marker-type"][value="searched"]').prop('checked', true);
-  $('#marker-info').data('pos', {x, y});
-  $('#marker-info').data('geometryType', geometryType || 'Point');
-}
-
-// 用于多边形、路径弹窗：把弹窗显示到最后一个点正上方
-function openAreaInput(points, geometryType) {
-  // 取最后一个点
-  let pt = points[points.length-1];
-  openMarkerInput(pt.x, pt.y, geometryType);
-  // 定位弹窗
-  let infoBox = $('#marker-info');
-  infoBox.show();
-  let container = $('#map-container')[0];
-  let left = pt.x - infoBox.outerWidth()/2;
-  let top = pt.y - infoBox.outerHeight() - 16;
-  // 防止超出边界
-  left = Math.max(10, Math.min(left, container.offsetWidth-infoBox.outerWidth()-10));
-  top = Math.max(10, top);
-  infoBox.css({left:left+'px',top:top+'px'});
-}
-
-function closeMarkerInput() { $('#marker-info').hide(); }
-function clearMapOverlays() {
-  overlays.forEach(o=>o.setMap(null));
-  overlays = [];
-}
-
-// 将像素点数组转经纬度数组
-function pointsToLngLats(points){
-  return points.map(pt=>{
-    const lnglat = map.containerToLngLat([pt.x, pt.y]);
-    return [lnglat.lng, lnglat.lat];
+  map.on('moveend zoomend', function() {
+    if (heatVisible) renderHeatFrame();
   });
-}
+  window.addEventListener('resize', function() {
+    if (heatVisible) renderHeatFrame();
+  });
 
-function saveCurrentDraw() {
-  if(drawMode === 'polygon' && drawPoints.length >= 3){
-    pendingDrawType = 'polygon';
-    pendingDrawGeometry = { type: "Polygon", coordinates: [pointsToLngLats(drawPoints)] };
-    openAreaInput(drawPoints, 'Polygon');
-    closeDrawCanvas();
-  } else if(drawMode === 'polyline' && drawPoints.length >= 2) {
-    pendingDrawType = 'polyline';
-    pendingDrawGeometry = { type: "LineString", coordinates: pointsToLngLats(drawPoints) };
-    openAreaInput(drawPoints, 'LineString');
-    closeDrawCanvas();
+  // ----------- 你的原有绘制/标记业务逻辑 -----------
+
+  function resizeDrawCanvas() {
+    const mapDom = document.getElementById('map');
+    drawCanvas.width = mapDom.offsetWidth;
+    drawCanvas.height = mapDom.offsetHeight;
+    drawCanvas.style.width = mapDom.offsetWidth + "px";
+    drawCanvas.style.height = mapDom.offsetHeight + "px";
+    drawPolygonOnCanvas();
   }
-}
 
-function saveToBackend(markerType, geometry, properties){
-  $.ajax({
-    url: API_SAVE,
-    type: 'POST',
-    contentType: 'application/json',
-    data: JSON.stringify({
-      taskId: taskId,
-      markerType: markerType,
-      geometry: JSON.stringify(geometry),
-      properties: JSON.stringify(properties)
-    }),
-    success: function(res){
-      if(res.code===0){
-        layui.layer.msg('保存成功', {icon:1});
-        renderMarker({
-          markerType, geometry: JSON.stringify(geometry), properties: JSON.stringify(properties)
-        });
+  function drawPolygonOnCanvas() {
+    drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+    if (drawPoints.length === 0 || !drawMode) return;
+    const type = drawMode === 'polygon'
+        ? $('input[name="marker-type"]:checked').val() || 'searched'
+        : drawMode === 'polyline'
+        ? 'path'
+        : 'poi';
+    const color = TYPE_COLORS[type];
+    const fill = TYPE_FILL[type];
+
+    if (drawMode === 'polygon' && drawPoints.length > 1) {
+      drawCtx.strokeStyle = color;
+      drawCtx.lineWidth = 2;
+      drawCtx.fillStyle = fill;
+      drawCtx.beginPath();
+      drawCtx.moveTo(drawPoints[0].x, drawPoints[0].y);
+      for(let i=1;i<drawPoints.length;i++) drawCtx.lineTo(drawPoints[i].x, drawPoints[i].y);
+      drawCtx.closePath();
+      drawCtx.stroke();
+      if (drawPoints.length > 2) drawCtx.fill();
+    }
+    if (drawMode === 'polyline' && drawPoints.length > 1) {
+      drawCtx.strokeStyle = color;
+      drawCtx.lineWidth = 4;
+      drawCtx.beginPath();
+      drawCtx.moveTo(drawPoints[0].x, drawPoints[0].y);
+      for(let i=1;i<drawPoints.length;i++) drawCtx.lineTo(drawPoints[i].x, drawPoints[i].y);
+      drawCtx.stroke();
+    }
+    // 点渲染
+    for(let pt of drawPoints){
+      drawCtx.beginPath();
+      drawCtx.arc(pt.x, pt.y, 6, 0, 2*Math.PI);
+      drawCtx.fillStyle = color;
+      drawCtx.fill();
+      drawCtx.strokeStyle="#fff";
+      drawCtx.lineWidth=2;
+      drawCtx.stroke();
+    }
+    if(drawMode === 'marker' && drawPoints.length === 1){
+      drawCtx.beginPath();
+      drawCtx.arc(drawPoints[0].x, drawPoints[0].y, 10, 0, 2*Math.PI);
+      drawCtx.fillStyle = color;
+      drawCtx.fill();
+      drawCtx.strokeStyle="#fff";
+      drawCtx.lineWidth=3;
+      drawCtx.stroke();
+    }
+  }
+
+  function closeDrawCanvas() {
+    drawEnable = false;
+    drawMode = null;
+    drawPoints = [];
+    drawCanvas.style.display = 'none';
+    drawCanvas.style.pointerEvents = 'none';
+    drawHint.style.display = 'none';
+    drawPolygonOnCanvas();
+  }
+
+  function openDrawCanvas(mode) {
+    drawEnable = true;
+    drawMode = mode;
+    drawPoints = [];
+    resizeDrawCanvas();
+    drawCanvas.style.display = 'block';
+    drawCanvas.style.pointerEvents = 'auto';
+    drawHint.style.display = 'block';
+    drawHint.innerText = mode==='polygon' ? '正在绘制区域，单击添加顶点，双击结束，ESC取消'
+      : mode==='polyline' ? '正在绘制路径，单击添加节点，双击结束，ESC取消'
+      : '点击地图添加标记点，ESC取消';
+    drawPolygonOnCanvas();
+  }
+
+  function openMarkerInput(x, y, geometryType) {
+    $('#marker-info').show();
+    $('#marker-description').val('');
+    $('#marker-color').val('#5FB878');
+    $('#color-preview').css('background', '#5FB878');
+    $('input[name="marker-type"][value="searched"]').prop('checked', true);
+    $('#marker-info').data('pos', {x, y});
+    $('#marker-info').data('geometryType', geometryType || 'Point');
+  }
+
+  function openAreaInput(points, geometryType) {
+    let pt = points[points.length-1];
+    openMarkerInput(pt.x, pt.y, geometryType);
+    let infoBox = $('#marker-info');
+    infoBox.show();
+    let container = $('#map-container')[0];
+    let left = pt.x - infoBox.outerWidth()/2;
+    let top = pt.y - infoBox.outerHeight() - 16;
+    left = Math.max(10, Math.min(left, container.offsetWidth-infoBox.outerWidth()-10));
+    top = Math.max(10, top);
+    infoBox.css({left:left+'px',top:top+'px'});
+  }
+
+  function closeMarkerInput() { $('#marker-info').hide(); }
+  function clearMapOverlays() {
+    overlays.forEach(o=>o.setMap(null));
+    overlays = [];
+  }
+
+  function pointsToLngLats(points){
+    return points.map(pt=>{
+      const lnglat = map.containerToLngLat([pt.x, pt.y]);
+      return [lnglat.lng, lnglat.lat];
+    });
+  }
+
+  function saveCurrentDraw() {
+    if(drawMode === 'polygon' && drawPoints.length >= 3){
+      pendingDrawType = 'polygon';
+      pendingDrawGeometry = { type: "Polygon", coordinates: [pointsToLngLats(drawPoints)] };
+      openAreaInput(drawPoints, 'Polygon');
+      closeDrawCanvas();
+    } else if(drawMode === 'polyline' && drawPoints.length >= 2) {
+      pendingDrawType = 'polyline';
+      pendingDrawGeometry = { type: "LineString", coordinates: pointsToLngLats(drawPoints) };
+      openAreaInput(drawPoints, 'LineString');
+      closeDrawCanvas();
+    }
+  }
+
+  const API_SAVE = '/api/map/savemarker';
+  const API_LIST = '/api/map/markers/';
+
+  function saveToBackend(markerType, geometry, properties){
+    $.ajax({
+      url: API_SAVE,
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({
+        taskId: taskId,
+        markerType: markerType,
+        geometry: JSON.stringify(geometry),
+        properties: JSON.stringify(properties)
+      }),
+      success: function(res){
+        if(res.code===0){
+          layui.layer.msg('保存成功', {icon:1});
+          renderMarker({
+            markerType, geometry: JSON.stringify(geometry), properties: JSON.stringify(properties)
+          });
+        } else {
+          layui.layer.msg('保存失败: '+(res.msg||'未知错误'), {icon:2});
+        }
+      },
+      error: function(err){
+        layui.layer.msg('网络错误，请重试', {icon:2});
+      }
+    });
+  }
+
+  function createMarkerIcon(color) {
+    let canvas = document.createElement('canvas');
+    canvas.width = 32; canvas.height = 32;
+    let ctx = canvas.getContext('2d');
+    ctx.beginPath();
+    ctx.arc(16, 16, 12, 0, 2 * Math.PI);
+    ctx.fillStyle = color;
+    ctx.shadowColor = "#888";
+    ctx.shadowBlur = 3;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(16, 16, 6, 0, 2 * Math.PI);
+    ctx.fillStyle = "#fff";
+    ctx.globalAlpha = 0.5;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    return canvas.toDataURL();
+  }
+
+  function renderMarker(marker){
+    const geometry = typeof marker.geometry === 'string' ? JSON.parse(marker.geometry) : marker.geometry;
+    let properties = {};
+    if (marker.properties) {
+      try { properties = JSON.parse(marker.properties); } catch(e) {}
+    }
+    let color = marker.color || properties.color || "#1E9FFF";
+    let markerType = marker.markerType || properties.markerType || "marker";
+    let description = marker.description || properties.description || "";
+    let createdBy = marker.createdBy || properties.createdBy || "";
+
+    let overlay = null;
+    if(markerType === 'polygon'){
+      overlay = new AMap.Polygon({
+        path: geometry.coordinates[0],
+        strokeColor: color,
+        strokeWeight: 2,
+        fillColor: color,
+        fillOpacity: 0.3
+      });
+      overlay.setMap(map);
+      overlay.on('click', function(e){
+        showInfoWindow(markerType, description, createdBy, e.lnglat);
+      });
+    } else if(markerType === 'polyline'){
+      overlay = new AMap.Polyline({
+        path: geometry.coordinates,
+        strokeColor: color,
+        strokeWeight: 4
+      });
+      overlay.setMap(map);
+      overlay.on('click', function(e){
+        showInfoWindow(markerType, description, createdBy, e.lnglat);
+      });
+    } else if(markerType === 'marker' || geometry.type==='Point'){
+      overlay = new AMap.Marker({
+        position: geometry.coordinates,
+        title: description,
+        icon: new AMap.Icon({
+          size: new AMap.Size(32, 32),
+          image: createMarkerIcon(color),
+          imageSize: new AMap.Size(32, 32)
+        })
+      });
+      overlay.setMap(map);
+      overlay.on('click', function(e){
+        showInfoWindow(markerType, description, createdBy, geometry.coordinates);
+      });
+    }
+    overlays.push(overlay);
+  }
+
+  function showInfoWindow(type, description, createdBy, lnglat){
+    let info = `<div style="padding:10px;">
+      <div style="font-weight:bold;margin-bottom:5px;">${TYPE_LABELS[type] || type || '标记'}</div>
+      <div>${description}</div>
+      <div style="font-size:12px;color:#999;margin-top:5px;">${createdBy?('创建者: '+createdBy):''}</div>
+    </div>`;
+    const infoWindow = new AMap.InfoWindow({content: info, offset: new AMap.Pixel(0, -20)});
+    infoWindow.open(map, lnglat);
+  }
+
+  function loadMarkers(){
+      clearMapOverlays();
+      $.ajax({
+        url: API_LIST + taskId,
+        type: 'GET',
+        success: function(res){
+          if(res.code===0 && res.data){
+            res.data.forEach(renderMarker);
+          }
+        }
+      });
+    }
+
+  // ---------- 初始化、事件绑定 ----------
+  $(document).ready(function(){
+    drawCanvas = document.getElementById('draw-canvas');
+    drawHint = document.getElementById('draw-hint');
+    drawCtx = drawCanvas.getContext('2d');
+    window.addEventListener('resize', resizeDrawCanvas);
+    resizeDrawCanvas();
+
+    // 加载后端数据
+    loadMarkers();
+
+    // 按钮绑定
+    $('#draw-area').on('click', function(){ openDrawCanvas('polygon'); });
+    $('#draw-path').on('click', function(){ openDrawCanvas('polyline'); });
+    $('#add-marker').on('click', function(){ openDrawCanvas('marker'); });
+    $('#clear-current').on('click', function(){ closeDrawCanvas(); });
+    $('#toggle-heatmap').off('click').on('click', toggleHeatmap);
+    $('#backToDetailBtn').on('click', function(){
+      var url = '/task/task-detail/' + taskId;
+      if(window.parent && window.parent.layui && window.parent.layui.index){
+        window.parent.layui.index.openTab({ title: '任务详情', href: url });
+        window.parent.layui.index.closeCurrentTab();
       } else {
-        layui.layer.msg('保存失败: '+(res.msg||'未知错误'), {icon:2});
+        window.location.href = url;
       }
-    },
-    error: function(err){
-      layui.layer.msg('网络错误，请重试', {icon:2});
-    }
-  });
-}
+    });
 
-// canvas生成彩色marker图标（圆点）
-function createMarkerIcon(color) {
-  let canvas = document.createElement('canvas');
-  canvas.width = 32; canvas.height = 32;
-  let ctx = canvas.getContext('2d');
-  ctx.beginPath();
-  ctx.arc(16, 16, 12, 0, 2 * Math.PI);
-  ctx.fillStyle = color;
-  ctx.shadowColor = "#888";
-  ctx.shadowBlur = 3;
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(16, 16, 6, 0, 2 * Math.PI);
-  ctx.fillStyle = "#fff";
-  ctx.globalAlpha = 0.5;
-  ctx.fill();
-  ctx.globalAlpha = 1;
-  return canvas.toDataURL();
-}
-
-// 渲染区域/路径/点
-function renderMarker(marker){
-  const geometry = typeof marker.geometry === 'string' ? JSON.parse(marker.geometry) : marker.geometry;
-  let properties = {};
-  if (marker.properties) {
-    try { properties = JSON.parse(marker.properties); } catch(e) {}
-  }
-  let color = marker.color || properties.color || "#1E9FFF";
-  let markerType = marker.markerType || properties.markerType || "marker";
-  let description = marker.description || properties.description || "";
-  let createdBy = marker.createdBy || properties.createdBy || "";
-
-  let overlay = null;
-  if(markerType === 'polygon'){
-    overlay = new AMap.Polygon({
-      path: geometry.coordinates[0],
-      strokeColor: color,
-      strokeWeight: 2,
-      fillColor: color,
-      fillOpacity: 0.3
-    });
-    overlay.setMap(map);
-    overlay.on('click', function(e){
-      showInfoWindow(markerType, description, createdBy, e.lnglat);
-    });
-  } else if(markerType === 'polyline'){
-    overlay = new AMap.Polyline({
-      path: geometry.coordinates,
-      strokeColor: color,
-      strokeWeight: 4
-    });
-    overlay.setMap(map);
-    overlay.on('click', function(e){
-      showInfoWindow(markerType, description, createdBy, e.lnglat);
-    });
-  } else if(markerType === 'marker' || geometry.type==='Point'){
-    overlay = new AMap.Marker({
-      position: geometry.coordinates,
-      title: description,
-      icon: new AMap.Icon({
-        size: new AMap.Size(32, 32),
-        image: createMarkerIcon(color),
-        imageSize: new AMap.Size(32, 32)
-      })
-    });
-    overlay.setMap(map);
-    overlay.on('click', function(e){
-      showInfoWindow(markerType, description, createdBy, geometry.coordinates);
-    });
-  }
-  overlays.push(overlay);
-}
-
-function showInfoWindow(type, description, createdBy, lnglat){
-  let info = `<div style="padding:10px;">
-    <div style="font-weight:bold;margin-bottom:5px;">${TYPE_LABELS[type] || type || '标记'}</div>
-    <div>${description}</div>
-    <div style="font-size:12px;color:#999;margin-top:5px;">${createdBy?('创建者: '+createdBy):''}</div>
-  </div>`;
-  const infoWindow = new AMap.InfoWindow({content: info, offset: new AMap.Pixel(0, -20)});
-  infoWindow.open(map, lnglat);
-}
-
-// 加载后端所有区域/路径/标记
-function loadMarkers(){
-  clearMapOverlays();
-  $.ajax({
-    url: API_LIST + taskId,
-    type: 'GET',
-    success: function(res){
-      if(res.code===0 && res.data){
-        res.data.forEach(renderMarker);
+    // canvas事件
+    drawCanvas.addEventListener('mousedown', function(e){
+      if(!drawEnable) return;
+      const rect = drawCanvas.getBoundingClientRect();
+      const x = e.clientX - rect.left, y = e.clientY - rect.top;
+      if(drawMode==='polygon' || drawMode==='polyline'){
+        drawPoints.push({x,y});
+        drawPolygonOnCanvas();
       }
-    }
-  });
-}
+      else if(drawMode==='marker'){
+        drawPoints = [{x,y}];
+        drawPolygonOnCanvas();
+        openMarkerInput(x,y,'Point');
+        let infoBox = $('#marker-info');
+        infoBox.show();
+        let container = $('#map-container')[0];
+        let left = x - infoBox.outerWidth()/2;
+        let top = y - infoBox.outerHeight() - 16;
+        left = Math.max(10, Math.min(left, container.offsetWidth-infoBox.outerWidth()-10));
+        top = Math.max(10, top);
+        infoBox.css({left:left+'px',top:top+'px'});
+        closeDrawCanvas();
+      }
+    });
 
-$(document).ready(function(){
+    drawCanvas.addEventListener('dblclick', function(e){
+      if(!drawEnable) return;
+      if(drawMode==='polygon' && drawPoints.length>=3){
+        saveCurrentDraw();
+      }
+      else if(drawMode==='polyline' && drawPoints.length>=2){
+        saveCurrentDraw();
+      }
+    });
+    document.addEventListener('keydown', function(e){
+      if(drawEnable && e.key==='Escape'){
+        closeDrawCanvas();
+      }
+    });
 
-  drawCanvas = document.getElementById('draw-canvas');
-  drawHint = document.getElementById('draw-hint');
-  drawCtx = drawCanvas.getContext('2d');
-  window.addEventListener('resize', resizeDrawCanvas);
-  resizeDrawCanvas();
+    $('#save-marker').on('click', function(){
+      let type = $('input[name="marker-type"]:checked').val() || 'searched';
+      let color = $('#marker-color').val();
+      let desc = $('#marker-description').val();
+      let pos = $('#marker-info').data('pos');
+      let geometryType = $('#marker-info').data('geometryType') || 'Point';
 
-  // 加载后端数据
-  loadMarkers();
-
-  // 按钮绑定
-  $('#draw-area').on('click', function(){ openDrawCanvas('polygon'); });
-  $('#draw-path').on('click', function(){ openDrawCanvas('polyline'); });
-  $('#add-marker').on('click', function(){ openDrawCanvas('marker'); });
-  $('#clear-current').on('click', function(){ closeDrawCanvas(); });
-
-  let weatherLayer = null;
-  let weatherLayerVisible = false;
-
-  $('#toggle-weather').on('click', function(){
-    if(weatherLayerVisible){
-      if(weatherLayer) map.remove(weatherLayer);
-      weatherLayerVisible = false;
-      $(this).text('天气图层');
-    }else{
-      weatherLayer = new AMap.WeatherLayer({ weather: 'clouds' }); // clouds|precipitation|radar
-      map.add(weatherLayer);
-      weatherLayerVisible = true;
-      $(this).text('关闭天气');
-    }
-  });
-
-  // canvas事件
-  drawCanvas.addEventListener('mousedown', function(e){
-    if(!drawEnable) return;
-    const rect = drawCanvas.getBoundingClientRect();
-    const x = e.clientX - rect.left, y = e.clientY - rect.top;
-    if(drawMode==='polygon' || drawMode==='polyline'){
-      drawPoints.push({x,y});
-      drawPolygonOnCanvas();
-    }
-    else if(drawMode==='marker'){
-      drawPoints = [{x,y}];
-      drawPolygonOnCanvas();
-      openMarkerInput(x,y,'Point');
-      // 定位弹窗
-      let infoBox = $('#marker-info');
-      infoBox.show();
-      let container = $('#map-container')[0];
-      let left = x - infoBox.outerWidth()/2;
-      let top = y - infoBox.outerHeight() - 16;
-      // 防止超出边界
-      left = Math.max(10, Math.min(left, container.offsetWidth-infoBox.outerWidth()-10));
-      top = Math.max(10, top);
-      infoBox.css({left:left+'px',top:top+'px'});
-      closeDrawCanvas();
-    }
-  });
-
-  drawCanvas.addEventListener('dblclick', function(e){
-    if(!drawEnable) return;
-    if(drawMode==='polygon' && drawPoints.length>=3){
-      saveCurrentDraw();
-    }
-    else if(drawMode==='polyline' && drawPoints.length>=2){
-      saveCurrentDraw();
-    }
-  });
-  document.addEventListener('keydown', function(e){
-    if(drawEnable && e.key==='Escape'){
-      closeDrawCanvas();
-    }
-  });
-
-  // marker/区域/路径保存
-  $('#save-marker').on('click', function(){
-    let type = $('input[name="marker-type"]:checked').val() || 'searched';
-    let color = $('#marker-color').val();
-    let desc = $('#marker-description').val();
-    let pos = $('#marker-info').data('pos');
-    let geometryType = $('#marker-info').data('geometryType') || 'Point';
-
-    if(geometryType==='Point'){
-      const lnglat = map.containerToLngLat([pos.x, pos.y]);
-      const geometry = { type: "Point", coordinates: [lnglat.lng, lnglat.lat] };
-      const props = {
-        color,
-        markerType: type,
-        description: desc,
-        createdBy: userName
-      };
-      saveToBackend('marker', geometry, props);
-    } else if(geometryType==='Polygon'){
-      // 用pendingDrawGeometry
-      const props = {
-        color,
-        markerType: type,
-        description: desc,
-        createdBy: userName
-      };
-      saveToBackend('polygon', pendingDrawGeometry, props);
+      if(geometryType==='Point'){
+        const lnglat = map.containerToLngLat([pos.x, pos.y]);
+        const geometry = { type: "Point", coordinates: [lnglat.lng, lnglat.lat] };
+        const props = {
+          color,
+          markerType: type,
+          description: desc,
+          createdBy: userName
+        };
+        saveToBackend('marker', geometry, props);
+      } else if(geometryType==='Polygon'){
+        const props = {
+          color,
+          markerType: type,
+          description: desc,
+          createdBy: userName
+        };
+        saveToBackend('polygon', pendingDrawGeometry, props);
+        pendingDrawGeometry = null;
+        pendingDrawType = null;
+      } else if(geometryType==='LineString'){
+        const props = {
+          color,
+          markerType: type,
+          description: desc,
+          createdBy: userName
+        };
+        saveToBackend('polyline', pendingDrawGeometry, props);
+        pendingDrawGeometry = null;
+        pendingDrawType = null;
+      }
+      closeMarkerInput();
+    });
+    $('#cancel-marker').on('click', function(){
+      closeMarkerInput();
       pendingDrawGeometry = null;
       pendingDrawType = null;
-    } else if(geometryType==='LineString'){
-      const props = {
-        color,
-        markerType: type,
-        description: desc,
-        createdBy: userName
-      };
-      saveToBackend('polyline', pendingDrawGeometry, props);
-      pendingDrawGeometry = null;
-      pendingDrawType = null;
-    }
-    closeMarkerInput();
-  });
-  $('#cancel-marker').on('click', function(){
-    closeMarkerInput();
-    pendingDrawGeometry = null;
-    pendingDrawType = null;
+    });
+
+    $('input[name="marker-type"]').on('change', function(){
+      let type = $(this).val();
+      let color = TYPE_COLORS[type];
+      $('#marker-color').val(color);
+      $('#color-preview').css('background', color);
+    });
+    $('#marker-color').on('input', function(){ $('#color-preview').css('background', $(this).val()); });
   });
 
-  // 类型颜色联动
-  $('input[name="marker-type"]').on('change', function(){
-    let type = $(this).val();
-    let color = TYPE_COLORS[type];
-    $('#marker-color').val(color);
-    $('#color-preview').css('background', color);
-  });
-  $('#marker-color').on('input', function(){ $('#color-preview').css('background', $(this).val()); });
-});
+  // Example: 动态更新热力点，后端/AI推送时调用
+  // updateHeatmapData([
+  //   { lng: 116.335, lat: 39.941, value: 1 },
+  //   { lng: 116.337, lat: 39.944, value: 0.6 }
+  // ]);
 </script>
 </body>
 </html>

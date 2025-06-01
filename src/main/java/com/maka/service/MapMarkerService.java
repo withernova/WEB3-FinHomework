@@ -2,6 +2,7 @@ package com.maka.service;
 
 import com.maka.pojo.MapMarker;
 import java.util.List;
+import java.util.Map;
 
 public interface MapMarkerService {
     /**
@@ -18,4 +19,7 @@ public interface MapMarkerService {
      * 删除地图标记
      */
     void deleteMarker(Integer markerId, Integer userId);
+
+    List<Map<String, Object>> generateHeatmapData(Integer taskId);
+
 }
