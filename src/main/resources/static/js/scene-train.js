@@ -1,6 +1,5 @@
-layui.use(['layer', 'form'], function () {
-  const layer = layui.layer;
-  const form  = layui.form;
+layui.use(['layer', 'form', 'element'], function () {
+  const { layer, form, element } = layui;
 
   /* 端点与会话 */
   const api = window.SCENE_API_URL;                 // = http://127.0.0.1:5000/api/scene-train
@@ -18,8 +17,8 @@ layui.use(['layer', 'form'], function () {
 
   /* ========= 场景选择监听 ========= */
   form.on('select(sceneSel)', function (data) {
-    scene = data.value;         // 取到选项的 value
-    if (!scene) {               // 未选中
+    scene = data.value;
+    if (!scene) {                // 未选中
       $btn.prop('disabled', true);
       return;
     }
@@ -66,7 +65,7 @@ layui.use(['layer', 'form'], function () {
     $btn.prop('disabled', data.done);      // 结束后不再可发
   }
 
-  /* ========= UI 辅助 ========= */
+  /* ========= UI ========= */
   function appendMsg(text, role) {
     const div = $('<div class="msg ' + role + '"><div class="bubble">' + text + '</div></div>');
     $msg.append(div);
@@ -83,11 +82,39 @@ layui.use(['layer', 'form'], function () {
   }
 
   function showReport(rep) {
+    const tpl = `
+      <div class="report-card">
+        <h2>本轮训练小结</h2>
+        <div class="item">
+          <span>安抚情绪</span>
+          <div class="layui-progress" lay-showPercent="yes">
+            <div class="layui-progress-bar" lay-percent="${rep.emotion}%"></div>
+          </div>
+        </div>
+        <div class="item">
+          <span>信息收集</span>
+          <div class="layui-progress" lay-showPercent="yes">
+            <div class="layui-progress-bar" lay-percent="${rep.info}%"></div>
+          </div>
+        </div>
+        <div class="item">
+          <span>安全意识</span>
+          <div class="layui-progress" lay-showPercent="yes">
+            <div class="layui-progress-bar" lay-percent="${rep.safe}%"></div>
+          </div>
+        </div>
+        <p class="advice">${rep.advice}</p>
+      </div>`;
     layer.open({
       type: 1,
-      title: "训练小结",
-      area: ["620px", "420px"],
-      content: `<pre style="padding:20px;margin:0;">${rep}</pre>`
+      title: false,
+      shadeClose: true,
+      area: ["480px", "420px"],
+      skin: "report-layer",
+      content: tpl,
+      success: function () {
+        element.render('progress');
+      }
     });
   }
 

@@ -16,6 +16,11 @@ body{margin:0;font-family:system-ui,Arial;background:#f6f7f9}
 .user .bubble{background:#0b65ff;color:#fff;border-bottom-right-radius:2px}
 .bot  .bubble{background:#e6e8eb;color:#000;border-bottom-left-radius:2px}
 #scoreCard{position:fixed;right:24px;top:24px;width:240px;display:none}
+.report-layer .layui-layer-content{padding:24px 28px;background:#fff;border-radius:16px}
+.report-card h2{margin-top:0;text-align:center;font-size:20px}
+.report-card .item{margin:22px 0}
+.report-card .item span{display:block;margin-bottom:6px}
+.report-card .advice{margin-top:24px;font-weight:bold;color:#ff5722;text-align:center}
 </style>
 </head>
 <body>
@@ -50,10 +55,12 @@ body{margin:0;font-family:system-ui,Arial;background:#f6f7f9}
   window.SCENE_API_URL = "http://127.0.0.1:5000/api/scene-train";
 </script>
 
-<script src="/js/scene-train.js?v=4"></script>
+<script src="/js/scene-train.js?v=5"></script>
 
 <script>
-layui.use(['form'],function(){ layui.form.render();});
+layui.use(['form','element'],function(){ 
+  layui.form.render();
+});
 </script>
 </body>
 </html>

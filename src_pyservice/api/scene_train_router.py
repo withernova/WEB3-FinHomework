@@ -13,17 +13,16 @@ def chat():
 
     try:
         if cmd == "start":
-            res = svc.start(sid, data.get("scene", "fear"))  # ← 返回 dict
-            res["session_id"] = sid
-            return jsonify(res)
+            res = svc.start(sid, data.get("scene", "fear"))
 
         elif cmd == "talk":
             res = svc.talk(sid, data.get("content", ""))
-            res["session_id"] = sid
-            return jsonify(res)
 
         else:
             return jsonify(error="invalid cmd"), 400
+
+        res["session_id"] = sid        # ← 放到统一出口
+        return jsonify(res)
 
     except Exception as e:
         return jsonify(error=str(e)), 400
