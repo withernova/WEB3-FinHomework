@@ -12,4 +12,7 @@ public interface MapMarkerMapper {
     int insert(MapMarker marker);
 
     int deleteById(Integer id);
+
+    List<MapMarker> selectAll();
+
 }

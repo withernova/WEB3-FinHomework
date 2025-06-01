@@ -27,4 +27,8 @@
         DELETE FROM map_markers WHERE id = #{id}
     </delete>
 
+    <select id="selectAll" resultType="com.maka.pojo.MapMarker">
+        SELECT * FROM map_markers
+    </select>
+
 </mapper>

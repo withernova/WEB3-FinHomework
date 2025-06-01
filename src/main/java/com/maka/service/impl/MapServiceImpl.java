@@ -77,7 +77,8 @@ public class MapServiceImpl implements MapService {
         return config;
     }
     
-        private Map<String, Object> geocodeAddress(String address) {
+    @Override
+    public Map<String, Object> geocodeAddress(String address) {
         if (address == null || address.trim().isEmpty()) {
             return null;
         }

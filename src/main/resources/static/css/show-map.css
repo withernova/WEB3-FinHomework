@@ -1,0 +1,11 @@
+#chinaMapEcharts {
+    width: 100%;
+    height: 600px;
+    border-radius: 6px;
+    border: 1px solid #eee;
+    margin-bottom: 20px;
+}
+
+.echarts-tooltip {
+    font-size: 14px;
+}
