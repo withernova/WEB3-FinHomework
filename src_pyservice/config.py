@@ -34,6 +34,7 @@ class Config:
     WEIGHT_SUCCESS  = 0.3   # 历史成功数权重
 
     MAP_API_KEY = os.environ.get("MAP_API_KEY", "2a73ff764995703ff9e17cc103851a1e")
+    DS_API_KEY = "sk-e61e9d664b3d4a88a69eb4effe1df92c"
 
     BASE_DIR = "./templates"
     DOCX_TEMPLATE_PATH = "./templates/report_template.docx"
