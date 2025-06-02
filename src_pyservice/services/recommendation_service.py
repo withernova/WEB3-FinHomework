@@ -1,5 +1,6 @@
 # services/recommendation_service.py
 from zhipuai import ZhipuAI
+from deepseek import DeepSeekAPI
 from config import Config
 from services.geo_service import GeoService
 import logging
@@ -9,9 +10,10 @@ logger = logging.getLogger(__name__)
 
 class RecommendationService:
     def __init__(self, api_key=None, model=None):
-        self.api_key = api_key or Config.ZHIPU_API_KEY
-        self.model = model or Config.MODEL_NAME
-        self.client = ZhipuAI(api_key=self.api_key)
+        self.api_key = api_key or Config.DS_API_KEY #Config.DS_API_KEY
+        self.model = "deepseek-chat" or Config.MODEL_NAME
+        self.client = DeepSeekAPI(api_key=self.api_key)
+        #self.client = ZhipuAI(api_key=self.api_key)
         self.geo_service = GeoService()
     
     def generate_recommendations(self, task, rescuers, tag_library=None):
@@ -189,7 +191,7 @@ class RecommendationService:
             logger.info("调用智谱AI模型提取标签")
             # 调用智谱AI模型
             try:
-                response = self.client.chat.completions.create(
+                response = self.client.chat_completion(
                     model=self.model,
                     messages=[
                         {"role": "system", "content": "你是一个专业的老人走失网站情形分析标签提取系统。请只返回纯JSON格式数据，不要添加任何代码块标记。返回的标签必须来自提供的标签库，且必须根据实际情况思考哪些标签可能会对本任务有帮助，例如老人在森林走失可能需要森林相关地形的技能，老人喜欢钓鱼，可能需要水域搜索等技能，务必因地制宜。最多返回10个最相关的标签。"},
@@ -200,7 +202,7 @@ class RecommendationService:
                 )
                 
                 # 获取返回内容
-                content = response.choices[0].message.content
+                content = response
                 logger.info(f"智谱AI返回内容: {content}")
                 
                 # 清理内容
@@ -411,7 +413,7 @@ class RecommendationService:
             """
             
             # 调用智谱AI模型
-            response = self.client.chat.completions.create(
+            response = self.client.chat_completion(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": "你是一个专业的救援任务分配系统，善于分析任务需求与救援人员能力的匹配度。"},
@@ -422,7 +424,7 @@ class RecommendationService:
             )
             
             # 解析返回结果
-            content = response.choices[0].message.content
+            content = response
             try:
                 result = json.loads(content)
                 return float(result["score"]), result["reason"]
@@ -455,7 +457,7 @@ class RecommendationService:
             prompt = self._build_report_prompt(task, top_rescuers, relevant_tags)
             
             # 调用智谱AI生成报告
-            response = self.client.chat.completions.create(
+            response = self.client.chat_completion(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": "你是一个专业的救援报告生成系统，擅长整理数据并生成详细、专业的推荐报告。"},
@@ -466,7 +468,7 @@ class RecommendationService:
             )
             
             # 获取报告内容
-            markdown_report = response.choices[0].message.content
+            markdown_report = response
             
             # 生成HTML格式的报告
             html_report = self._generate_html_report(task, top_rescuers, relevant_tags, markdown_report)
@@ -670,7 +672,7 @@ class RecommendationService:
             
             logger.info("调用智谱AI生成摘要")
             # 调用智谱AI模型
-            response = self.client.chat.completions.create(
+            response = self.client.chat_completion(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": "你是一个专业的走失老人信息摘要生成系统，擅长将详细信息整理成简洁、重点突出的描述，便于救援人员快速理解关键信息。"},
@@ -681,7 +683,7 @@ class RecommendationService:
             )
             
             # 获取生成的摘要
-            summary = response.choices[0].message.content
+            summary = response
             logger.info(f"智谱AI返回摘要: {summary}")
             
             return summary.strip()
