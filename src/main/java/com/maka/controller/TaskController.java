@@ -57,6 +57,9 @@ public class TaskController {
             // 如果未登录，重定向到登录页面
             return "common/no-login";
         }
+        if (!userService.isFamily(userId)) {
+            return "common/forbidden-rescuer";  // 返回禁止访问页面
+        }
         
         // 返回任务发布页面
         return "task/task-publish";
@@ -72,6 +75,9 @@ public class TaskController {
         if (userId == null) {
             // 如果未登录，重定向到登录页面
             return "common/no-login";
+        }
+        if (!userService.isFamily(userId)) {
+            return "common/forbidden-rescuer";  // 返回禁止访问页面
         }
         
         // 返回任务管理页面

@@ -6,6 +6,7 @@ import com.maka.mapper.TaskMapper;
 import com.maka.pojo.Family;
 import com.maka.pojo.MapMarker;
 import com.maka.pojo.Rescuer;
+import com.maka.pojo.SkillTag;
 import com.maka.pojo.Task;
 import com.maka.query.ApiResponse;
 import com.maka.service.FamilyService;
@@ -22,6 +23,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +35,8 @@ import javax.servlet.http.HttpSession;
 @RequestMapping("/mapshow")
 public class MapShowController {
 
+    @Autowired
+    private RescuerService rescuerService;
     @Autowired
     private TaskMapper taskMapper;
     @Autowired
@@ -189,5 +193,67 @@ public class MapShowController {
         
         System.out.println("=== getMarkerCenter 结束，返回null ===");
         return null;
+    }
+
+
+    @GetMapping("/skill-distribution")
+    public ResponseEntity<Map<String, Object>> getSkillDistribution() {
+        // 获取所有可用的搜救队员
+        List<Rescuer> rescuers = rescuerService.getAvailableRescuers();
+        
+        // 获取所有技能标签
+        List<SkillTag> allTags = rescuerService.getAllSkillTags();
+        
+        // 按标签类别分类并统计
+        Map<String, Integer> categoryCount = new HashMap<>();
+        Map<String, List<Map<String, Object>>> categoryDetails = new HashMap<>();
+        
+        // 初始化类别映射
+        for (SkillTag tag : allTags) {
+            if (!categoryCount.containsKey(tag.getTagCategory())) {
+                categoryCount.put(tag.getTagCategory(), 0);
+                categoryDetails.put(tag.getTagCategory(), new ArrayList<>());
+            }
+        }
+        
+        // 统计每个队员的技能标签
+        for (Rescuer rescuer : rescuers) {
+            List<String> rescuerTags = rescuer.getSkillTags();
+            
+            for (SkillTag tag : allTags) {
+                if (rescuerTags.contains(tag.getTagName())) {
+                    // 增加类别计数
+                    categoryCount.put(tag.getTagCategory(), 
+                                     categoryCount.get(tag.getTagCategory()) + 1);
+                    
+                    // 查找该标签是否已存在于详情列表中
+                    boolean found = false;
+                    for (Map<String, Object> detail : categoryDetails.get(tag.getTagCategory())) {
+                        if (detail.get("name").equals(tag.getTagName())) {
+                            int count = (int) detail.get("value");
+                            detail.put("value", count + 1);
+                            found = true;
+                            break;
+                        }
+                    }
+                    
+                    // 如果不存在，添加新的标签统计
+                    if (!found) {
+                        Map<String, Object> detail = new HashMap<>();
+                        detail.put("name", tag.getTagName());
+                        detail.put("value", 1);
+                        categoryDetails.get(tag.getTagCategory()).add(detail);
+                    }
+                }
+            }
+        }
+        
+        // 准备返回数据
+        Map<String, Object> result = new HashMap<>();
+        result.put("categoryCount", categoryCount);
+        result.put("categoryDetails", categoryDetails);
+        result.put("totalRescuers", rescuers.size());
+        
+        return ResponseEntity.ok(result);
     }
 }
