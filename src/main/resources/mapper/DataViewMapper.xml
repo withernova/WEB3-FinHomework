@@ -22,4 +22,9 @@
         SELECT uuid
         FROM rescuers
     </select>
+
+    <select id="selectTagList" resultType="com.maka.pojo.Rescuer">
+        SELECT skill_tags
+        FROM rescuers
+    </select>
 </mapper>

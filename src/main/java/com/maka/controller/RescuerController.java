@@ -134,7 +134,7 @@ public class RescuerController {
         rescuer.setName(name);
         rescuer.setLocation(location);
         rescuer.setSkillsDescription(skillsDescription);
-        rescuer.setSkillTags(skillTags); // 你的Rescuer类需有此属性
+        rescuer.setSkill_tags(skillTags); // 你的Rescuer类需有此属性
         rescuer.setStatus("available");
 
         // 统一调用一个更新方法

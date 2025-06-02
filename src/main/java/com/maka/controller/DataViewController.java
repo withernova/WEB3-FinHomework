@@ -1,6 +1,8 @@
 package com.maka.controller;
 
 
+import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.maka.service.DataViewService;
 import com.maka.service.FaceComparisonService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,11 @@ public class DataViewController {
         res.put("RescuingCount",rescuingCount);
         res.put("TotalTaskNum",rescuingCount + rescuedCount);
         res.put("TotalPeopleNum",totalPeopleNum);
+        return res;
+    }
+    @GetMapping("/tag")
+    public String tagVisualizer() throws JsonProcessingException {
+        String res = dataViewService.getTagJson();
         return res;
     }
 }

@@ -231,9 +231,9 @@
             </div>
             <div class="layui-col-md4">
                 <div class="layui-card">
-                    <div class="layui-card-header"><i class="fa fa-calendar icon"></i>日历</div>
+                    <div class="layui-card-header"><i class="fa fa-calendar icon"></i>Tag</div>
                     <div class="layui-card-body">
-                        <div id="calendar"></div>
+                        <div id="tag-container" style="padding: 5px;"></div>
                     </div>
                 </div>
             </div>
@@ -252,25 +252,6 @@
 <script src="../layuimini/lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
 <script src="../layuimini/js/lay-config.js?v=1.0.4" charset="utf-8"></script>
 <script>
-    layui.use(['element', 'calendar'], function() {
-        var element = layui.element;
-        var calendar = layui.calendar;
-
-        // 日历功能
-        calendar.render({
-            elem: '#calendar',
-            theme: 'default', // 日历主题
-            done: function (date) {
-                // 日历回调
-                alert('您选择的日期是：' + date);
-            }
-        });
-
-        // 绑定日历点击事件
-        calendar.on('change', function (date) {
-            alert('您选择的日期是：' + date);
-        });
-    });
     // 左侧视频文件（视频1和视频2）
     const leftVideos = [
         '../static/video/1.MP4',
@@ -342,9 +323,9 @@
             echarts = layui.echarts;
 
         miniTab.listen();
-        $(function(){
+        $(function() {
             // 页面加载后，立刻发 AJAX 请求拿到后端返回的统计数据
-            $.getJSON('/data_view/data_visualizer', function(data){
+            $.getJSON('/data_view/data_visualizer', function (data) {
 
                 $('#rescuing').text(data.RescuingCount);
                 $('#rescued').text(data.RescuedCount);
@@ -352,11 +333,30 @@
                 $('#total_people').text(data.TotalPeopleNum);
 
                 $('#total_rescue').text(data.TotalTaskNum);
-                $('#success_rate').text((100 * data.RescuedCount / (data.RescuedCount + data.RescuingCount)) + "%");
-            })
-                .fail(function(jqXHR, textStatus, errorThrown){
-                    console.error('请求 /data_view/data_visualizer 失败：', textStatus, errorThrown);
+                $('#success_rate').text((100 * data.RescuedCount / (data.RescuedCount + data.RescuingCount)).toFixed(2) + "%");
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                console.error('请求 /data_view/data_visualizer 失败：', textStatus, errorThrown);
+            });
+            $.getJSON('/data_view/tag', function (data) {
+                let tags = data;
+                console.log(tags);
+                // 2. 找到刚才放好的那个容器
+                let $container = $('#tag-container');
+
+                // 3. 遍历数组，为每个值创建一个 Layui Tag（这里用 layui-badge 作示例）
+                tags.forEach(function (text) {
+                    // 你可以根据需要改成 span.layui-tag，或 a.layui-btn-sm 等样式
+                    let $tag = $(
+                        '<span class="layui-badge layui-bg-green" '
+                        + 'style="margin:4px; padding:4px 10px; font-size:14px;">'
+                        + text +
+                        '</span>'
+                    );
+                    $container.append($tag);
+                }).fail(function (jqXHR, textStatus, errorThrown) {
+                    console.error('请求 /data_view/tag 失败：', textStatus, errorThrown);
                 });
+            });
         });
         $('body').on('click', '.layuimini-notice', function () {
             var title = $(this).children('.layuimini-notice-title').text(),

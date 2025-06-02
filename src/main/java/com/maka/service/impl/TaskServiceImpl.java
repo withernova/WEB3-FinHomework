@@ -233,7 +233,7 @@ public class TaskServiceImpl implements TaskService {
                 rescuerData.put("uuid", rescuer.getUuid());
                 rescuerData.put("name", rescuer.getName());
                 rescuerData.put("location", rescuer.getLocation());
-                rescuerData.put("skillTags", rescuer.getSkillTags());
+                rescuerData.put("skillTags", rescuer.getSkill_tags());
                 rescuerData.put("taskIds", rescuer.getTaskIds());
                 
                 // 获取用户信息和电话号码
