@@ -2,13 +2,244 @@
 <html lang="zh" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Dummy 测试页面</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" th:href="@{/css/index.css}">
+    <!-- 引入技能图表的CSS -->
+    <link th:href="@{/css/show-skill.css}" rel="stylesheet">
+    <!-- 引入地图的CSS -->
+    <link th:href="@{/css/show-map.css}" rel="stylesheet">
+    <title>智寻归途数据可视化中心</title>
+    <script th:src="@{/js/jquery-2.2.1.min.js}"></script>
+    <!-- 在 head 标签中添加 -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@2.2.1/dist/jquery.min.js"></script>
+    <script th:src="@{/js/rem.js}"></script>
+    <script th:src="@{/js/echarts.min.js}"></script>
+    <script th:src="@{/js/guangxi.js}"></script>
+    <script th:src="@{/js/index.js}"></script>
+    
+    <!-- 引入高德地图API -->
+    <script type="text/javascript">
+    window._AMapSecurityConfig = {
+        securityJsCode: "f8ad23bb5e2995594eb1c0d1a8c9e85f",
+    };
+    </script>
+    <script src="https://webapi.amap.com/maps?v=2.0&key=8c25fcd7450b05cd9d63fd310c2f3652&plugin=AMap.Geocoder"></script>
 </head>
 <body>
-    <h2>Dummy 示例页面 - 地图片段插入测试</h2>
-    <div th:replace="show/show-map :: mapfrag"></div>
-    <br></br>
-    <div th:replace="show/show-skilltag :: skill-distribution-chart"></div>
+<div class="t_container">
+    <header class="t_header">
+        <span>智寻归途数据可视化中心</span>
+    </header>
+    <main class="t_main">
+        <div class="t_left_box">
+            <img class="t_l_line" th:src="@{/img/left_line.png}" alt="">
+            <div class="t_mbox t_gbox">
+                <i></i>
+                <span>正在进行的救援</span>
+                <h2 id="rescuing">-1</h2>
+            </div>
+            <div class="t_mbox t_ybox">
+                <i></i>
+                <span>已完成的救援</span>
+                <h2 id="rescued">-1</h2>
+            </div>
+            <img class="t_r_line" th:src="@{/img/right_line.png}" alt="">
+        </div>
+        <div class="t_center_box">
+            <!-- <div class="t_top_box">
+                <img class="t_l_line" th:src="@{/img/left_line.png}" alt="">
+                <ul class="t_nav">
+                    <li>
+                        <span>救援队总人数</span>
+                        <h1 id="total_people">-1</h1>
+                        <i></i>
+                    </li>
+                </ul>
+                <img class="t_r_line" th:src="@{/img/right_line.png}" alt="">
+            </div> -->
+            
+            <!-- 将原来的 chart_3 替换为地图 -->
+            <div class="t_bottom_box">
+                <img class="t_l_line" th:src="@{/img/left_line.png}" alt="">
+                <!-- 地图容器 - 适应静态页面布局 -->
+                <div class="rescue-map-integrated">
+                    <div class="map-container-integrated">
+                        <div id="rescue-map" style="width: 100%; height: 100%;"></div>
+                    </div>
+                </div>
+                <img class="t_r_line" th:src="@{/img/right_line.png}" alt="">
+            </div>
+        </div>
+        <div class="t_right_box">
+            <img class="t_l_line" th:src="@{/img/left_line.png}" alt="">
+            <h1 class="t_title">人口走失原因分析</h1>
+            <div id="reason" class="echart" style="top:10%; width: 90%; height: 4.0rem; position: absolute;"></div>
+            <header style="height: 0;" class="t_b_h">
+                <span style="top: 11px; font-size: larger; margin-left: -20px;">救援总次数</span>
+                <img th:src="@{/img/test.png}" alt="">
+                <h3 style="display: inline-block;">
+                    <span id="total_rescue" style="color: #e62626; font-size: larger; margin-left: -80px;">-1</span>
+                    <span style="color: #ffffff; font-size: larger; vertical-align: baseline;">次</span>
+                </h3>
+            </header>
+            <img class="t_r_line" th:src="@{/img/right_line.png}" alt="">
+        </div>
+        
+        <!-- 在左下角位置插入技能分布图表 -->
+        <div class="b_left_box">
+            <img class="t_l_line" th:src="@{/img/left_line.png}" alt="">
+            <!-- 技能分布图表容器 - 调整样式以适应布局 -->
+            <div class="skill-chart-integrated">
+                <div class="skill-chart-container layui-card">
+                    <div class="layui-card-header chart-header">
+                        <h3 id="skill-chartTitle" class="layui-elip skill-chart-title">搜救队员技能分布</h3>
+                    </div>
+                    <div class="layui-card-body">
+                        <div id="skillChart" class="chart-box skill-chart-box"></div>
+                        <!-- 统一使用一个容器，通过类名区分状态 -->
+                        <div id="skill-centerLogoContainer" class="center-logo-container">
+                            <img th:src="@{/layuimini/images/暖心归家.png}" alt="Logo" class="center-logo" id="skill-centerLogo">
+                        </div>
+                        <div class="chart-info skill-chart-info">
+                            <p>当前共有 <span id="skill-totalRescuers" class="layui-badge layui-bg-blue">0</span> 名搜救队员</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <img class="t_r_line" th:src="@{/img/right_line.png}" alt="">
+        </div>
+        
+        <div class="b_center_box">
+            <img class="t_l_line" th:src="@{/img/left_line.png}" alt="">
+            <div id="oldAnalysis" class="echart" style="width: 100%; height: 3.6rem;"></div>
+            <img class="t_r_line" th:src="@{/img/right_line.png}" alt="">
+        </div>
+        <div class="b_right_box">
+            <img class="t_l_line" th:src="@{/img/left_line.png}" alt="">
+            <h1 class="t_title">实时救援请求</h1>
+            <div class="t_table" style="height: 3.4rem">
+                <div class=""></div>
+                <div class="wrap">
+                    <ul>
+                        <li>
+                            <p>谢雨晴加入了救援队伍</p>
+                        </li>
+                        <li>
+                            <p>陈翠英在无锡市滨湖区海岸城附近走失</p>
+                        </li>
+                        <li>
+                            <p>王建国在无锡市滨湖区星光广场附近走失</p>
+                        </li>
+                        <li>
+                            <p>谢雨晴在星光广场附近没有发现老人</p>
+                        </li>
+                        <li>
+                            <p>谢雨晴在健康街道附近没有发现老人</p>
+                        </li>
+                        <li>
+                            <p>谢雨晴在融创茂附近发现疑似老人</p>
+                        </li>
+                    </ul>
+                </div>
+                <img class="t_r_line" th:src="@{/img/right_line.png}" alt="">
+            </div>
+        </div>
+    </main>
+</div>
 
+<!-- 引入技能图表的JavaScript -->
+<script th:src="@{/js/show-skill.js}"></script>
+<!-- 引入地图的JavaScript -->
+<script th:src="@{/js/show-map.js}"></script>
+
+<script>
+// 检查 jQuery 是否加载
+console.log('jQuery 检查:', typeof $);
+console.log('jQuery 版本:', typeof $ !== 'undefined' ? $.fn.jquery : '未加载');
+
+// 如果 jQuery 没有加载，我们用原生 JavaScript 重写
+if (typeof $ === 'undefined') {
+    console.error('jQuery 未加载！使用原生 JavaScript 重写...');
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('使用原生 JS：页面加载完成，开始请求数据...');
+        
+        fetch('/data_view/data_visualizer')
+            .then(response => {
+                console.log('响应状态:', response.status);
+                console.log('响应状态文本:', response.statusText);
+                return response.json();
+            })
+            .then(data => {
+                console.log('请求成功，返回的数据:', data);
+                
+                // 更新页面元素
+                const rescuingEl = document.getElementById('rescuing');
+                const rescuedEl = document.getElementById('rescued');
+                const totalRescueEl = document.getElementById('total_rescue');
+                
+                console.log('元素检查:');
+                console.log('rescuing元素:', rescuingEl ? '存在' : '不存在');
+                console.log('rescued元素:', rescuedEl ? '存在' : '不存在');
+                console.log('total_rescue元素:', totalRescueEl ? '存在' : '不存在');
+                
+                if (rescuingEl && data.RescuingCount !== undefined) {
+                    rescuingEl.textContent = data.RescuingCount;
+                    console.log('已更新 rescuing:', data.RescuingCount);
+                }
+                if (rescuedEl && data.RescuedCount !== undefined) {
+                    rescuedEl.textContent = data.RescuedCount;
+                    console.log('已更新 rescued:', data.RescuedCount);
+                }
+                if (totalRescueEl && data.TotalTaskNum !== undefined) {
+                    totalRescueEl.textContent = data.TotalTaskNum;
+                    console.log('已更新 total_rescue:', data.TotalTaskNum);
+                }
+            })
+            .catch(error => {
+                console.error('请求失败:', error);
+            });
+    });
+} else {
+    // jQuery 正常加载，使用原来的代码
+    $(function(){
+        console.log('jQuery 正常：页面加载完成，开始请求数据...');
+        
+        // 你原来的 jQuery 代码...
+        $.ajax({
+            url: '/data_view/data_visualizer',
+            method: 'GET',
+            dataType: 'json',
+            timeout: 10000,
+            beforeSend: function() {
+                console.log('正在发送请求到: /data_view/data_visualizer');
+            },
+            success: function(data) {
+                console.log('请求成功，返回的数据:', data);
+                
+                // 更新页面元素
+                if (data.RescuingCount !== undefined) {
+                    $('#rescuing').text(data.RescuingCount);
+                    console.log('已更新 rescuing 元素');
+                }
+                if (data.RescuedCount !== undefined) {
+                    $('#rescued').text(data.RescuedCount);
+                    console.log('已更新 rescued 元素');
+                }
+                if (data.TotalTaskNum !== undefined) {
+                    $('#total_rescue').text(data.TotalTaskNum);
+                    console.log('已更新 total_rescue 元素');
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.error('请求失败！');
+                console.error('状态码:', jqXHR.status);
+                console.error('错误信息:', errorThrown);
+            }
+        });
+    });
+}
+</script>
 </body>
 </html>

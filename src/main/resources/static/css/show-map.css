@@ -1,11 +1,84 @@
-#chinaMapEcharts {
+.map-container {
     width: 100%;
-    height: 600px;
-    border-radius: 6px;
-    border: 1px solid #eee;
-    margin-bottom: 20px;
+    height: 500px;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: #001529;
+    margin: 20px 0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
-.echarts-tooltip {
-    font-size: 14px;
+#rescue-map {
+    width: 100%;
+    height: 100%;
+}
+
+/* 添加闪烁标题动画 */
+@keyframes glow {
+    0% { text-shadow: 0 0 5px rgba(24, 144, 255, 0.6); }
+    50% { text-shadow: 0 0 20px rgba(24, 144, 255, 0.8), 0 0 30px rgba(24, 144, 255, 0.6); }
+    100% { text-shadow: 0 0 5px rgba(24, 144, 255, 0.6); }
+}
+
+
+/* 适配静态页面布局的地图样式 */
+.rescue-map-integrated {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    padding: 0.1rem;
+}
+
+.rescue-map-integrated .map-container-integrated {
+    width: 100%;
+    height: calc(100% - 0.2rem); /* 使用百分比高度而不是固定的rem值 */
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #001529;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.rescue-map-integrated #rescue-map {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+}
+
+/* 地图标题样式优化 */
+.rescue-map-integrated .map-container-integrated::before {
+    content: '老人走失搜救地图';
+    position: absolute;
+    top: 0.1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-size: 0.16rem;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(24, 144, 255, 0.5);
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+    .rescue-map-integrated .map-container-integrated {
+        height: 2.8rem;
+    }
+    
+    .rescue-map-integrated .map-container-integrated::before {
+        font-size: 0.14rem;
+        top: 0.08rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .rescue-map-integrated .map-container-integrated {
+        height: 2.4rem;
+    }
+    
+    .rescue-map-integrated .map-container-integrated::before {
+        font-size: 0.12rem;
+        top: 0.06rem;
+    }
 }
