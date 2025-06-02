@@ -1,8 +1,10 @@
 package com.maka.mapper;
 
 import com.maka.pojo.MapMarker;
-import java.util.List;
+import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
+@Mapper
 public interface MapMarkerMapper {
 
     List<MapMarker> selectByTaskId(Integer taskId);

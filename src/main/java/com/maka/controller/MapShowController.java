@@ -3,33 +3,21 @@ package com.maka.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.maka.mapper.MapMarkerMapper;
 import com.maka.mapper.TaskMapper;
-import com.maka.pojo.Family;
 import com.maka.pojo.MapMarker;
 import com.maka.pojo.Rescuer;
 import com.maka.pojo.SkillTag;
 import com.maka.pojo.Task;
-import com.maka.query.ApiResponse;
-import com.maka.service.FamilyService;
-import com.maka.service.MapMarkerService;
 import com.maka.service.RescuerService;
-import com.maka.service.TaskService;
-import com.maka.service.UserService;
 import com.maka.service.MapService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.servlet.http.HttpSession;
 
 @RestController
 @RequestMapping("/mapshow")

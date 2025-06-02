@@ -138,7 +138,7 @@ public class RescuerServiceImpl implements RescuerService {
         int res1 = rescuerMapper.updateRescuerWithStatus(rescuer);
 
         // 2. 更新 skill_tags
-        int res2 = rescuerMapper.updateRescuerSkillTags(rescuer.getUuid(), rescuer.getSkill_tags());
+        int res2 = rescuerMapper.updateRescuerSkillTags(rescuer.getUuid(), rescuer.getSkillTags());
 
         return res1 > 0 && res2 > 0;
     }

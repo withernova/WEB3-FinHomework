@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -233,7 +232,7 @@ public class TaskServiceImpl implements TaskService {
                 rescuerData.put("uuid", rescuer.getUuid());
                 rescuerData.put("name", rescuer.getName());
                 rescuerData.put("location", rescuer.getLocation());
-                rescuerData.put("skillTags", rescuer.getSkill_tags());
+                rescuerData.put("skillTags", rescuer.getSkillTags());
                 rescuerData.put("taskIds", rescuer.getTaskIds());
                 
                 // 获取用户信息和电话号码

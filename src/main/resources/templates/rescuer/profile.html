@@ -81,10 +81,10 @@
             <label class="layui-form-label">技能标签：</label>
             <div class="layui-input-block">
               <div class="tag-list"
-                   th:if="${rescuer != null && rescuer.skillTags != null && !rescuer.skillTags.isEmpty()}">
-                <div th:each="tag : ${rescuer.skillTags}" class="tag-item" th:text="${tag}"></div>
+                   th:if="${rescuer != null && rescuer.getSkillTags != null && !rescuer.getSkillTags.isEmpty()}">
+                <div th:each="tag : ${rescuer.getSkillTags}" class="tag-item" th:text="${tag}"></div>
               </div>
-              <div th:if="${rescuer == null || rescuer.skillTags == null || rescuer.skillTags.isEmpty()}"
+              <div th:if="${rescuer == null || rescuer.getSkillTags == null || rescuer.getSkillTags.isEmpty()}"
                    class="layui-form-mid layui-word-aux">
                 您还未设置技能标签，
                 <a href="/rescuer/generate-tags" class="layui-font-blue">点击设置</a>

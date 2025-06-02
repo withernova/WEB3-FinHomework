@@ -6,6 +6,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.maka.mapper.DataViewMapper;
+import com.maka.mapper.RescuerMapper;
+import com.maka.pojo.Rescuer;
 import com.maka.service.DataViewService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,8 @@ public class DataViewServiceImpl implements DataViewService {
 
     @Autowired
     DataViewMapper dataViewMapper;
+    @Autowired
+    RescuerMapper rescuerMapper;
     @Override
     public int getRescuedCount()
     {
@@ -35,8 +39,12 @@ public class DataViewServiceImpl implements DataViewService {
 
     @Override
     public String getTagJson() throws JsonProcessingException {
-        List<List<String>> tagList = dataViewMapper.selectTagList();
-        JSONArray mergedArray = new JSONArray();
+        List<Rescuer> rescuers = rescuerMapper.getAvailableRescuers();
+
+        List<List<String>> tagList = new ArrayList<>();
+        for (var rescuer : rescuers) {
+            tagList.add(rescuer.getSkillTags());
+        }
         ObjectMapper mapper = new ObjectMapper();
 
         // 用来记录哪些“元素（序列化后）”已经添加过

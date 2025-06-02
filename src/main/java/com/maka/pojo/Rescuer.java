@@ -14,8 +14,12 @@ public class Rescuer implements Serializable {
     private String status; // available, visitor
     private String location;
     private String skillsDescription; // 用户描述的技能
-    
-    private List<String> skill_tags;   // AI生成的技能标签
+
+    public List<String> getSkillTags() {
+        return skillTags;
+    }
+
+    private List<String> skillTags;   // AI生成的技能标签
     private List<Integer> taskIds;
     @Override
     public String toString() {
@@ -25,7 +29,7 @@ public class Rescuer implements Serializable {
                 ", status='" + status + '\'' +
                 ", location='" + location + '\'' +
                 ", skillsDescription='" + skillsDescription + '\'' +
-                ", skillTags=" + skill_tags +
+                ", skillTags=" + skillTags +
                 ", taskIds=" + taskIds +
                 '}';
     }
