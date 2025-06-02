@@ -18,6 +18,12 @@ public class VoiceController {
         this.voiceService = voiceService;
     }
 
+    // 添加创建特征组的接口
+    @PostMapping("/createGroup")
+    public String createGroup() {
+        return voiceService.createGroup();
+    }
+
     @PostMapping("/createFeature")
     public String createFeature(
             @RequestParam String groupId,

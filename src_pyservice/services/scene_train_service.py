@@ -1,13 +1,24 @@
 import uuid, json, re, time, random
 from typing import Dict, List
+
 from zhipuai import ZhipuAI
 from config import Config
 
 _PROMPTS = {
-    "fear":  "你扮演一位走失老人，情绪激动，不停说想找儿子。",
-    "refuse":"你扮演一位走失老人，对陌生人高度警惕，拒绝回答问题。",
-    "night": "你扮演深夜寒冷中的走失老人，情绪低落并颤抖。",
+    "fear":  "你扮演一位走失老人，情绪激动，不停说想找儿子。注意说话要口语化一些，同时符合走失老人的形象",
+    "refuse":"你扮演一位走失老人，对陌生人高度警惕，拒绝回答问题。注意说话要口语化一些，同时符合走失老人的形象",
+    "night": "你扮演深夜寒冷中的走失老人，情绪低落并颤抖。注意说话要口语化一些，同时符合走失老人的形象",
 }
+
+_SCORE_SYSTEM = (
+    "你是专业搜救教练，请针对志愿者的话从下列维度 0-100 打分：\n"
+    "1) emotion：安抚情绪的效果；\n"
+    "2) info   ：获取有效线索的效果；\n"
+    "3) safe   ：对潜在安全风险的关注度；\n"
+    "同时给出一句中文建议。\n"
+    "严格输出不带代码块的 **JSON**："
+    '{"emotion":数值,"info":数值,"safe":数值,"advice":"一句建议"}'
+)
 
 class SceneTrainService:
     def __init__(self):
@@ -52,7 +63,7 @@ class SceneTrainService:
         done = len(room["scoreLog"]) >= 5
 
         # 生成小结 + 清理上下文
-        report = ""
+        report = {}
         if done:
             report = self._report(room)
             self.rooms.pop(sid, None)
@@ -78,39 +89,46 @@ class SceneTrainService:
 
     # ---------- 给一句话打分 ----------
     def _score(self, user_msg:str):
-        prompt = (
-          f"志愿者的话：{user_msg}\n\n"
-          "你是专业搜救教练，请用 JSON 给出 0-100 三项评分并一句建议：\n"
-          '{"emotion":数值,"info":数值,"safe":数值,"advice":"一句中文建议"}'
-        )
-        try:
-            resp = self.client.chat.completions.create(
-                model=self.model,
-                messages=[{"role":"system","content":"严格返回 JSON，不要代码块"},
-                          {"role":"user","content":prompt}],
-                temperature=0.3,max_tokens=120)
-            txt = resp.choices[0].message.content
-            # 清除反引号等
-            txt = re.sub(r"[`‎\s]*\{","{",txt,1,flags=re.S)
-            data = json.loads(txt)
-        except Exception:
-            # 容错：随机分 + 建议
-            data = {
-                "emotion": random.randint(50,90),
-                "info":    random.randint(50,90),
-                "safe":    random.randint(50,90),
-                "advice":  "保持共情，多询问开放式问题"
-            }
-        return data
+        prompt = f"志愿者的话：{user_msg}"
+        messages = [
+            {"role":"system","content":_SCORE_SYSTEM},
+            {"role":"user","content":prompt}
+        ]
+
+        for _ in range(2):          # 最多尝试两次解析
+            try:
+                resp = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    temperature=0.3,
+                    max_tokens=120
+                )
+                txt = resp.choices[0].message.content
+                txt = re.sub(r"[`‎\s]*\{","{",txt,1,flags=re.S)   # 去反引号
+                return json.loads(txt)
+            except Exception:
+                # 第二次时在 messages 结尾再补一句“重新输出 JSON”
+                if len(messages) == 2:
+                    messages.append({"role":"user","content":"请只输出 JSON"})
+                else:
+                    break   # 已经重试过
+        # 仍失败则随机分
+        return {
+            "emotion": random.randint(50,90),
+            "info":    random.randint(50,90),
+            "safe":    random.randint(50,90),
+            "advice":  "保持共情，多询问开放式问题"
+        }
 
     # ---------- 训练小结 ----------
     def _report(self, room):
         arr = room["scoreLog"]
-        em = sum(x["emotion"] for x in arr)//len(arr)
-        inf= sum(x["info"]    for x in arr)//len(arr)
-        sa = sum(x["safe"]    for x in arr)//len(arr)
-        return (f"## 训练小结\n\n"
-                f"- 安抚情绪：**{em}**\n"
-                f"- 信息收集：**{inf}**\n"
-                f"- 安全意识：**{sa}**\n\n"
-                "建议：继续练习“先共情，再询问”的对话节奏。")
+        em  = sum(x["emotion"] for x in arr)//len(arr)
+        inf = sum(x["info"]    for x in arr)//len(arr)
+        sa  = sum(x["safe"]    for x in arr)//len(arr)
+        return {
+            "emotion": em,
+            "info":    inf,
+            "safe":    sa,
+            "advice":  "继续练习“先共情，再询问”的对话节奏。"
+        }

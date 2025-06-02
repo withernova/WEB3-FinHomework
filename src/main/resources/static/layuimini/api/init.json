@@ -27,32 +27,7 @@
           "icon": "fa fa-area-chart",
           "target": "_self"
         },
-        {
-          "title": "救援行动",
-          "href": "",
-          "icon": "fa fa-road",
-          "target": "_self",
-          "child": [
-            {
-              "title": "救援信息",
-              "href": "page/ongoingrescue.html",
-              "icon": "fa fa-file-text",
-              "target": "_self"
-            },
-            {
-              "title": "救援管理",
-              "href": "page/aid-application.html",
-              "icon": "fa fa-th-large",
-              "target": "_self"
-            },
-            {
-              "title": "地图管理",
-              "href": "page/map-management.html",
-              "icon": "fa fa-map",
-              "target": "_self"
-            }
-          ]
-        },
+
         {
           "title": "任务中心",
           "icon": "fa fa-tasks",

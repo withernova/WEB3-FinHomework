@@ -96,9 +96,9 @@ a{
     position: relative;
     margin-bottom: 0.2rem;
 }
-.t_bottom_box{
+.t_bottom_box {
     width: 100%;
-    height: 3.17rem;
+    height: 4.7rem; /* 4.3rem = 3.17 + 1.13 */
     overflow: hidden;
     position: relative;
 }

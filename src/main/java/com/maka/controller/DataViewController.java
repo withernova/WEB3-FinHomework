@@ -18,6 +18,8 @@ public class DataViewController {
     @Autowired
     private DataViewService dataViewService;
 
+    
+
     @GetMapping("/data_visualizer")
     public Map<String, Integer> dataVisualizer()
     {

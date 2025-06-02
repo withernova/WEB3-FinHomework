@@ -3,6 +3,8 @@ package com.maka.controller;
 import com.maka.pojo.Rescuer;
 import com.maka.pojo.SkillTag;
 import com.maka.service.RescuerService;
+import com.maka.service.UserService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,6 +25,9 @@ public class RescuerController {
 
     @Autowired
     private RescuerService rescuerService;
+
+    @Autowired
+    private UserService userService;
     
     // 跳转到申请页面
     @GetMapping("/apply")
@@ -30,6 +35,8 @@ public class RescuerController {
         String userId = (String) session.getAttribute("userId");
         if (userId == null) {
             return"common/no-login";
+        }else if (!userService.isRescuer(userId)){
+            return "common/forbidden-family";
         }
         
         // 检查是否已经申请过
@@ -48,12 +55,12 @@ public class RescuerController {
     @ResponseBody
     public Map<String, Object> applyRescuer(@RequestBody Map<String, String> formData, HttpSession session) {
         String userId = (String) session.getAttribute("userId");
-        //System.out.println("[applyRescuer] userId from session: " + userId);
-        //System.out.println("[applyRescuer] formData: " + formData);
 
         if (userId == null) {
-            //System.out.println("[applyRescuer] userId is null, returning error");
-            return Map.of("success", false, "message", "未登录，请重新登录");
+            return Map.of("success", false, "message", "未登录，请重新登录", "code", 401);
+        } else if (!userService.isRescuer(userId)) {
+            // 对于非救援者，返回权限错误的JSON响应
+            return Map.of("success", false, "message", "权限不足，此功能仅对救援人员开放", "code", 403);
         }
 
         // 创建Rescuer对象并设置属性
@@ -68,9 +75,9 @@ public class RescuerController {
         boolean result = rescuerService.updateOrInsertRescuer(rescuer);
         
         if (result) {
-            return Map.of("success", true, "message", "申请提交成功");
+            return Map.of("success", true, "message", "申请提交成功", "code", 200);
         } else {
-            return Map.of("success", false, "message", "申请提交失败");
+            return Map.of("success", false, "message", "申请提交失败", "code", 500);
         }
     }
     

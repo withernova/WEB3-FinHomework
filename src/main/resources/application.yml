@@ -63,9 +63,9 @@ aliyun:
 
 xfyun:
   requestUrl: https://api.xf-yun.com/v1/private/s782b4996
-  appId: 609426a3
-  apiKey: d8b1264bbeb1ed0095111f2e595f9ea9
-  apiSecret: NTUwMzRjMDQxMDAwNTY3NTYzYTg2YWZl
+  appId: b2648935
+  apiKey: 1af07890f43226ae5eee242776b69feb
+  apiSecret: OWFhNGZhOTU1YTQzNmIxOTFjZWI0Njc4
 
 
 mybatis:

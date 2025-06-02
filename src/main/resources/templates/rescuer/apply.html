@@ -74,7 +74,22 @@
                             window.location.href = '/rescuer/generate-tags';
                         });
                     } else {
-                        layer.msg(res.message, {icon: 2});
+                        // 检查权限错误码
+                        if (res.code === 403) {
+                            // 对于权限错误，显示消息然后重定向到权限错误页面
+                            layer.msg(res.message, {icon: 2}, function(){
+                                // 重定向到权限错误页面
+                                window.top.location.href = '/common/forbidden';
+                            });
+                        } else if (res.code === 401) {
+                            // 对于未登录错误，重定向到登录页面
+                            layer.msg(res.message, {icon: 2}, function(){
+                                window.top.location.href = '/login';
+                            });
+                        } else {
+                            // 其他错误只显示消息
+                            layer.msg(res.message, {icon: 2});
+                        }
                     }
                 },
                 error: function() {
