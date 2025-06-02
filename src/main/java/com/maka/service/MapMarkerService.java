@@ -18,7 +18,7 @@ public interface MapMarkerService {
     /**
      * 删除地图标记
      */
-    void deleteMarker(Integer markerId, Integer userId);
+    void deleteMarker(Integer markerId, String userId);
 
     List<Map<String, Object>> generateHeatmapData(Integer taskId);
 

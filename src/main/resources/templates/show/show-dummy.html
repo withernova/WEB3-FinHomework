@@ -5,26 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" th:href="@{/css/index.css}">
-    <!-- 引入技能图表的CSS -->
-    <link th:href="@{/css/show-skill.css}" rel="stylesheet">
-    <!-- 引入地图的CSS -->
-    <link th:href="@{/css/show-map.css}" rel="stylesheet">
     <title>智寻归途数据可视化中心</title>
     <script th:src="@{/js/jquery-2.2.1.min.js}"></script>
-    <!-- 在 head 标签中添加 -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@2.2.1/dist/jquery.min.js"></script>
     <script th:src="@{/js/rem.js}"></script>
     <script th:src="@{/js/echarts.min.js}"></script>
     <script th:src="@{/js/guangxi.js}"></script>
     <script th:src="@{/js/index.js}"></script>
-    
-    <!-- 引入高德地图API -->
-    <script type="text/javascript">
-    window._AMapSecurityConfig = {
-        securityJsCode: "f8ad23bb5e2995594eb1c0d1a8c9e85f",
-    };
-    </script>
-    <script src="https://webapi.amap.com/maps?v=2.0&key=8c25fcd7450b05cd9d63fd310c2f3652&plugin=AMap.Geocoder"></script>
 </head>
 <body>
 <div class="t_container">
@@ -46,31 +33,19 @@
             </div>
             <img class="t_r_line" th:src="@{/img/right_line.png}" alt="">
         </div>
+        
         <div class="t_center_box">
-            <!-- <div class="t_top_box">
-                <img class="t_l_line" th:src="@{/img/left_line.png}" alt="">
-                <ul class="t_nav">
-                    <li>
-                        <span>救援队总人数</span>
-                        <h1 id="total_people">-1</h1>
-                        <i></i>
-                    </li>
-                </ul>
-                <img class="t_r_line" th:src="@{/img/right_line.png}" alt="">
-            </div> -->
-            
-            <!-- 将原来的 chart_3 替换为地图 -->
+            <!-- 将原来的 chart_3 替换为地图片段 -->
             <div class="t_bottom_box">
                 <img class="t_l_line" th:src="@{/img/left_line.png}" alt="">
-                <!-- 地图容器 - 适应静态页面布局 -->
+                <!-- 引入地图片段，并添加适配样式 -->
                 <div class="rescue-map-integrated">
-                    <div class="map-container-integrated">
-                        <div id="rescue-map" style="width: 100%; height: 100%;"></div>
-                    </div>
+                    <div th:replace="~{show/show-map :: mapfrag}"></div>
                 </div>
                 <img class="t_r_line" th:src="@{/img/right_line.png}" alt="">
             </div>
         </div>
+        
         <div class="t_right_box">
             <img class="t_l_line" th:src="@{/img/left_line.png}" alt="">
             <h1 class="t_title">人口走失原因分析</h1>
@@ -86,26 +61,12 @@
             <img class="t_r_line" th:src="@{/img/right_line.png}" alt="">
         </div>
         
-        <!-- 在左下角位置插入技能分布图表 -->
+        <!-- 左下角：引入技能分布图表片段 -->
         <div class="b_left_box">
             <img class="t_l_line" th:src="@{/img/left_line.png}" alt="">
-            <!-- 技能分布图表容器 - 调整样式以适应布局 -->
+            <!-- 引入技能分布图表片段，并添加适配样式 -->
             <div class="skill-chart-integrated">
-                <div class="skill-chart-container layui-card">
-                    <div class="layui-card-header chart-header">
-                        <h3 id="skill-chartTitle" class="layui-elip skill-chart-title">搜救队员技能分布</h3>
-                    </div>
-                    <div class="layui-card-body">
-                        <div id="skillChart" class="chart-box skill-chart-box"></div>
-                        <!-- 统一使用一个容器，通过类名区分状态 -->
-                        <div id="skill-centerLogoContainer" class="center-logo-container">
-                            <img th:src="@{/layuimini/images/暖心归家.png}" alt="Logo" class="center-logo" id="skill-centerLogo">
-                        </div>
-                        <div class="chart-info skill-chart-info">
-                            <p>当前共有 <span id="skill-totalRescuers" class="layui-badge layui-bg-blue">0</span> 名搜救队员</p>
-                        </div>
-                    </div>
-                </div>
+                <div th:replace="~{show/show-skill :: skill-distribution-chart}"></div>
             </div>
             <img class="t_r_line" th:src="@{/img/right_line.png}" alt="">
         </div>
@@ -115,6 +76,7 @@
             <div id="oldAnalysis" class="echart" style="width: 100%; height: 3.6rem;"></div>
             <img class="t_r_line" th:src="@{/img/right_line.png}" alt="">
         </div>
+        
         <div class="b_right_box">
             <img class="t_l_line" th:src="@{/img/left_line.png}" alt="">
             <h1 class="t_title">实时救援请求</h1>
@@ -147,11 +109,6 @@
         </div>
     </main>
 </div>
-
-<!-- 引入技能图表的JavaScript -->
-<script th:src="@{/js/show-skill.js}"></script>
-<!-- 引入地图的JavaScript -->
-<script th:src="@{/js/show-map.js}"></script>
 
 <script>
 // 检查 jQuery 是否加载
@@ -206,7 +163,6 @@ if (typeof $ === 'undefined') {
     $(function(){
         console.log('jQuery 正常：页面加载完成，开始请求数据...');
         
-        // 你原来的 jQuery 代码...
         $.ajax({
             url: '/data_view/data_visualizer',
             method: 'GET',
@@ -241,5 +197,99 @@ if (typeof $ === 'undefined') {
     });
 }
 </script>
+
+<!-- 添加适配样式 -->
+<style>
+/* 地图在静态页面中的适配样式 */
+.rescue-map-integrated {
+    width: 100%;
+    height: 100%;
+    padding: 0.1rem;
+}
+
+.rescue-map-integrated .map-container {
+    height: 3.4rem !important;
+    margin: 0 !important;
+    border-radius: 8px;
+}
+
+.rescue-map-integrated #rescue-map {
+    border-radius: 8px;
+}
+
+/* 技能图表在静态页面中的适配样式 */
+.skill-chart-integrated {
+    width: 100%;
+    height: 100%;
+    padding: 0.1rem;
+}
+
+.skill-chart-integrated .skill-chart-container {
+    margin-bottom: 0;
+    height: 100%;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.skill-chart-integrated .chart-header {
+    padding: 0.05rem 0;
+    background: transparent;
+}
+
+.skill-chart-integrated .chart-header h3 {
+    color: #fff;
+    font-size: 0.18rem;
+    text-align: center;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.skill-chart-integrated .chart-box {
+    height: 2.8rem !important;
+}
+
+.skill-chart-integrated .center-logo-container {
+    width: 0.6rem;
+    height: 0.6rem;
+}
+
+.skill-chart-integrated .center-logo {
+    max-width: 0.5rem;
+    max-height: 0.5rem;
+}
+
+.skill-chart-integrated .chart-info {
+    color: #fff;
+    font-size: 0.14rem;
+    margin-top: 0.05rem;
+}
+
+.skill-chart-integrated .chart-info .layui-badge {
+    background-color: rgba(24, 144, 255, 0.8);
+    padding: 0.02rem 0.06rem;
+    font-size: 0.12rem;
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+    .rescue-map-integrated .map-container {
+        height: 2.8rem !important;
+    }
+    
+    .skill-chart-integrated .chart-box {
+        height: 2.2rem !important;
+    }
+    
+    .skill-chart-integrated .center-logo-container {
+        width: 0.4rem;
+        height: 0.4rem;
+    }
+    
+    .skill-chart-integrated .center-logo {
+        max-width: 0.35rem;
+        max-height: 0.35rem;
+    }
+}
+</style>
 </body>
 </html>
