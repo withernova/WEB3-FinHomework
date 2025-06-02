@@ -264,17 +264,15 @@
       data: formData,
       processData: false,
       contentType: false,
-      success: function(response) {
-        const res = JSON.parse(response)
-        if (response && res.similarity > 0) {
-          $('#result_temp').text('走失人员为：' + res.lostPerson);
-          $('#result').text('相似度为：' + res.similarity + '%');
-          $('#preview-left').show();
-          $('#preview-right').show();
-          document.getElementById("preview-left").src = "data:image/png;base64,"+res.bestFrame;
-          document.getElementById("preview-right").src = res.img;
-        } else {
-          $('#result').text('未找到匹配的图片');
+      success: raw => {
+        const res = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        if(res.lostPerson && res.lostPerson !== '无'){
+          $('#result_temp').text('走失人员：'+res.lostPerson);
+          $('#result').text('相似度：'+res.similarity+'%');
+          $('#preview-left').attr('src', "data:image/png;base64,"+res.bestFrame).show();
+          $('#preview-right').attr('src', res.img).show();
+        }else{
+          $('#result').text('未找到匹配人员');
           $('#preview-left').hide();
           $('#preview-right').hide();
         }

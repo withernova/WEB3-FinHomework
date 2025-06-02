@@ -17,14 +17,8 @@
       "child": [
         {
           "title": "可视化数据显示",
-          "href": "data-view.html",
+          "href": "show/show-dummy",
           "icon": "fa fa-bar-chart",
-          "target": "_self"
-        },
-        {
-          "title": "失踪预测可视化",
-          "href": "echats.html",
-          "icon": "fa fa-area-chart",
           "target": "_self"
         },
 
@@ -75,12 +69,6 @@
             {
               "title": "队员信息",
               "href": "page/rescuer_list.html",
-              "icon": "fa fa-file-text-o",
-              "target": "_self"
-            },
-            {
-              "title": "展示",
-              "href": "show/show-dummy",
               "icon": "fa fa-file-text-o",
               "target": "_self"
             }

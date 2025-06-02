@@ -151,6 +151,8 @@ public class FaceComparisonServiceImpl implements FaceComparisonService {
 
         String uid = "无";
         double similarity = -1;
+
+        String name = "无";
         String bestFrame = "";
         while(timestamp <= timeLength)
         {
@@ -174,6 +176,7 @@ public class FaceComparisonServiceImpl implements FaceComparisonService {
                     {
                         uid = result.getString("user_id");
                         similarity = score;
+                        name = result.getString("user_info");
                         bestFrame = imgStr;
                     }
                 }
@@ -185,29 +188,15 @@ public class FaceComparisonServiceImpl implements FaceComparisonService {
         grabber.stop();
 
 
-
-        File jsonFile = new File("src/main/resources/static/data/table.json");
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        Map<String, Object> table = objectMapper.readValue(jsonFile, Map.class);
-        List<Map<String, Object>> data = (List<Map<String, Object>>)table.get("data");
-
-        String name = "无";
-        String img = "";
-        for (Map<String, Object> datum: data)
-        {
-            if (Objects.equals(datum.get("uid"), uid))
-            {
-                name = (String)datum.get("oldName");
-                img = (String) datum.get("img");
-            }
-        }
+        Task task = taskMapper.selectById(Integer.parseInt(uid));
+        String url = task.getPhotoUrl();
+        //TODO:講這個url放到前端，然後顯示對應的圖片
 
         return "{" +
                 "\"lostPerson\": \"" + name + "\"," +
                 "\"similarity\": " + similarity + "," +
                 "\"bestFrame\": \"" + bestFrame + "\"," +
-                "\"img\": \"" + img + "\"" +
+                "\"img\": \"" + url + "\"" +
                 "}";
     }
 }
