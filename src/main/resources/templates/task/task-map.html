@@ -552,9 +552,6 @@
         fillOpacity: 0.3
       });
       overlay.setMap(map);
-      overlay.on('click', function(e){
-        showInfoWindow(markerType, description, createdBy, e.lnglat);
-      });
     } else if(markerType === 'polyline'){
       overlay = new AMap.Polyline({
         path: geometry.coordinates,
@@ -562,9 +559,6 @@
         strokeWeight: 4
       });
       overlay.setMap(map);
-      overlay.on('click', function(e){
-        showInfoWindow(markerType, description, createdBy, e.lnglat);
-      });
     } else if(markerType === 'marker' || geometry.type==='Point'){
       overlay = new AMap.Marker({
         position: geometry.coordinates,
@@ -576,22 +570,95 @@
         })
       });
       overlay.setMap(map);
-      overlay.on('click', function(e){
-        showInfoWindow(markerType, description, createdBy, geometry.coordinates);
-      });
     }
-    overlays.push(overlay);
+    
+    // 在创建的覆盖物上添加标记 ID 和点击事件
+    if (overlay) {
+      overlay.markerId = marker.id;
+      
+      if (markerType === 'polygon') {
+        overlay.on('click', function(e){
+          showInfoWindow(markerType, description, createdBy, e.lnglat, overlay.markerId);
+        });
+      } else if (markerType === 'polyline') {
+        overlay.on('click', function(e){
+          showInfoWindow(markerType, description, createdBy, e.lnglat, overlay.markerId);
+        });
+      } else if (markerType === 'marker' || geometry.type === 'Point') {
+        overlay.on('click', function(){
+          showInfoWindow(markerType, description, createdBy, geometry.coordinates, overlay.markerId);
+        });
+      }
+      
+      overlays.push(overlay);
+    }
   }
 
-  function showInfoWindow(type, description, createdBy, lnglat){
-    let info = `<div style="padding:10px;">
-      <div style="font-weight:bold;margin-bottom:5px;">${TYPE_LABELS[type] || type || '标记'}</div>
-      <div>${description}</div>
-      <div style="font-size:12px;color:#999;margin-top:5px;">${createdBy?('创建者: '+createdBy):''}</div>
-    </div>`;
-    const infoWindow = new AMap.InfoWindow({content: info, offset: new AMap.Pixel(0, -20)});
-    infoWindow.open(map, lnglat);
+  function showInfoWindow(type, description, createdBy, lnglat, markerId){
+  // 关闭之前可能存在的InfoWindow
+  if (window.currentInfoWindow) {
+    window.currentInfoWindow.close();
   }
+  
+  let info = `<div style="padding:10px; max-width:300px;">
+    <div style="font-weight:bold;margin-bottom:5px;">${TYPE_LABELS[type] || type || '标记'}</div>
+    <div>${description}</div>
+    <div style="font-size:12px;color:#999;margin-top:5px;">${createdBy?('创建者: '+createdBy):''}</div>
+    ${markerId ? `<div style="text-align:right;margin-top:8px;"><a href="javascript:void(0)" class="delete-marker" data-id="${markerId}">删除</a></div>` : ''}
+  </div>`;
+  
+  // 创建信息窗口并设置在地图中央显示
+  const infoWindow = new AMap.InfoWindow({
+    content: info,
+    offset: new AMap.Pixel(0, 0),
+    closeWhenClickMap: true  // 点击地图关闭
+  });
+  
+  // 保存当前InfoWindow的引用
+  window.currentInfoWindow = infoWindow;
+  
+  // 先将地图中心点移动到标记位置
+  map.setCenter(lnglat);
+  
+  // 打开信息窗口在地图中心
+  infoWindow.open(map, map.getCenter());
+  
+  // 为删除按钮添加点击事件
+  setTimeout(() => {
+    $('.delete-marker').on('click', function(){
+      const markerId = $(this).data('id');
+      console.log("删除标记ID:", markerId);
+      deleteMarker(markerId);
+      infoWindow.close();
+    });
+  }, 100);
+}
+
+function deleteMarker(markerId) {
+  // 确保markerId是整数
+  markerId = parseInt(markerId, 10);
+  
+  layui.layer.confirm('确定要删除这个标记吗？', {icon: 3, title:'提示'}, function(index){
+    $.ajax({
+      url: '/api/map/marker/delete',
+      type: 'POST',
+      data: { id: markerId },  // 使用id作为参数名，与后端@RequestParam匹配
+      success: function(res) {
+        if (res.code === 0) {
+          layui.layer.msg('删除成功', {icon: 1});
+          loadMarkers(); // 重新加载标记
+        } else {
+          layui.layer.msg('删除失败: ' + (res.msg || '未知错误'), {icon: 2});
+        }
+      },
+      error: function(err) {
+        console.error('删除失败:', err);
+        layui.layer.msg('网络错误，请重试', {icon: 2});
+      }
+    });
+    layui.layer.close(index);
+  });
+}
 
   function loadMarkers(){
       clearMapOverlays();

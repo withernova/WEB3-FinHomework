@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.maka.service.MapMarkerService;
@@ -56,20 +57,42 @@ public class MapApiController {
     
     /**
      * 删除地图标记
-     */
-    @DeleteMapping("/marker/{markerId}")
-    public ResponseEntity<?> deleteMarker(@PathVariable Integer markerId, HttpSession session) {
-        Integer userId = (Integer) session.getAttribute("userId");
+    //  */
+    // @PostMapping("/marker/delete/{markerId}")
+    // public ResponseEntity<?> deleteMarkerPost(@PathVariable Integer markerId, HttpSession session) {
+    //     Integer userId = (Integer) session.getAttribute("userId");
+    //     if (userId == null) {
+    //         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.singletonMap("message", "未登录"));
+    //     }
+        
+    //     try {
+    //         mapMarkerService.deleteMarker(markerId, userId);
+    //         return ResponseEntity.ok(ApiResponse.success(true));
+    //     } catch (Exception e) {
+    //         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+    //             .body(Collections.singletonMap("message", e.getMessage()));
+    //     }
+    // }
+
+    /**
+ * 删除地图标记 (POST方式)
+ */
+/**
+ * 删除地图标记 (POST方式)
+ */
+    @PostMapping("/marker/delete")
+    public ResponseEntity<?> deleteMarkerPost(@RequestParam Integer id, HttpSession session) {
+        String userId = (String) session.getAttribute("userId");
         if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.singletonMap("message", "未登录"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("未登录"));
         }
         
         try {
-            mapMarkerService.deleteMarker(markerId, userId);
-            return ResponseEntity.ok(Collections.singletonMap("message", "删除成功"));
+            mapMarkerService.deleteMarker(id, userId);
+            return ResponseEntity.ok(ApiResponse.success(true));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Collections.singletonMap("message", e.getMessage()));
+                .body(ApiResponse.error(e.getMessage()));
         }
     }
 
