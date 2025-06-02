@@ -155,6 +155,12 @@
           "href":"rescuer/course_center",
           "icon":"fa fa-play-circle",
           "target":"_self"
+        },
+        {
+          "title":"感谢墙",
+          "href":"rescuer/thanks_wall",
+          "icon":"fa fa-heart",
+          "target":"_self"
         }
 
       ]

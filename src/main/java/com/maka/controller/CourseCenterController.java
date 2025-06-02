@@ -15,4 +15,8 @@ public class CourseCenterController {
         // 返回 Thymeleaf 模板的逻辑视图名
         return "rescuer/course_center";
     }
+    @GetMapping("/rescuer/thanks_wall")
+    public String thanksWall(){
+        return "rescuer/thanks_wall";
+    }
 }

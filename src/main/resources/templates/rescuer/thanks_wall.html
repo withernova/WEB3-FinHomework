@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>志愿者感谢墙</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="/layuimini/lib/layui-v2.5.5/css/layui.css">
+
+  <style>
+  /* —— 背景 —— */
+  body{margin:0;background:#dfe1e4;font-family:"PingFang SC",sans-serif;overflow:hidden;}
+
+  /* —— 看板 —— */
+  #wall{position:relative;width:100%;height:100vh;overflow:hidden;}
+
+  /* —— 便签 —— */
+  .note{position:absolute;width:180px;cursor:pointer;
+        opacity:0;transform-origin:center top;
+        animation:drop .8s cubic-bezier(.19,.85,.46,1.3) forwards;
+        --deg:0deg;--z:1;
+        transform:rotate(var(--deg));z-index:var(--z);}
+  @keyframes drop{0%{transform:translateY(-150px) rotate(calc(var(--deg)-15deg));opacity:0;}
+                  100%{transform:rotate(var(--deg));opacity:1;}}
+
+  .paper{position:relative;border-radius:16px;padding:28px 20px 52px;
+         min-height:160px;background:var(--bg);color:#fff;
+         box-shadow:0 10px 22px rgba(0,0,0,.22);transition:transform .25s;}
+  .note:hover .paper{transform:scale(1.06) rotate(calc(var(--deg)+3deg));}
+
+  .content{font-size:18px;line-height:1.7;word-break:break-all;}
+
+  /* 胶条 */
+  .note::before{content:'';position:absolute;top:-10px;left:50%;margin-left:-26px;
+                width:52px;height:30px;background:#ffe496;opacity:.9;
+                clip-path:polygon(0 0,100% 0,88% 100%,12% 100%);
+                box-shadow:0 4px 8px rgba(0,0,0,.25);transform:rotate(4deg);}
+
+  footer{position:absolute;bottom:10px;left:0;width:100%;font-size:13px;text-align:center;opacity:.85}
+
+  /* —— 新增按钮 —— */
+  #addBtn{position:fixed;right:24px;bottom:24px;z-index:100;width:60px;height:60px;
+          border-radius:50%;background:linear-gradient(135deg,#ff6a88,#ff99ac);
+          display:flex;align-items:center;justify-content:center;
+          color:#fff;font-size:38px;box-shadow:0 6px 18px rgba(0,0,0,.35);
+          cursor:pointer;transition:.25s;}
+  #addBtn:hover{transform:scale(1.1);}
+
+  /* —— 拖动细节 —— */
+  .note{user-select:none;}      /* 禁止拖动时误选中文字 */
+  .paper{cursor:move;}          /* 光标提示可拖动 */
+  .note.dragging{z-index:999;}  /* 拖动过程置顶 */
+  </style>
+</head>
+
+<body>
+  <div id="wall"></div>
+  <div id="addBtn">+</div>
+
+  <!-- 依赖 -->
+  <script src="/layuimini/lib/jquery-3.4.1/jquery-3.4.1.min.js"></script>
+  <script src="/layuimini/lib/layui-v2.5.5/layui.js"></script>
+
+  <!-- 主逻辑 -->
+  <script src="/js/thanks-wall.js?v=8"></script>
+</body>
+</html>

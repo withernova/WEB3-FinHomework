@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.Console;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -77,7 +78,8 @@ public class FaceComparisonController {
             String resultJson = faceService.compareFaceFromVideo(file);
             return ResponseEntity.ok(resultJson);
         } catch (Exception e) {
-            return ResponseEntity.ok("{\"lostPerson\":\"无\"}");
+            
+            return ResponseEntity.ok("{\"lostPerson\":" + e.getMessage() +"}");
         }
     }
 }
