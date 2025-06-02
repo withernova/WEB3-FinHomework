@@ -3,10 +3,15 @@
 <head>
   <meta charset="utf-8">
   <title>紧急通知</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 视口设置：保证移动端宽度正确缩放 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <!-- 依赖样式 -->
   <link rel="stylesheet" href="../layuimini/lib/layui-v2.5.5/css/layui.css" media="all">
   <link rel="stylesheet" href="../layuimini/css/public.css" media="all">
+
   <style>
+    /* ====== 保持桌面端原有排版 ====== */
     .notification-preview {
       background-color: #f2f2f2;
       border: 1px solid #ccc;
@@ -16,27 +21,66 @@
     }
 
     .layui-form-label {
-      width: 120px; /* 固定标签宽度 */
-      white-space: nowrap; /* 防止换行 */
-      overflow: hidden; /* 超出部分隐藏 */
-      text-overflow: ellipsis; /* 显示省略号 */
-      display: inline-block; /* 保证标签与输入框同一行 */
-      text-align: right; /* 右对齐 */
-      margin-right: 10px; /* 给标签和输入框增加间距 */
-    }
-    .view-progress-btn {
-      background-color: #1c528a;
-      color: white; /* 按钮文字颜色 */
+      width: 120px;               /* 桌面端固定标签宽度 */
+      white-space: nowrap;        /* 防止换行 */
+      overflow: hidden;           /* 超出部分隐藏 */
+      text-overflow: ellipsis;    /* 显示省略号 */
+      display: inline-block;      /* 与输入框同一行 */
+      text-align: right;          /* 右对齐 */
+      margin-right: 10px;         /* 间距 */
     }
 
-    /* 悬停时按钮颜色变化 */
+    .view-progress-btn {
+      background-color: #1c528a;
+      color: #fff;
+    }
+
     .view-progress-btn:hover {
-      background-color: #0069d9; /* 悬停时的颜色 */
+      background-color: #0069d9;
     }
 
     .layui-input-block {
-      width: 1200px; /* 固定输入框容器宽度 */
-      display: inline-block; /* 使输入框与标签保持在同一行 */
+      width: 1200px;              /* 桌面端保持原 1200px 宽度 */
+      display: inline-block;
+    }
+
+    /* ====== 响应式：≤992px（含）时改为移动端样式 ====== */
+    @media (max-width: 992px) {
+      .layuimini-container {
+        padding: 0 10px;          /* 两侧留白 */
+      }
+
+      /* 表单项改为纵向排列 */
+      .layui-form-item {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+      }
+
+      .layui-form-label {
+        width: 100%;              /* 标签占满整行 */
+        text-align: left;         /* 标签左对齐 */
+        margin-right: 0;
+        margin-bottom: 4px;
+      }
+
+      .layui-input-block {
+        width: 100% !important;   /* 输入区域满宽并覆盖 layui 默认 margin */
+        display: block;
+        margin-left: 0 !important;
+      }
+
+      /* 输入控件与预览区域适配屏幕宽度 */
+      .layui-input,
+      .layui-select,
+      .notification-preview {
+        width: 100% !important;
+      }
+
+      /* 按钮占满整行，易于点击 */
+      .view-progress-btn {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -104,12 +148,7 @@
       <div class="layui-form-item">
         <div class="layui-input-block">
           <button class="layui-btn view-progress-btn" lay-submit lay-filter="send-notice">发送通知</button>
-          <img src="../img/R.jpg" alt="图标1" style="width: 30px; height: 30px; margin-left: 10px;">
-          <img src="../img/OIP.jpg" alt="图标2" style="width: 30px; height: 30px; margin-left: 10px;">
-          <img src="../img/qclsb.jpg" alt="图标3" style="width: 30px; height: 30px; margin-left: 10px;">
-          <img src="../img/345.png" alt="图标3" style="width: 30px; height: 30px; margin-left: 10px;">
         </div>
-
       </div>
     </form>
 
@@ -120,56 +159,54 @@
   </div>
 </div>
 
+<!-- 依赖脚本 -->
 <script src="../layuimini/lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
 <script src="../layuimini/lib/jquery-3.4.1/jquery-3.4.1.min.js"></script>
 <script>
   layui.use(['form', 'laydate'], function () {
     var form = layui.form,
-            laydate = layui.laydate;
+        laydate = layui.laydate;
 
-    // 初始化日期选择器
+    // 日期时间选择器
     laydate.render({
       elem: '#missing_time',
-      type: 'datetime', // 设置为选择日期和时间
-      format: 'yyyy-MM-dd HH:mm', // 设置日期格式
+      type: 'datetime',
+      format: 'yyyy-MM-dd HH:mm',
       done: function (value) {
-        console.log("选择的时间: ", value); // 选择完成后的回调函数
+        console.log("选择的时间: ", value);
       }
     });
 
-    // 监听表单提交
+    // 表单提交
     form.on('submit(send-notice)', function (data) {
-      // 获取表单字段
       const requestData = {
         name: data.field.name,
         gender: data.field.gender,
         age: data.field.age,
-        lostTime: data.field.missing_time, // 确保此格式与后端接收格式相匹配
+        lostTime: data.field.missing_time,
         lostLocation: data.field.missing_location,
         contactInfo: data.field.family_contact
       };
-      console.log('发送到后端的数据:', JSON.stringify(requestData)); // 调试输出
 
-      // 发送 AJAX 请求
+      console.log('发送到后端的数据:', JSON.stringify(requestData));
+
       $.ajax({
-        url: 'http://localhost:8080/sendNotification', // 后端接口地址
+        url: 'http://localhost:8080/sendNotification',
         type: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify(requestData), // 将对象转换为 JSON 字符串
-        success: function (response) {
+        data: JSON.stringify(requestData),
+        success: function () {
           $('#success-message').removeClass('layui-hide');
-          console.log(response);
         },
         error: function (xhr, status, error) {
           console.error('请求失败:', error);
           alert("发送通知失败，请重试。");
         }
       });
-      // 阻止表单的默认提交行为
-      return false;
+      return false; // 阻止默认提交
     });
 
-    // 监听输入框变化以更新预览
+    // 实时预览
     $('input, select').on('input change', function () {
       const name = $('input[name="name"]').val();
       const gender = $('select[name="gender"] option:selected').text();
@@ -177,9 +214,10 @@
       const missingTime = $('input[name="missing_time"]').val();
       const missingLocation = $('input[name="missing_location"]').val();
       const familyContact = $('input[name="family_contact"]').val();
+
       const message = `紧急通知！<br><br>尊敬的相关人员，<br><br>我们正在寻找一位失踪老人，请您密切注意。<br><br>失踪老人信息如下：<br>姓名: ${name}<br>性别: ${gender}<br>年龄: ${age}岁<br>走失时间: ${missingTime}<br>走失地点: ${missingLocation}<br>联系方式: ${familyContact}<br><br>请您如果有相关信息，请及时与家属联系。感谢您的配合！<br><br>此致，<br>紧急通知小组`;
 
-      $('#preview-content').html(message); // 使用 .html() 保持换行效果
+      $('#preview-content').html(message);
     });
   });
 </script>

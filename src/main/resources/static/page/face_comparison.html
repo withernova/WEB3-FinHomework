@@ -1,118 +1,247 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>人脸图片比对</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
   <style>
-    body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#e0f7fa,#80deea);margin:0;padding:0;display:flex;justify-content:center;align-items:center;height:100vh;overflow:auto;}
-    .container{display:flex;justify-content:space-between;width:90%;max-width:1400px;background:#fff;padding:40px;border-radius:20px;box-shadow:0 4px 12px rgba(0,0,0,.2);transform:scale(1);transition:.3s ease-in-out;animation:fadeIn 1s ease-in-out;}
+    :root{
+      --primary:#007bff;
+      --bg-grad:linear-gradient(135deg,#e0f7fa,#80deea);
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{
+      font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;
+      background:var(--bg-grad);
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;   /* 允许竖向滚动 */
+      min-height:100vh;
+      padding:24px 8px;
+    }
+    /* === 容器 === */
+    .container{
+      display:flex;
+      gap:30px;
+      width:90%;
+      max-width:1400px;
+      background:#fff;
+      padding:40px;
+      border-radius:20px;
+      box-shadow:0 4px 12px rgba(0,0,0,.2);
+      animation:fadeIn .9s ease;
+      transition:transform .3s ease;
+    }
     .container:hover{transform:scale(1.02);}
-    .main-card,.side-card{background:#fff;border-radius:20px;padding:40px;box-shadow:0 4px 12px rgba(0,0,0,.2);transition:.3s ease-in-out;}
-    .main-card:hover,.side-card:hover{transform:translateY(-10px);box-shadow:0 8px 16px rgba(0,0,0,.3);}
-    .main-card{flex:2;margin-right:30px;}
-    h1{font-size:30px;color:#007bff;margin-bottom:20px;}
-    .instructions{font-size:18px;color:#666;margin-bottom:20px;}
-    .input-container{position:relative;margin-bottom:30px;}
-    label{display:block;font-size:18px;margin-bottom:10px;color:#333;}
-    .input-icon input{width:75%;max-width:500px;padding:12px 20px;font-size:16px;border:2px solid #007bff;border-radius:10px;outline:none;margin-top:10px;}
-    .input-icon .icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:18px;color:#007bff;}
-    #preview-container{margin-top:40px;display:flex;justify-content:space-between;}
-    .preview-box{flex:1;margin:0 20px;text-align:center;}
-    .preview-box label{font-size:18px;color:#007bff;display:block;margin-bottom:15px;}
-    .preview-box img{max-width:100%;max-height:350px;border-radius:10px;border:2px solid #007bff;}
-    button{background:#007bff;color:#fff;padding:18px 40px;font-size:20px;border:none;border-radius:10px;cursor:pointer;transition:.3s ease;width:100%;margin-top:30px;}
-    button:hover{background:#0056b3;box-shadow:0 4px 12px rgba(0,0,0,.2);}
-    #result{font-size:18px;color:#333;margin-top:30px;text-align:center;}
-    .side-card{flex:1;padding:30px;text-align:left;}
-    .side-card h2{font-size:22px;margin-bottom:20px;color:#007bff;}
-    .side-card ul{list-style:none;padding:0;margin:0 0 20px;}
-    .side-card li{font-size:16px;color:#333;margin-bottom:8px;}
-    .side-card p{font-size:14px;color:#555;}
+    /* 主要/侧边卡片 */
+    .main-card,.side-card{
+      background:#fff;
+      border-radius:20px;
+      padding:40px;
+      box-shadow:0 4px 12px rgba(0,0,0,.12);
+      transition:transform .3s ease,box-shadow .3s ease;
+    }
+    .main-card:hover,.side-card:hover{
+      transform:translateY(-6px);
+      box-shadow:0 8px 18px rgba(0,0,0,.18);
+    }
+    .main-card{flex:2;}
+    .side-card{flex:1;}
+    /* 文本 & 标题 */
+    h1{
+      font-size:clamp(24px,2.4vw,32px);
+      color:var(--primary);
+      margin-bottom:20px;
+    }
+    .instructions{font-size:clamp(14px,1.4vw,18px);color:#555;margin-bottom:20px;}
+    label{display:block;font-size:clamp(14px,1.4vw,18px);margin-bottom:10px;color:#333;}
+    /* 文件输入 */
+    .input-icon{position:relative;width:100%;}
+    .input-icon .icon{
+      position:absolute;left:12px;top:50%;
+      transform:translateY(-50%);
+      font-size:18px;color:var(--primary);
+    }
+    .input-icon input{
+      width:100%;
+      padding:12px 16px 12px 42px;
+      font-size:16px;
+      border:2px solid var(--primary);
+      border-radius:10px;
+      outline:none;
+    }
+    /* 预览区 */
+    #preview-container{
+      margin-top:40px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:20px;
+    }
+    .preview-box{
+      flex:1 1 240px;
+      text-align:center;
+    }
+    .preview-box img{
+      max-width:100%;
+      max-height:350px;
+      border-radius:10px;
+      border:2px solid var(--primary);
+    }
+    /* 按钮 */
+    button{
+      background:var(--primary);
+      color:#fff;
+      padding:16px 32px;
+      font-size:18px;
+      border:none;
+      border-radius:10px;
+      cursor:pointer;
+      width:100%;
+      margin-top:30px;
+      transition:background .3s,box-shadow .3s;
+    }
+    button:hover{background:#0056b3;box-shadow:0 4px 12px rgba(0,0,0,.18);}
+    /* 结果文本 */
+    #result,#result_temp{
+      font-size:16px;
+      color:#333;
+      margin-top:20px;
+      text-align:center;
+    }
+    /* 侧栏 */
+    .side-card h2{font-size:20px;margin-bottom:16px;color:var(--primary);}
+    .side-card p,.side-card li{font-size:14px;color:#555;margin-bottom:8px;list-style:none;}
+    /* GIF & 动画 */
     .text-move-up{display:inline-block;position:relative;top:-25px;}
-    .gif-image{width:70px;height:70px;margin-left:10px;margin-top:10px;}
-    @keyframes fadeIn{0%{opacity:0;transform:translateY(20px);}100%{opacity:1;transform:translateY(0);}}
+    .gif-image{width:64px;height:64px;margin-left:8px;}
+    @keyframes fadeIn{from{opacity:.0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+    /* === 移动端适配点 === */
+    @media (max-width:768px){
+      .container{
+        flex-direction:column;          /* 上下堆叠 */
+        padding:24px 20px;
+      }
+      .main-card,.side-card{
+        padding:28px;
+      }
+      .side-card{order:2;}              /* 主卡片显示在前，帮助信息置后 */
+      h1{text-align:center;font-size:24px;}
+    }
   </style>
 </head>
 <body>
-<div class="container">
-  <div class="main-card">
-    <h1><span class="text-move-up">人脸图片比对</span><img src="../img/face.gif" alt="GIF" class="gif-image"></h1>
-    <p class="instructions">请上传清晰的照片进行人脸比对，比对结果会在几秒钟内显示。</p>
-    <form id="uploadForm">
-      <div class="input-container">
-        <label for="faceImage">上传照片</label>
-        <div class="input-icon">
-          <input type="file" id="faceImage" name="file" accept="image/*" required>
-          <span class="icon"><i class="fas fa-camera"></i></span>
+
+  <div class="container">
+    <!-- 主功能卡片 -->
+    <div class="main-card">
+      <h1><span class="text-move-up">人脸图片比对</span><img src="../img/face.gif" alt="GIF" class="gif-image" /></h1>
+      <p class="instructions">请上传清晰的照片进行人脸比对，比对结果会在几秒钟内显示。</p>
+
+      <form id="uploadForm">
+        <div class="input-container">
+          <label for="faceImage">上传照片</label>
+          <div class="input-icon">
+            <input type="file" id="faceImage" name="file" accept="image/*" required />
+            <span class="icon"><i class="fas fa-camera"></i></span>
+          </div>
         </div>
-      </div>
-      <div id="preview-container">
-        <div class="preview-box"><label>上传的图片</label><img id="preview-left" style="display:none;"></div>
-        <div class="preview-box"><label>数据库中的匹配图片</label><img id="preview-right" style="display:none;"></div>
-      </div>
-      <button type="submit" id="compareBtn" disabled>立即比对</button>
-    </form>
-    <p id="result"></p>
-    <p id="result_temp"></p>
+
+        <div id="preview-container">
+          <div class="preview-box">
+            <label>上传的图片</label>
+            <img id="preview-left" style="display:none;" />
+          </div>
+          <div class="preview-box">
+            <label>数据库中的匹配图片</label>
+            <img id="preview-right" style="display:none;" />
+          </div>
+        </div>
+
+        <button type="submit" id="compareBtn" disabled>立即比对</button>
+      </form>
+
+      <p id="result"></p>
+      <p id="result_temp"></p>
+    </div>
+
+    <!-- 侧边帮助卡片 -->
+    <div class="side-card">
+      <h2>帮助信息</h2>
+      <p>系统会对上传的照片先做质量检测，通过后才能进行人脸搜索。</p>
+      <p>请确保图片清晰、无遮挡。</p>
+    </div>
   </div>
-  <div class="side-card">
-    <h2>帮助信息</h2>
-    <p>系统会对上传的照片先做质量检测，通过后才能进行人脸搜索。</p>
-    <p>请确保图片清晰、无遮挡。</p>
-  </div>
-</div>
 
-<script src="../js/jquery-2.2.1.min.js"></script>
-<script>
-let photoQualified = false;
+  <!-- JS 逻辑：保持原样，只把 jQuery 地址改成完整版 CDN 方便移动端 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.1/jquery.min.js"></script>
+  <script>
+    let photoQualified = false;
 
-/* 1. 选图预览 + 质量检测 */
-$('#faceImage').on('change', function(){
-  const file = this.files[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e => $('#preview-left').attr('src', e.target.result).show();
-  reader.readAsDataURL(file);
+    /* 1. 选图预览 + 质量检测 */
+    $('#faceImage').on('change', function () {
+      const file = this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => $('#preview-left').attr('src', e.target.result).show();
+      reader.readAsDataURL(file);
 
-  $('#compareBtn').prop('disabled', true);
-  $('#result').text('正在检测照片质量...').css('color','#333');
+      $('#compareBtn').prop('disabled', true);
+      $('#result').text('正在检测照片质量...').css('color', '#333');
 
-  const fd = new FormData(); fd.append('file', file);
-  $.ajax({ url:'/face/checkQuality', type:'POST', data:fd, processData:false, contentType:false,
-    success: res => {
-      photoQualified = res.qualified;
-      if(photoQualified){
-        $('#result').text('照片质量检测通过 ✔').css('color','green');
-        $('#compareBtn').prop('disabled', false);
-      }else{
-        $('#result').text('照片质量不合格 ✘，请重新选择').css('color','red');
+      const fd = new FormData();
+      fd.append('file', file);
+      $.ajax({
+        url: '/face/checkQuality',
+        type: 'POST',
+        data: fd,
+        processData: false,
+        contentType: false,
+        success: res => {
+          photoQualified = res.qualified;
+          if (photoQualified) {
+            $('#result').text('照片质量检测通过 ✔').css('color', 'green');
+            $('#compareBtn').prop('disabled', false);
+          } else {
+            $('#result').text('照片质量不合格 ✘，请重新选择').css('color', 'red');
+          }
+        },
+        error: _ => {
+          photoQualified = false;
+          $('#result').text('质量检测失败，请重试').css('color', 'red');
+        }
+      });
+    });
+
+    /* 2. 提交表单进行人脸搜索 */
+    $('#uploadForm').submit(function (e) {
+      e.preventDefault();
+      if (!photoQualified) {
+        alert('请先上传一张合格的照片');
+        return;
       }
-    },
-    error: _=>{ photoQualified = false; $('#result').text('质量检测失败，请重试').css('color','red'); }
-  });
-});
 
-/* 2. 提交表单进行人脸搜索 */
-$('#uploadForm').submit(function(e){
-  e.preventDefault();
-  if(!photoQualified){ alert('请先上传一张合格的照片'); return; }
-
-  const fd = new FormData(); fd.append('file', $('#faceImage')[0].files[0]);
-  $.ajax({ url:'/face/compare', type:'POST', data:fd, processData:false, contentType:false,
-    success: raw => {
-      const res = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      if(res.lostPerson && res.lostPerson !== '无'){
-        $('#result_temp').text('走失人员：'+res.lostPerson);
-        $('#result').text('相似度：'+res.similarity+'%');
-        $('#preview-right').attr('src', res.img).show();
-      }else{
-        $('#result').text('未找到匹配人员');
-        $('#preview-right').hide();
-      }
-    }
-  });
-});
-</script>
+      const fd = new FormData();
+      fd.append('file', $('#faceImage')[0].files[0]);
+      $.ajax({
+        url: '/face/compare',
+        type: 'POST',
+        data: fd,
+        processData: false,
+        contentType: false,
+        success: raw => {
+          const res = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          if (res.lostPerson && res.lostPerson !== '无') {
+            $('#result_temp').text('走失人员：' + res.lostPerson);
+            $('#result').text('相似度：' + res.similarity + '%');
+            $('#preview-right').attr('src', res.img).show();
+          } else {
+            $('#result').text('未找到匹配人员');
+            $('#preview-right').hide();
+          }
+        }
+      });
+    });
+  </script>
 </body>
 </html>
