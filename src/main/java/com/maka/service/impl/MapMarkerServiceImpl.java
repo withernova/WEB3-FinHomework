@@ -47,7 +47,7 @@ public class MapMarkerServiceImpl implements MapMarkerService {
 
     @Override
     @Transactional
-    public void deleteMarker(Integer markerId, Integer userId) {
+    public void deleteMarker(Integer markerId, String userId) {
         MapMarker marker = mapMarkerMapper.selectById(markerId);
         if (marker == null) {
             throw new RuntimeException("标记不存在");
