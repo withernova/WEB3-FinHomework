@@ -361,6 +361,7 @@ a{
     .t_container {
         min-width: 0;            /* 取消桌面端的 min-width:1360px */
         padding: 0.2rem 0;       /* 适当加内边距，让内容不要贴边 */
+        width: 120%;
     }
 
     /* 2. 主体内容区：让左右三块垂直排列 */
