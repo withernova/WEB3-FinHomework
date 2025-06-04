@@ -165,7 +165,7 @@
       <!-- 操作按钮 -->
       <div class="task-buttons">
         <!-- 根据用户类型显示不同的返回链接 -->
-        <a th:href="${userType == 'rescuer' ? '/task/task-track' : '/task/task-manage'}" class="layui-btn layui-btn-primary">返回列表</a>
+        <a th:href="${userType == 'rescuer' ? '/task/task-management' : '/task/task-manage'}" class="layui-btn layui-btn-primary">返回列表</a>
         
         <!-- 仅家属可以编辑和取消任务 -->
         <a th:if="${userType == 'family'}" th:href="@{'/task/task-edit/' + ${task.id}}" class="layui-btn">编辑任务</a>

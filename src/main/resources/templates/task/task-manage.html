@@ -4,11 +4,10 @@
   <meta charset="utf-8">
   <title>我的任务管理</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <!-- LayuiMini 资源 -->
   <link rel="stylesheet" th:href="@{/layuimini/lib/layui-v2.5.5/css/layui.css}">
   <link rel="stylesheet" th:href="@{/layuimini/css/public.css}">
   <style>
-    /* ======  原有样式  ====== */
+    /* 基础样式 */
     body{background:#f2f2f2;}
     .layuimini-container{margin:20px auto;background:#fff;border-radius:8px;
       box-shadow:0 2px 8px rgba(0,0,0,.1);padding:20px;}
@@ -21,25 +20,66 @@
     .task-status-finished{color:#5FB878;}
     .task-info{margin-bottom:10px;}
     .search-box{margin-bottom:20px;}
-
-    /* ======  移动端自适应（≤768px）  ====== */
-    @media (max-width: 768px){
-      /* 容器缩进 */
-      .layuimini-container{margin:10px auto;padding:15px;}
-
-      /* 搜索栏垂直排列 */
-      .search-box .layui-form-item{display:block;}
-      .search-box .layui-inline{display:block;width:100%;margin-bottom:8px;}
-      .search-box .layui-form-label{display:block;float:none;width:auto;padding:0 0 4px 0;}
-      .search-box .layui-input-inline{display:block;width:100%!important;}
-      .search-box .layui-btn{width:100%;margin:5px 0;}
-
-      /* 响应式表格 */
-      .table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-      .table-responsive .layui-table{min-width:800px;}   /* 固定最小宽度，出现横向滚动条 */
-
-      /* 图片稍微缩小 */
-      .elder-photo{width:60px;height:60px;}
+    
+    /* 移动端响应式适配 */
+    @media screen and (max-width: 768px) {
+      /* 容器边距调整 */
+      .layuimini-container {
+        margin: 10px;
+        padding: 15px;
+      }
+      
+      /* 搜索框调整为垂直排列 */
+      .search-box .layui-inline {
+        display: block;
+        margin-right: 0;
+        margin-bottom: 10px;
+        width: 100%;
+      }
+      
+      .search-box .layui-input-inline {
+        display: block;
+        width: 100% !important; /* 覆盖layui的内联样式 */
+        margin-right: 0;
+      }
+      
+      .search-box .layui-form-label {
+        width: auto;
+        padding: 5px 0;
+        text-align: left;
+      }
+      
+      /* 按钮宽度调整 */
+      .search-box .layui-btn {
+        width: 100%;
+        margin-bottom: 5px;
+      }
+      
+      /* 表格横向滚动 */
+      .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      /* 缩小图片尺寸 */
+      .elder-photo {
+        width: 60px;
+        height: 60px;
+      }
+      
+      /* 操作按钮垂直排列 */
+      .task-action-btn {
+        display: block;
+        margin-bottom: 5px;
+        width: 100%;
+      }
+      
+      /* 调整表格内容字体大小 */
+      .layui-table td, .layui-table th {
+        font-size: 12px;
+        padding: 8px 5px;
+      }
     }
   </style>
 </head>
@@ -49,8 +89,8 @@
     <fieldset class="layui-elem-field layui-field-title" align="center">
       <legend>我的任务管理</legend>
     </fieldset>
-
-    <!--  搜索栏  -->
+    
+    <!-- 搜索栏 -->
     <div class="layui-form search-box">
       <div class="layui-form-item">
         <div class="layui-inline">
@@ -76,12 +116,12 @@
         </div>
       </div>
     </div>
-
-    <!-- 任务列表（加外层 div 以便控制横向滚动） -->
+    
+    <!-- 任务列表 - 添加响应式容器 -->
     <div class="table-responsive">
       <table id="taskTable" lay-filter="taskTable"></table>
     </div>
-
+    
     <!-- 操作栏模板 -->
     <script type="text/html" id="taskActions">
       <a class="layui-btn layui-btn-xs task-action-btn" lay-event="detail">查看详情</a>
@@ -89,7 +129,7 @@
       <a class="layui-btn layui-btn-xs layui-btn-danger task-action-btn" lay-event="cancel">取消</a>
       {{#  } }}
     </script>
-
+    
     <!-- 状态显示模板 -->
     <script type="text/html" id="statusTpl">
       {{#  if(d.status === 'waiting'){ }}
@@ -102,7 +142,7 @@
       <span>{{ d.status }}</span>
       {{#  } }}
     </script>
-
+    
     <!-- 照片显示模板 -->
     <script type="text/html" id="photoTpl">
       <img src="{{ d.photoUrl }}" alt="{{ d.elderName }}" class="elder-photo">
@@ -110,98 +150,144 @@
   </div>
 </div>
 
-<!-- 依赖脚本 -->
 <script th:src="@{/layuimini/lib/layui-v2.5.5/layui.js}"></script>
 <script th:src="@{/layuimini/lib/jquery-3.4.1/jquery-3.4.1.min.js}"></script>
-
-<!-- 业务脚本 -->
 <script th:inline="javascript">
 /*<![CDATA[*/
 layui.use(['table', 'form', 'layer', 'util'], function(){
   var table = layui.table
-      ,form  = layui.form
+      ,form = layui.form
       ,layer = layui.layer
-      ,util  = layui.util;
-
-  /* 表格渲染 */
+      ,util = layui.util;
+  
+  // 获取当前设备是否为移动设备
+  var isMobile = window.innerWidth <= 768;
+  
+  // 初始化表格
   var taskTable = table.render({
     elem: '#taskTable'
-    ,url: '/task/list'
-    ,page: true
-    ,limit: 10
+    ,url: '/task/list'  // 数据接口
+    ,page: true  // 开启分页
+    ,limit: 10   // 每页显示的条数
     ,limits: [10, 20, 50, 100]
-    ,cols: [[
-      {field: 'id',        title: 'ID',       width: 80, fixed: 'left', sort: true}
-      ,{field: 'photoUrl',  title: '老人照片', width:120, templet:'#photoTpl'}
-      ,{field: 'elderName', title: '老人姓名', width:120}
-      ,{field: 'lostTime',  title: '走失时间', width:180, sort:true, templet:function(d){
-          return util.toDateString(new Date(d.lostTime), "yyyy-MM-dd HH:mm:ss");
-        }}
-      ,{field: 'location',  title: '走失地点', width:250}
-      ,{field: 'status',    title: '任务状态', width:120, sort:true, templet:'#statusTpl'}
-      ,{fixed:'right',      title: '操作',    width:180, align:'center', toolbar:'#taskActions'}
+    ,cols: [[  // 表头设置
+      {field: 'id', title: 'ID', width: 80, sort: true, fixed: 'left'}
+      ,{field: 'photoUrl', title: '老人照片', width: 120, templet: '#photoTpl'}
+      ,{field: 'elderName', title: '老人姓名', width: 120}
+      ,{field: 'lostTime', title: '走失时间', width: 180, sort: true, templet: function(d){
+        return util.toDateString(new Date(d.lostTime), "yyyy-MM-dd HH:mm:ss");
+      }}
+      ,{field: 'location', title: '走失地点', width: 250}
+      ,{field: 'status', title: '任务状态', width: 120, sort: true, templet: '#statusTpl'}
+      ,{fixed: 'right', title: '操作', width: 180, align:'center', toolbar: '#taskActions'}
     ]]
-    ,response:{ statusCode:0 }
-    ,parseData:function(res){
-      return{
+    ,response: {
+      statusCode: 0  // 成功的状态码
+    }
+    ,parseData: function(res){ // 解析后端返回的数据
+      return {
         "code": res.code,
-        "msg" : res.msg,
+        "msg": res.msg,
         "count": res.data.total,
-        "data" : res.data.records
+        "data": res.data.records
       };
     }
-    ,id:'taskTableReload'
-    ,done:function(res, curr, count){
-      setTimeout(function(){
-        document.querySelectorAll('.layui-laypage-count')
-          .forEach(function(el){ el.textContent='共 '+count+' 条'; });
-      },100);
+    ,id: 'taskTableReload',
+    done: function(res, curr, count) {
+        // 分页显示修正
+        setTimeout(function(){
+        // 强制把分页底部的"共 xx 条"改成 count
+        var countElems = document.querySelectorAll('.layui-laypage-count');
+        countElems.forEach(function(elem) {
+            elem.textContent = '共 ' + count + ' 条';
+        });
+        }, 100);
     }
   });
-
-  /* 搜索 */
+  
+  // 监听搜索按钮
   $('#searchBtn').on('click', function(){
+    var elderName = $('input[name="elderName"]').val();
+    var status = $('select[name="status"]').val();
+    
+    // 执行重载
     table.reload('taskTableReload', {
-      page:{curr:1},
-      where:{
-        elderName:$('input[name="elderName"]').val(),
-        status:$('select[name="status"]').val()
+      page: {
+        curr: 1  // 重新从第 1 页开始
+      }
+      ,where: {
+        elderName: elderName,
+        status: status
       }
     });
   });
-
-  /* 重置 */
+  
+  // 监听重置按钮
   $('#resetBtn').on('click', function(){
     $('input[name="elderName"]').val('');
     $('select[name="status"]').val('');
     form.render('select');
-    table.reload('taskTableReload', {page:{curr:1}, where:{elderName:'',status:''}});
-  });
-
-  /* 监听行工具 */
-  table.on('tool(taskTable)', function(obj){
-    var data=obj.data, layEvent=obj.event;
-    if(layEvent==='detail'){
-      var url='/task/task-detail/'+data.id;
-      window.location.href=url;
-      if(window.parent && window.parent.layui && window.parent.layui.index){
-        window.parent.layui.index.openTab({title:'任务详情', href:url});
+    
+    // 重新加载表格
+    table.reload('taskTableReload', {
+      page: {
+        curr: 1
       }
-    }else if(layEvent==='cancel'){
+      ,where: {
+        elderName: '',
+        status: ''
+      }
+    });
+  });
+  
+  // 监听表格行工具事件
+  table.on('tool(taskTable)', function(obj){
+    var data = obj.data;  // 获得当前行数据
+    var layEvent = obj.event;  // 获得 lay-event 对应的值
+    
+    if(layEvent === 'detail'){  // 查看详情
+      // 跳转到详情页
+      var url = '/task/task-detail/' + data.id;
+      var title = '任务详情'; // 可自定义
+      window.location.href = url;
+      // 如果在框架内，尝试使用框架的tab打开
+      if(window.parent && window.parent.layui && window.parent.layui.index){
+        window.parent.layui.index.openTab({
+          title: title,
+          href: url
+        });
+      }
+    } else if(layEvent === 'cancel'){  // 取消任务
       layer.confirm('确定要取消该任务吗？', function(index){
-        $.post('/task/cancel/'+data.id,function(res){
-          if(res.code===0){
-            layer.msg('任务已取消',{icon:1});
-            obj.del();
-          }else{
-            layer.msg(res.msg||'操作失败',{icon:2});
+        // 发送请求取消任务
+        $.ajax({
+          url: '/task/cancel/' + data.id,
+          type: 'POST',
+          success: function(res){
+            if(res.code === 0){
+              layer.msg('任务已取消', {icon: 1});
+              obj.del();  // 删除对应行（tr）的DOM结构
+            } else {
+              layer.msg(res.msg || '操作失败', {icon: 2});
+            }
+            layer.close(index);
+          },
+          error: function(){
+            layer.msg('服务器错误，请稍后重试', {icon: 2});
+            layer.close(index);
           }
-          layer.close(index);
-        }).fail(function(){
-          layer.msg('服务器错误，请稍后重试',{icon:2});
-          layer.close(index);
         });
       });
+    }
+  });
+  
+  // 窗口大小改变时重新加载表格
+  $(window).resize(function(){
+    var newIsMobile = window.innerWidth <= 768;
+    // 只有移动状态改变时才重新加载表格
+    if(newIsMobile !== isMobile){
+      isMobile = newIsMobile;
+      table.reload('taskTableReload');
     }
   });
 });

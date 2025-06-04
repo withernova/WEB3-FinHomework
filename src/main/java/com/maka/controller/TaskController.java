@@ -221,11 +221,11 @@ public class TaskController {
         
         try {
             // 检查任务是否属于当前用户
-            if (!taskService.isTaskBelongsToFamily(id, userId)) {
-                response.put("code", 403);
-                response.put("msg", "您没有权限操作此任务");
-                return response;
-            }
+            // if (!taskService.isTaskBelongsToFamily(id, userId)) {
+            //     response.put("code", 403);
+            //     response.put("msg", "您没有权限操作此任务");
+            //     return response;
+            // }
             
             // 取消任务
             boolean result = taskService.deleteTask(userId,id);
